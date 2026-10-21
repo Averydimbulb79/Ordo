@@ -1,6 +1,6 @@
 # Component evaluation
 
-Status: 0.0.1, 22 October 2026. Downloaded components are candidates, not a complete editing engine. Version numbers are fixed for this reproducible baseline; they are not claims of being the newest releases.
+Status: 0.1.0, 22 October 2026. Downloaded components are candidates, not a complete editing engine. Version numbers are fixed for this reproducible baseline; they are not claims of being the newest releases.
 
 | Component | Version | Role | Licence recorded in package |
 | --- | --- | --- | --- |
@@ -18,8 +18,12 @@ Browser-provided components: WebCodecs, Web Audio/AudioWorklet, file APIs and wo
 
 - Exact direct dependency versions and transitive dependency integrity are recorded in package-lock.json. Use npm ci; do not commit node_modules or package tarballs.
 - Media tests exercise a generated PCM WAV's duration, channel count and sample rate, and invalid-input handling.
-- Component Lab imports all three runtime dependencies. It performs a WebGL draw and an IndexedDB write/read/delete check in the actual browser, and allows local metadata inspection.
+- The archived Component Lab imports all three runtime dependencies. It performs a WebGL draw and an IndexedDB write/read/delete check in the actual browser, and allows local metadata inspection.
 - File names and errors are rendered as text, never as HTML.
+
+## Current integration
+
+Mediabunny now powers import metadata and frame/audio export. The editor uses a shared Canvas 2D letterbox draw function for preview and export, HTML media playback for preview sound, OfflineAudioContext for exported audio, and idb for recovery snapshots. PixiJS is retained as a compositor candidate but is not imported into the editor bundle. Playwright 1.62.1 (Apache-2.0) is a development-only browser-test dependency.
 
 ## Still to prove
 

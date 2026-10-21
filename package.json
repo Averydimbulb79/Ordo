@@ -1,14 +1,15 @@
 {
   "name": "ordo",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Ordo web video editor: component evaluation foundation",
+  "description": "Ordo web video editor",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test scripts/media.test.mjs"
+    "test": "node --experimental-strip-types --test scripts/*.test.mjs",
+    "test:browser": "node scripts/browser-smoke.mjs"
   },
   "dependencies": {
     "idb": "8.0.4",
@@ -16,6 +17,7 @@
     "pixi.js": "8.22.0"
   },
   "devDependencies": {
+    "playwright": "1.62.1",
     "typescript": "5.9.3",
     "vite": "8.3.5"
   },

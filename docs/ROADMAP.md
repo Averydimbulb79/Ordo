@@ -8,9 +8,11 @@ One web editor developed on main, later packaged with Electron for Windows. Same
 
 Pinned components, lockfile, modular source, diagnostic page, media tests and GitHub build workflow. Not an editing release. No legacy app exists to archive; the initial repository is kept on backup/initial-foundation.
 
-## 0.1: smallest complete editing workflow
+## 0.1: smallest complete editing workflow (implemented with initial limits)
 
 Import video/audio; frame-aware sequence model; preview and seeking; split and trim; undo/redo; downloadable versioned project file and media relinking; a working export with configuration checks and an explicit fallback where needed. Check audio sync and compare preview frames with export. No inert controls presented as finished features.
+
+Current limits: one sequential assembly track, 720p/30 fps, two-minute export cap. User confirmed the 0.0.1 foundation works in their browser. See VALIDATION.md for v0.1 checks.
 
 ## 0.2: usable multitrack editor
 

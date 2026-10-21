@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {fresh,split,trim,locate,duration,History,parseProject} from '../src/model.ts';
+const fixture=()=>({...fresh(),assets:[{id:'a',name:'source.mp4',size:100,modified:10,duration:10,kind:'video',width:1280,height:720}],clips:[{id:'c',assetId:'a',inFrame:30,frames:180,volume:1}]});
+test('split preserves total duration and contiguous source frames',()=>{const p=split(fixture(),'c',60,'r');assert.equal(duration(p),180);assert.deepEqual(p.clips.map(c=>[c.inFrame,c.frames]),[[30,60],[90,120]]);assert.equal(locate(p,60).clip.id,'r');assert.equal(locate(p,179).offset,119);assert.equal(locate(p,180),null);});
+test('splitting at either boundary is rejected',()=>{assert.throws(()=>split(fixture(),'c',0,'r'));assert.throws(()=>split(fixture(),'c',180,'r'));});
+test('trim respects the source duration and keeps original project unchanged',()=>{const p=fixture(),q=trim(p,'c',20,300);assert.equal(q.clips[0].frames,280);assert.equal(p.clips[0].inFrame,30);assert.throws(()=>trim(p,'c',-1,20));assert.throws(()=>trim(p,'c',20,301));assert.throws(()=>trim(p,'c',20,20));});
+test('undo and redo retain exact edits and new edits discard redo',()=>{const h=new History(),p=fixture();h.push(p);const q=split(p,'c',60,'r');assert.deepEqual(h.undo(q),p);assert.deepEqual(h.redo(p),q);h.undo(q);h.push(p);assert.equal(h.canRedo,false);});
+test('project round trip retains source ranges and volume',()=>{const p=fixture();p.clips[0].volume=.4;assert.deepEqual(parseProject(JSON.stringify(p)),p);});
+test('project validation rejects corrupt ranges, missing sources and duplicate IDs',()=>{for(const mutate of [p=>p.clips[0].frames=301,p=>p.clips[0].assetId='missing',p=>p.assets.push(p.assets[0]),p=>p.version=2,p=>p.clips[0].volume=2,p=>p.clips[0].inFrame=.2]){const p=fixture();mutate(p);assert.throws(()=>parseProject(JSON.stringify(p)));}});
