@@ -4,7 +4,13 @@ An Android-first video editor, with a shared web build for testing. Local editin
 
 [Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
-### v0.2.0: Android foundation
+### v0.2.1: import feedback and Android saving
+
+- Selecting media opens Project media with reading progress, imported filenames and a persistent result.
+- The empty preview changes to “Your media is ready” with a Choose clips action. Duplicate and failed imports show explicit feedback.
+- Fix Android project/video saving rejecting valid file sizes and chunk offsets. Test builds continue to install over v0.2.0.
+
+### Android foundation
 
 - Touch workspace with preview/timeline, bottom tool dock and media, clip and project sheets.
 - Swipe to pan, pinch to zoom, drag selected-clip trim handles and scrub the ruler.
@@ -13,12 +19,12 @@ An Android-first video editor, with a shared web build for testing. Local editin
 - Android Save as for projects and exported videos; native Back handling and system-bar accommodation.
 - GitHub builds an installable APK with stable development signing for install-over updates.
 
-The APK link becomes available after the first successful Android build. See [Actions](https://github.com/Averydimbulb79/Ordo/actions) for current results. Test builds use the documented public development certificate; production signing is a later distribution step.
+See [Actions](https://github.com/Averydimbulb79/Ordo/actions) for current results. Test builds use the documented public development certificate; production signing is a later distribution step.
 
 ### First edit on your phone
 
 1. Install the APK and open Ordo, or try the web link in Chrome.
-2. Tap Media, import a short video, then Add to sequence and Done.
+2. Tap Import media or Media and choose a short video. Project media opens with confirmation; tap Add to sequence, then Done.
 3. Tap a timeline clip. Use Split/Duplicate in the dock or Edit for trim, volume and ordering.
 4. Open Project to save your edit. Keep the original footage for relinking after reopening.
 5. Tap Export, choose a supported format, and save the finished video.

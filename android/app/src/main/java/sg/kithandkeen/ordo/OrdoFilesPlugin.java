@@ -30,10 +30,9 @@ public class OrdoFilesPlugin extends Plugin {
     public synchronized void beginSave(PluginCall call) {
         if (stream != null || selecting) { call.reject("Another file save is already active."); return; }
         String name = call.getString("name");
-        Long size = call.getLong("size");
-        if (name == null || name.trim().isEmpty() || size == null || size < 0 || size > 268435456L) {
-            call.reject("Invalid file name or file exceeds the initial 256 MB save limit."); return;
-        }
+        Long size = SaveByteCount.read(call.getData().opt("size"));
+        if (name == null || name.trim().isEmpty()) { call.reject("Choose a non-empty file name."); return; }
+        if (size == null) { call.reject("Invalid file size. Saving currently supports files up to 256 MB."); return; }
         expected = size;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -71,7 +70,7 @@ public class OrdoFilesPlugin extends Plugin {
     public synchronized void append(PluginCall call) {
         if (!valid(call)) return;
         try {
-            String data = call.getString("data"); Long offset = call.getLong("offset");
+            String data = call.getString("data"); Long offset = SaveByteCount.read(call.getData().opt("offset"));
             if (data == null || data.length() > 400000 || offset == null || offset != written) throw new IllegalArgumentException("Invalid chunk order or size");
             byte[] bytes = Base64.decode(data, Base64.NO_WRAP);
             if (written + bytes.length > expected) throw new IllegalArgumentException("File exceeds declared size");

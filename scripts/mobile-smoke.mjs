@@ -8,6 +8,7 @@ import { resolve, join, extname, sep } from 'node:path';
 import { chromium } from 'playwright';
 const folder=await mkdtemp(join(tmpdir(),'ordo-smoke-'));
 const fixture=join(folder,'source.webm');
+const invalid=join(folder,'broken.mp4');
 execFileSync('ffmpeg',['-v','error','-f','lavfi','-i','testsrc2=size=320x180:rate=30','-f','lavfi','-i','sine=frequency=440:sample_rate=48000','-t','3','-c:v','libvpx','-b:v','300k','-c:a','libopus',fixture]);
 const root=resolve('dist');
 const server=createServer(async(req,res)=>{
@@ -26,9 +27,28 @@ try {
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
  const page=await context.newPage();page.setDefaultTimeout(15000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(url);await page.locator('#dock-media').tap();
+ await page.goto(url);
+ const chooser=page.waitForEvent('filechooser');await page.locator('#import-empty').tap();await (await chooser).setFiles(fixture);
  await page.getByRole('dialog',{name:'Project media'}).waitFor();
- await page.locator('#media-file').setInputFiles(fixture);await page.getByRole('button',{name:'Add to sequence'}).tap();
+ await page.waitForFunction(()=>document.querySelector('#import-feedback').textContent.includes('1 file imported'));
+ assert.match(await page.locator('.media-card').innerText(),/source.webm[\s\S]*Ready to add/);
+ if(process.env.ORDO_IMPORT_SCREENSHOT)await page.screenshot({path:process.env.ORDO_IMPORT_SCREENSHOT});
+ await page.getByRole('button',{name:'Close media panel'}).tap();
+ assert.equal(await page.locator('#empty-heading').innerText(),'Your media is ready');
+ assert.match(await page.locator('#empty-description').innerText(),/1 file is in Project media/);
+ assert.equal(await page.locator('#import-empty').innerText(),'Choose clips');
+ if(process.env.ORDO_READY_SCREENSHOT)await page.screenshot({path:process.env.ORDO_READY_SCREENSHOT});
+ await page.locator('#import-empty').tap();await page.getByRole('dialog',{name:'Project media'}).waitFor();
+ await page.locator('#media-file').setInputFiles(fixture);
+ await page.waitForFunction(()=>document.querySelector('#import-feedback').textContent.includes('already in Project media'));
+ assert.equal(await page.locator('.media-card').count(),1,'Duplicate import remains visible without creating another asset');
+ const {writeFile}=await import('node:fs/promises');await writeFile(invalid,'This is not a video');
+ await page.locator('#media-file').setInputFiles(invalid);
+ await page.waitForFunction(()=>document.querySelector('#import-feedback').classList.contains('is-error'));
+ assert.match(await page.locator('#import-feedback').innerText(),/broken.mp4/);
+ assert.equal(await page.locator('.media-card').count(),1,'Failed import keeps existing media');
+ await page.getByRole('button',{name:'Add to sequence'}).tap();
+ assert.match(await page.locator('.media-card').innerText(),/In timeline/);
  await page.getByRole('button',{name:'Close media panel'}).tap();
  assert.equal(await page.locator('.clip').count(),1);
  const dock=await page.locator('#mobile-dock').boundingBox();assert.ok(dock.y+dock.height<=844,'Bottom dock is visible without scrolling');
@@ -55,5 +75,5 @@ try {
  await page.setViewportSize({width:844,height:390});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  const wideDock=await page.locator('#mobile-dock').boundingBox();assert.ok(wideDock.y+wideDock.height<=390,'Landscape dock remains visible');
- assert.deepEqual(errors,[]);console.log('Mobile touch checks passed: dock and sheets, media import, trim handle, duplicate, pinch zoom, project save, portrait and landscape.');
+ assert.deepEqual(errors,[]);console.log('Mobile touch checks passed: import from empty panel, automatic media sheet, persistent confirmation, choose clips, duplicate/failed import feedback, trim handle, duplicate clip, pinch zoom, project save, portrait and landscape.');
 } finally { await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await rm(folder,{recursive:true,force:true}); }

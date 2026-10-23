@@ -36,7 +36,7 @@ jobs:
         working-directory: android
         env:
           ORDO_VERSION_CODE: ${{ github.run_number }}
-        run: chmod +x gradlew && ./gradlew assembleDebug lintDebug --no-daemon
+        run: chmod +x gradlew && ./gradlew testDebugUnitTest assembleDebug lintDebug --no-daemon
       - name: Prepare download
         run: |
           mkdir -p apk

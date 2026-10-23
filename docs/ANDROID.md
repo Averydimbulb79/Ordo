@@ -1,6 +1,12 @@
 # Ordo for Android
 
-## v0.2.0: Android foundation
+## v0.2.1: import and saving fixes
+
+Import now opens the media sheet automatically after files are selected, shows reading/result feedback and highlights the imported entries. Before clips are added, the preview shows a media-ready state and Choose clips action. Duplicate selections and failed reads have explicit messages.
+
+Android JSON numbers for file sizes and chunk offsets can arrive as Integer rather than Long. The save bridge now validates whole numeric values without requiring Long. Unit regression checks cover normal sizes, zero and later chunk offsets, the limit boundary and invalid values. This fixes the false “Invalid file name or file exceeds…” rejection; the existing 256 MB save and two-minute export limits remain.
+
+## Android foundation
 
 One shared editor, packaged locally with Capacitor 8.5.3. Android is the primary platform; Electron/Windows work is deferred.
 
@@ -45,7 +51,7 @@ npm ci
 npm run android:sync
 base64 --decode .github/development-signing.p12.base64 > .github/development-signing.p12
 cd android
-./gradlew assembleDebug lintDebug
+./gradlew testDebugUnitTest assembleDebug lintDebug
 ```
 
 ORDO_VERSION_CODE supplies the monotonically increasing test build number in GitHub. Keep appId and certificate stable between updates.

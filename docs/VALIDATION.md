@@ -37,3 +37,10 @@ New touch checks in Chromium's mobile/touch mode: import through the media sheet
 Android compilation/lint are performed in .github/workflows/android.yml; consult the matching GitHub run for their result. Native file-provider dialogs, system bars on different Android versions, hardware codecs, real device playback/export and upgrade installation cannot be established by desktop touch emulation. These require the device checklist in ANDROID.md. No actual-device pass is claimed.
 
 The Capacitor CLI's development-only xcode dependency currently reports moderate uuid advisories in npm audit. It is not bundled in the Android runtime; no forced dependency downgrade or unverified major override was applied.
+
+
+## v0.2.1: import feedback and save bridge
+
+Local core/build and touch checks cover the empty-panel import action, automatic media-sheet opening, filename/result feedback, the persistent media-ready prompt, Choose clips reopening the library, duplicate selection and failed import feedback without losing existing media. Existing touch editing and desktop export checks remain in use.
+
+Android SaveByteCountTest verifies Integer/Long/Double input sizes, zero and subsequent chunk offsets, the 256 MB boundary and rejection of malformed sizes. The APK workflow runs these unit tests before assembly/lint. Full document-provider saving on a phone remains a device check; a unit pass does not establish it.
