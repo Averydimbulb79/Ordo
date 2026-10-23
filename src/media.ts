@@ -1,3 +1,4 @@
+import { isAndroid, saveAndroid } from './native';
 import { ALL_FORMATS, BlobSource, Input } from 'mediabunny';
 import type { Asset } from './model';
 export type LocalMedia = { file: File; url: string };
@@ -12,10 +13,12 @@ export async function inspect(file: File): Promise<Asset> {
   return { id: crypto.randomUUID(), name: file.name, size: file.size, modified: file.lastModified, duration: seconds, kind: video ? 'video' : 'audio', width: video?.displayWidth ?? 0, height: video?.displayHeight ?? 0 };
  } finally { input.dispose(); }
 }
-export function download(blob: Blob, name: string) {
+export async function download(blob: Blob, name: string): Promise<'saved' | 'requested' | 'cancelled'> {
+ if (isAndroid) return saveAndroid(blob, name);
  const url = URL.createObjectURL(blob), anchor = document.createElement('a');
  anchor.href = url; anchor.download = name; document.body.append(anchor); anchor.click(); anchor.remove();
  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+ return 'requested';
 }
 export function drawContained(ctx: CanvasRenderingContext2D, source?: CanvasImageSource | null, sourceWidth?: number, sourceHeight?: number) {
  const { width, height } = ctx.canvas;

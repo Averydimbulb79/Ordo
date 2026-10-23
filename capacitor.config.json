@@ -1,0 +1,16 @@
+{
+  "appId": "sg.kithandkeen.ordo",
+  "appName": "Ordo",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#111318",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "contain",
+      "style": "DARK"
+    }
+  }
+}

@@ -1,22 +1,28 @@
 {
   "name": "ordo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Ordo web video editor",
+  "description": "Android-first video editor with a shared web build",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --experimental-strip-types --test scripts/*.test.mjs",
-    "test:browser": "node scripts/browser-smoke.mjs"
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "cap open android",
+    "test:mobile": "node scripts/mobile-smoke.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
     "idb": "8.0.4",
     "mediabunny": "1.62.0",
     "pixi.js": "8.22.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
     "playwright": "1.62.1",
     "typescript": "5.9.3",
     "vite": "8.3.5"

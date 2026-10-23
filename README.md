@@ -1,56 +1,55 @@
 ## Ordo
 
-A local video editor for the web. The same application will later be packaged with Electron for Windows. No AI, account or media upload required.
+An Android-first video editor, with a shared web build for testing. Local editing, no account or media upload required, and no AI features.
 
-[Open Ordo](https://averydimbulb79.github.io/Ordo/) · [Roadmap](docs/ROADMAP.md) · [Components](docs/COMPONENTS.md) · [Validation](docs/VALIDATION.md)
+[Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
-### v0.1.0: first assembly editor
+### v0.2.0: Android foundation
 
-- Import supported video/audio files into the media bin and add them to a single sequential timeline.
-- Preview, seek and step through the sequence, with source audio.
-- Split at the playhead, trim source ranges, reorder clips, delete and undo/redo.
-- Adjust clip volume, zoom the timeline and use full screen.
-- Save a versioned .ordo project, reopen it and relink original media.
-- Local recovery snapshots; portable project downloads remain the recommended backup.
-- Export up to 2 minutes at 1280 × 720 / 30 fps as MP4 (H.264/AAC) or WebM (VP8/Opus), subject to browser codec support. Progress and cancellation included.
+- Touch workspace with preview/timeline, bottom tool dock and media, clip and project sheets.
+- Swipe to pan, pinch to zoom, drag selected-clip trim handles and scrub the ruler.
+- Import video/audio; split, trim, duplicate, reorder, delete and undo/redo on one sequential track.
+- Preview with sound, adjust clip volume, save/reopen .ordo projects and relink source media.
+- Android Save as for projects and exported videos; native Back handling and system-bar accommodation.
+- GitHub builds an installable APK with stable development signing for install-over updates.
 
-Start with Chrome or Edge on desktop. The compact layout supports basic use on smaller screens; mobile media support varies. Original files remain unchanged and are not embedded in .ordo projects. Keep those files for relinking.
+The APK link becomes available after the first successful Android build. See [Actions](https://github.com/Averydimbulb79/Ordo/actions) for current results. Test builds use the documented public development certificate; production signing is a later distribution step.
 
-### Quick start
+### First edit on your phone
 
-1. Import media, then choose Add to sequence.
-2. Select a clip. Click the ruler to move the playhead; Space plays or pauses.
-3. Press S to split, or set source In/Out frames in Clip properties and Apply trim.
-4. Save the project, then Export. Try WebM if MP4 encoding is unavailable.
+1. Install the APK and open Ordo, or try the web link in Chrome.
+2. Tap Media, import a short video, then Add to sequence and Done.
+3. Tap a timeline clip. Use Split/Duplicate in the dock or Edit for trim, volume and ordering.
+4. Open Project to save your edit. Keep the original footage for relinking after reopening.
+5. Tap Export, choose a supported format, and save the finished video.
 
-Shortcuts: Space play/pause; arrows step; S split; Delete remove; Ctrl/Cmd+Z undo; Ctrl/Cmd+Shift+Z redo; Ctrl/Cmd+S save.
+Current limits: one sequential track, fixed 1280 × 720 / 30 fps and exports up to two minutes. MP4 (H.264/AAC) and WebM (VP8/Opus) depend on the device/browser's codec support. Recent Android and an updated Android System WebView are recommended. Keep the app in the foreground during export. Phone hardware, memory and file-provider behaviour still require real-device testing.
+
+### Feature direction
+
+The goal is to rival Filmora Mobile and CapCut's traditional editing workflows: overlapping tracks, photos, keyframes, speed curves, text/manual captions, masks, chroma key, transitions, colour tools and audio mixing. These are staged roadmap targets, not features already implemented. Windows development is deferred.
 
 ### Development
 
-Node.js 22.12 or newer:
+Node.js 22.12+:
 
 ```sh
 npm ci
 npm run dev
-```
-
-```sh
 npm test
 npm run build
-npm run preview
 ```
-
-Browser workflow checks require ffmpeg and a Playwright Chromium installation:
 
 ```sh
 npx playwright install chromium
 npm run test:browser
+npm run test:mobile
 ```
 
-GitHub Actions builds, tests and deploys main. Pages must use GitHub Actions as its publishing source. Windows packaging is deferred until the web editing workflow is proven; there is no EXE yet.
+Browser tests require ffmpeg. Android builds require JDK 21 and Android SDK 36; see the Android guide. GitHub Actions builds/tests main, publishes the web build and builds the APK.
 
-### Current scope
+### Project protection
 
-This is an early assembly editor, not FilmCraft feature parity. Multiple overlapping tracks, transitions, titles, effects, advanced colour, large-project optimisation and longer exports are future work. PixiJS remains an evaluated candidate; this release uses a shared Canvas 2D letterbox renderer for preview/export.
+.ordo files contain editing instructions and source references, not embedded media. Save them alongside your original footage. Local recovery snapshots are an additional aid. Preserve rollback checkpoints before substantial changes and update this README each release.
 
-The 0.0.1 diagnostic source is archived in legacy/v0.0.1; its complete runnable state is preserved on backup/v0.0.1-before-editor. The original MIT licence remains unchanged. Dependency licences also apply.
+v0.1.0 is preserved on backup/v0.1.0-before-android; v0.0.1 source remains in legacy/v0.0.1. Ordo retains its MIT licence; dependency licences also apply. [Components](docs/COMPONENTS.md) · [Validation](docs/VALIDATION.md)

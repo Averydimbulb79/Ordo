@@ -45,3 +45,9 @@ PixiJS draws graphics; it does not provide a video timeline or media export. Med
 ## Notices
 
 Keep dependency licence texts with distributed code and generate a complete distribution notice inventory before public release. The Ordo MIT licence does not replace dependencies' licences. Modifying MPL-covered source files requires review of those files' source-distribution obligations. Codec availability and patent considerations are distinct from a library's source licence.
+
+## Android addition: 0.2.0
+
+Capacitor core/android/cli 8.5.3 (MIT) wrap the shared build. A small repository-owned Java plugin uses Android's Storage Access Framework for explicit Save as destinations, with chunked writes and completion checks. Capacitor's built-in SystemBars integration handles insets with viewport-fit=contain. Android's Back action is bridged to the editor so panels can close before exiting.
+
+Primary references: https://capacitorjs.com/docs/android ; https://capacitorjs.com/docs/plugins/android ; https://capacitorjs.com/docs/android/configuration .

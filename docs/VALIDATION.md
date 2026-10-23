@@ -27,3 +27,13 @@ The synthetic test is not a codec/device compatibility certification or a percep
 Export currently uses in-memory output and per-clip offline audio rendering; a 2-minute cap bounds the initial workload. Clip boundaries use integer frames at a fixed 30 fps. Preview uses browser media playback; export uses decoded frames and offline audio, so exact colour and seeking consistency need further real-media tests.
 
 GitHub Actions results are separate from local checks. Consult the Actions tab for current runs.
+
+## v0.2.0: Android foundation, 23 October 2026
+
+Passed locally: TypeScript/build, the core model/media tests, and the prior browser editing/export workflow after integration of the native save adapter.
+
+New touch checks in Chromium's mobile/touch mode: import through the media sheet, add a clip, drag a trim handle and verify its new frame duration, duplicate, pinch the timeline to zoom, open/close clip and project sheets, save a project, and confirm dock visibility/no horizontal overflow in portrait and landscape. The portrait layout was visually inspected. The reproducible test is scripts/mobile-smoke.mjs.
+
+Android compilation/lint are performed in .github/workflows/android.yml; consult the matching GitHub run for their result. Native file-provider dialogs, system bars on different Android versions, hardware codecs, real device playback/export and upgrade installation cannot be established by desktop touch emulation. These require the device checklist in ANDROID.md. No actual-device pass is claimed.
+
+The Capacitor CLI's development-only xcode dependency currently reports moderate uuid advisories in npm audit. It is not bundled in the Android runtime; no forced dependency downgrade or unverified major override was applied.

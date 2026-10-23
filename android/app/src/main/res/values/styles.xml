@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?><resources>
+<style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar"><item name="colorPrimary">@color/colorPrimary</item><item name="colorPrimaryDark">@color/colorPrimaryDark</item><item name="colorAccent">@color/colorAccent</item><item name="android:windowBackground">@color/ordo_background</item><item name="android:statusBarColor">@color/ordo_background</item><item name="android:navigationBarColor">@color/ordo_background</item><item name="android:windowLightStatusBar">false</item><item name="android:windowLightNavigationBar">false</item></style>
+<style name="AppTheme.NoActionBar" parent="AppTheme"><item name="windowActionBar">false</item><item name="windowNoTitle">true</item><item name="android:background">@null</item></style>
+<style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen"><item name="windowSplashScreenBackground">@color/ordo_background</item><item name="windowSplashScreenAnimatedIcon">@drawable/ordo_icon</item><item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item></style>
+</resources>
