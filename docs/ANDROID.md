@@ -1,5 +1,15 @@
 # Ordo for Android
 
+## v0.3.0: media and multitrack
+
+Media cards show a decoded video thumbnail, source duration and filename. Thumbnails are small, serially generated, cached against the live File and recreated after relinking. A failed thumbnail does not invalidate otherwise usable media.
+
+V1 is the main assembly track; V2 layers a second video; A1 and A2 carry independent sound. Choose the destination in Project media, or change track/start time in Edit. V2 initially uses a smaller picture-in-picture placement. Picture controls adjust position, scale and opacity. Main-track cross-dissolves overlap adjacent clips, shorten the timeline accordingly and crossfade their sound. Timeline panning works horizontally and vertically on touch devices.
+
+Format v2 persists track placement, transforms and transitions. Older v1 projects are read and upgraded when saved; older Ordo releases cannot read the new format. Keyframe automation is still planned.
+
+Preview uses several browser media players and a shared Canvas compositor. Export uses the same placement/blend rules, sequential video decoding, a reusable bounded frame copy per video clip and audio mixing in one-second blocks. Final encoded output is still held in memory, so the existing export/save limits remain. Device performance is not established by desktop tests.
+
 ## v0.2.1: import and saving fixes
 
 Import now opens the media sheet automatically after files are selected, shows reading/result feedback and highlights the imported entries. Before clips are added, the preview shows a media-ready state and Choose clips action. Duplicate selections and failed reads have explicit messages.
@@ -17,7 +27,7 @@ One shared editor, packaged locally with Capacitor 8.5.3. Android is the primary
 - Android Back closes the current sheet/dialog before offering to exit. Playback pauses when the page becomes hidden. The screen stays awake during export.
 - Installed app bundles the web build. Editing does not require an account or media upload. Keep the app in the foreground during export.
 
-This is a test build of the existing single-track assembly workflow. It does not yet match Filmora/CapCut. Real-device import/playback/export and document-provider behaviour remain device test requirements.
+This is a test build with a four-track editing baseline. It does not yet match Filmora/CapCut. Real-device import/playback/export and document-provider behaviour remain device test requirements.
 
 ## Install and update
 
@@ -58,4 +68,4 @@ ORDO_VERSION_CODE supplies the monotonically increasing test build number in Git
 
 ## Architecture and next engine decision
 
-Current import/export uses Mediabunny/WebCodecs with Canvas 2D and Web Audio, shared with the browser. Capacitor supplies Android integration, not a faster video engine. If phone benchmarks expose unacceptable export performance or codec coverage, evaluate an Android Media3 Transformer bridge against the same project model before changing the processing path. No native render engine is integrated in v0.2.0.
+Current import/export uses Mediabunny/WebCodecs with Canvas 2D and Web Audio, shared with the browser. Capacitor supplies Android integration, not a faster video engine. If phone benchmarks expose unacceptable export performance or codec coverage, evaluate an Android Media3 Transformer bridge against the same project model before changing the processing path. No native render engine is integrated in v0.3.0.

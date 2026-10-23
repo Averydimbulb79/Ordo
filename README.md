@@ -1,39 +1,35 @@
 ## Ordo
 
-An Android-first video editor, with a shared web build for testing. Local editing, no account or media upload required, and no AI features.
+An Android-first video editor, with a shared web build. Local editing, no account or media upload required, and no AI features.
 
 [Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
-### v0.2.1: import feedback and Android saving
+### v0.3.0: media thumbnails, multitrack and dissolves
 
-- Selecting media opens Project media with reading progress, imported filenames and a persistent result.
-- The empty preview changes to “Your media is ready” with a Choose clips action. Duplicate and failed imports show explicit feedback.
-- Fix Android project/video saving rejecting valid file sizes and chunk offsets. Test builds continue to install over v0.2.0.
-
-### Android foundation
-
-- Touch workspace with preview/timeline, bottom tool dock and media, clip and project sheets.
-- Swipe to pan, pinch to zoom, drag selected-clip trim handles and scrub the ruler.
-- Import video/audio; split, trim, duplicate, reorder, delete and undo/redo on one sequential track.
-- Preview with sound, adjust clip volume, save/reopen .ordo projects and relink source media.
-- Android Save as for projects and exported videos; native Back handling and system-bar accommodation.
-- GitHub builds an installable APK with stable development signing for install-over updates.
-
-See [Actions](https://github.com/Averydimbulb79/Ordo/actions) for current results. Test builds use the documented public development certificate; production signing is a later distribution step.
+- Project media shows a video thumbnail, duration badge and readable filename. Audio and missing media retain clear placeholders.
+- Four tracks: V1 for the main assembly, V2 for overlapping video, and A1/A2 for independent soundtracks. Choose a destination on each media card before adding.
+- V2 defaults to picture-in-picture. Edit controls change a clip's track, start time, scale, position, opacity and volume.
+- Cross-dissolves between adjacent V1 clips, including sound crossfades. Select the outgoing clip, open Edit and choose its transition to the next clip.
+- Shared composition rules for preview/export; splitting, trimming, duplication, undo/redo, project save/reopen/relink and local recovery remain available.
+- Portrait/landscape touch workspace with pinch zoom and horizontal/vertical timeline panning; native Android saving and install-over updates.
 
 ### First edit on your phone
 
-1. Install the APK and open Ordo, or try the web link in Chrome.
-2. Tap Import media or Media and choose a short video. Project media opens with confirmation; tap Add to sequence, then Done.
-3. Tap a timeline clip. Use Split/Duplicate in the dock or Edit for trim, volume and ordering.
-4. Open Project to save your edit. Keep the original footage for relinking after reopening.
-5. Tap Export, choose a supported format, and save the finished video.
+1. Import a short video. Project media opens with confirmation, a thumbnail and duration.
+2. Choose V1, then Add to sequence. Use V2 for an overlay, or A1/A2 for sound. Tap Done.
+3. Tap a timeline clip and open Edit for timing, picture placement, volume or a transition. Swipe vertically in the timeline to reach lower tracks.
+4. Save your .ordo project through Project. Keep the original footage for relinking.
+5. Export and save the finished video; play it in another player to verify sound and picture on your phone.
 
-Current limits: one sequential track, fixed 1280 × 720 / 30 fps and exports up to two minutes. MP4 (H.264/AAC) and WebM (VP8/Opus) depend on the device/browser's codec support. Recent Android and an updated Android System WebView are recommended. Keep the app in the foreground during export. Phone hardware, memory and file-provider behaviour still require real-device testing.
+V1 closes gaps automatically; V2/A1/A2 have independent start times and allow gaps. Clips on the same independent track cannot overlap. New clips append to the chosen track at its end or the playhead, whichever is later. A dissolve overlaps two V1 clips, shortening the sequence by that overlap; short clips use a shorter dissolve. Other transition types and keyframe animation are not yet implemented.
+
+Current export limits remain 1280 × 720 / 30 fps, two minutes and a 256 MB Android save limit. MP4 (H.264/AAC) and WebM (VP8/Opus) depend on device codec support. Keep the app in the foreground during export. Audio is mixed in one-second blocks; the final encoded output is still assembled in memory. Real-phone performance and hardware codecs require device testing.
+
+Project format v2 preserves the new settings and reads older v1 projects. Older Ordo versions cannot open newly saved v2 projects. Source media and thumbnail images are not embedded in .ordo files. Test APKs use the documented public development signing certificate, with the same application ID and increasing versionCode.
 
 ### Feature direction
 
-The goal is to rival Filmora Mobile and CapCut's traditional editing workflows: overlapping tracks, photos, keyframes, speed curves, text/manual captions, masks, chroma key, transitions, colour tools and audio mixing. These are staged roadmap targets, not features already implemented. Windows development is deferred.
+The goal is to rival Filmora Mobile and CapCut's traditional editing workflows. Keyframes are the diamond-shaped points that animate values such as position, scale, opacity and volume over time. They, speed curves, text/manual captions, masks, chroma key, more transitions, colour tools and advanced audio mixing remain roadmap targets. Windows work is deferred.
 
 ### Development
 
@@ -44,18 +40,12 @@ npm ci
 npm run dev
 npm test
 npm run build
-```
-
-```sh
 npx playwright install chromium
 npm run test:browser
 npm run test:mobile
+npm run test:composition
 ```
 
-Browser tests require ffmpeg. Android builds require JDK 21 and Android SDK 36; see the Android guide. GitHub Actions builds/tests main, publishes the web build and builds the APK.
+Browser tests require ffmpeg. Android builds require JDK 21 and Android SDK 36. GitHub Actions tests main, publishes the web build and builds an installable APK. Consult [Actions](https://github.com/Averydimbulb79/Ordo/actions) for current results.
 
-### Project protection
-
-.ordo files contain editing instructions and source references, not embedded media. Save them alongside your original footage. Local recovery snapshots are an additional aid. Preserve rollback checkpoints before substantial changes and update this README each release.
-
-v0.1.0 is preserved on backup/v0.1.0-before-android; v0.0.1 source remains in legacy/v0.0.1. Ordo retains its MIT licence; dependency licences also apply. [Components](docs/COMPONENTS.md) · [Validation](docs/VALIDATION.md)
+Preserve rollback checkpoints before substantial changes and update this README each release. Ordo retains its MIT licence; dependency licences also apply. [Components](docs/COMPONENTS.md) · [Validation](docs/VALIDATION.md)

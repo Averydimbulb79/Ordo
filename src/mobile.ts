@@ -73,7 +73,7 @@ export function setupMobile(hooks: Hooks) {
  // Trim handles commit a single undo step after the finger is released.
  const scroll=$('timeline-scroll'),content=$('timeline-content');
  const pointers=new Map<number,{x:number;y:number}>();
- let startX=0,startScroll=0,pinchDistance=0,pinchScale=0,pinchFrame=0,mode:'pan'|'seek'|'trim'|'pinch'|''='';
+ let startX=0,startY=0,startScrollTop=0,startScroll=0,pinchDistance=0,pinchScale=0,pinchFrame=0,mode:'pan'|'seek'|'trim'|'pinch'|''='';
  let suppressUntil=0;
  scroll.addEventListener('click',event=>{if(performance.now()<suppressUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
  let drag: { id:string;side:string;inFrame:number;outFrame:number;sourceFrames:number;nextIn:number;nextOut:number;scale:number;node:HTMLElement;left:number;width:number } | null=null;
@@ -87,7 +87,7 @@ export function setupMobile(hooks: Hooks) {
    const rect=scroll.getBoundingClientRect(),center=Array.from(pointers.values()).reduce((n,p)=>n+p.x,0)/2;
    pinchFrame=(scroll.scrollLeft+center-rect.left-56)/pinchScale;return;
   }
-  startX=event.clientX;startScroll=scroll.scrollLeft;
+  startX=event.clientX;startY=event.clientY;startScrollTop=scroll.scrollTop;startScroll=scroll.scrollLeft;
   const target=event.target as HTMLElement,handle=target.closest<HTMLElement>('.trim-handle');
   if(handle){const node=handle.closest<HTMLElement>('.clip')!,id=node.dataset.id!,range=hooks.trimRange(id);if(!range)return;
    drag={id,side:handle.dataset.side!,...range,nextIn:range.inFrame,nextOut:range.outFrame,scale:hooks.getScale(),node,left:parseFloat(node.style.left),width:parseFloat(node.style.width)};mode='trim';event.preventDefault();
@@ -105,15 +105,15 @@ export function setupMobile(hooks: Hooks) {
    drag.node.style.width=`${Math.max(2,(drag.nextOut-drag.nextIn)/30*drag.scale)}px`;return;
   }
   if(mode==='seek'){event.preventDefault();hooks.seek((event.clientX-content.getBoundingClientRect().left-56)/hooks.getScale()*30);}
-  else if(mode==='pan'){event.preventDefault();scroll.scrollLeft=startScroll-(event.clientX-startX);}
+  else if(mode==='pan'){event.preventDefault();scroll.scrollLeft=startScroll-(event.clientX-startX);scroll.scrollTop=startScrollTop-(event.clientY-startY);}
  },{passive:false});
  function finish(event:PointerEvent){
   if(!pointers.has(event.pointerId))return;
   if(scroll.hasPointerCapture(event.pointerId))scroll.releasePointerCapture(event.pointerId);
-  if(mode==='pinch'||mode==='trim'||(mode==='pan'&&Math.abs(event.clientX-startX)>8))suppressUntil=performance.now()+350;
+  if(mode==='pinch'||mode==='trim'||(mode==='pan'&&Math.hypot(event.clientX-startX,event.clientY-startY)>8))suppressUntil=performance.now()+350;
   pointers.delete(event.pointerId);
   if(mode==='trim'&&drag){const range=drag;drag=null;if(event.type==='pointercancel'){range.node.style.left=`${range.left}px`;range.node.style.width=`${range.width}px`;}else if(range.nextIn!==range.inFrame||range.nextOut!==range.outFrame){hooks.commitTrim(range.id,range.nextIn,range.nextOut);}}
-  if(!pointers.size)mode='';else{mode='pan';startX=Array.from(pointers.values())[0].x;startScroll=scroll.scrollLeft;}
+  if(!pointers.size)mode='';else{mode='pan';startX=Array.from(pointers.values())[0].x;startY=Array.from(pointers.values())[0].y;startScrollTop=scroll.scrollTop;startScroll=scroll.scrollLeft;}
  }
  scroll.addEventListener('pointerup',finish);scroll.addEventListener('pointercancel',finish);
  return { closeSheet, showSheet };

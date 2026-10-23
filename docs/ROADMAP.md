@@ -42,11 +42,13 @@ Acceptance: build APK and lint; keep web editing tests passing; validate mobile 
 
 ## 0.3: useful mobile multitrack editor
 
-Overlays and independent soundtracks, photo import, aspect ratio presets, filmstrip thumbnails, snapping and direct preview transforms. Preview and export must use the same timeline/composition rules. Add project media collection so ongoing edits do not rely only on transient file access.
+0.3.0 delivers video media-card thumbnails/duration/filename, a four-track baseline (V1, V2, A1, A2), independent placement, picture-in-picture transforms and cross-dissolves on V1 with sound crossfades. Preview and export share composition rules; older projects migrate to format v2. Keyframe automation is not implemented yet.
+
+Remaining in the 0.3 series: additional overlay and soundtrack tracks, photo import, aspect ratio presets, timeline filmstrips, snapping and direct preview transforms. Preview and export must use the same timeline/composition rules. Add project media collection so ongoing edits do not rely only on transient file access.
 
 ## 0.4: timing and animation
 
-Speed/freeze/reverse, keyframes and easing. Keep clip duration, audio sync and undo correct when retiming. Variable speed follows constant-speed validation.
+Speed/freeze/reverse, keyframes and easing. Diamond-shaped keyframes will animate position, scale, opacity and volume, with add/remove, previous/next and easing controls; preview and export must evaluate the same values. Keep clip duration, audio sync and undo correct when retiming. Variable speed follows constant-speed validation.
 
 ## 0.5: text, captions and templates
 

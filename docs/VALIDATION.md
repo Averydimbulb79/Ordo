@@ -44,3 +44,12 @@ The Capacitor CLI's development-only xcode dependency currently reports moderate
 Local core/build and touch checks cover the empty-panel import action, automatic media-sheet opening, filename/result feedback, the persistent media-ready prompt, Choose clips reopening the library, duplicate selection and failed import feedback without losing existing media. Existing touch editing and desktop export checks remain in use.
 
 Android SaveByteCountTest verifies Integer/Long/Double input sizes, zero and subsequent chunk offsets, the 256 MB boundary and rejection of malformed sizes. The APK workflow runs these unit tests before assembly/lint. Full document-provider saving on a phone remains a device check; a unit pass does not establish it.
+
+
+## v0.3.0: media cards, four tracks and cross-dissolves
+
+Model checks cover overlapping main-track transitions/weights/duration, independent overlay and audio placement, split continuity, same-track collision rejection, transform validation, legacy project migration and new-setting round trips.
+
+The composition browser test imports red/blue video with 440/880 Hz sound. It verifies thumbnails and duration labels, creates V1/V2/A1/A2 clips, checks picture-in-picture and blended preview pixels, plays across a dissolve, saves format-v2 settings and exports 150 frames. FFmpeg verifies the blended output pixels, complete decode and both soundtrack frequencies with main-track audio muted. Existing browser export/relink/cancel checks remain, alongside touch checks for destination/placement controls and vertical track panning.
+
+These synthetic checks do not certify smooth playback, exact audio sync or export performance on an Android phone. MP4 hardware codecs, long edits and real variable-frame-rate footage remain device validation requirements.

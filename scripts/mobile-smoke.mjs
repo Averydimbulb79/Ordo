@@ -31,6 +31,7 @@ try {
  const chooser=page.waitForEvent('filechooser');await page.locator('#import-empty').tap();await (await chooser).setFiles(fixture);
  await page.getByRole('dialog',{name:'Project media'}).waitFor();
  await page.waitForFunction(()=>document.querySelector('#import-feedback').textContent.includes('1 file imported'));
+ await page.locator('.media-card img').waitFor();assert.equal(await page.locator('.media-duration').innerText(),'0:03');
  assert.match(await page.locator('.media-card').innerText(),/source.webm[\s\S]*Ready to add/);
  if(process.env.ORDO_IMPORT_SCREENSHOT)await page.screenshot({path:process.env.ORDO_IMPORT_SCREENSHOT});
  await page.getByRole('button',{name:'Close media panel'}).tap();
@@ -66,7 +67,18 @@ try {
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{id:0,x:cx-65,y:cy},{id:1,x:cx+65,y:cy}]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  assert.ok(Number(await page.locator('#zoom').inputValue())>48,'Pinch increased timeline zoom');
- await page.locator('#dock-edit').tap();await page.getByRole('dialog',{name:'Clip settings'}).waitFor();await page.getByRole('button',{name:'Close edit panel'}).tap();
+ await page.locator('#dock-edit').tap();await page.getByRole('dialog',{name:'Clip settings'}).waitFor();
+ assert.equal(await page.locator('#clip-track option').count(),4);
+ await page.locator('#clip-track').selectOption('v2');await page.locator('#clip-start').fill('0');await page.locator('#apply-placement').tap();
+ await page.waitForFunction(()=>document.querySelector('.clip[data-track="v2"]'));
+ await page.getByRole('button',{name:'Close edit panel'}).tap();
+ await page.locator('#timeline-scroll').evaluate(el=>el.scrollTop=0);
+ const area=await page.locator('#timeline-scroll').boundingBox(),px=area.x+area.width-30,py=area.y+area.height-25;
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:px,y:py}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:px,y:area.y+25}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ assert.ok(await page.locator('#timeline-scroll').evaluate(el=>el.scrollTop)>0,'Vertical touch pan reveals lower audio tracks');
+
  await page.locator('#dock-project').tap();await page.getByRole('dialog',{name:'Project menu'}).waitFor();
  const saved=page.waitForEvent('download');await page.locator('#save').tap();await (await saved).saveAs(join(folder,'mobile.ordo'));
  await page.getByRole('button',{name:'Close project panel'}).tap();

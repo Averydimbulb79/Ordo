@@ -1,26 +1,59 @@
 export type Asset = { id: string; name: string; size: number; modified: number; duration: number; kind: 'video' | 'audio'; width: number; height: number };
-export type Clip = { id: string; assetId: string; inFrame: number; frames: number; volume: number };
-export type Project = { format: 'ordo-project'; version: 1; name: string; fps: 30; width: 1280; height: 720; assets: Asset[]; clips: Clip[] };
+export const TRACKS = ['v1','v2','a1','a2'] as const;
+export type Track = typeof TRACKS[number];
+export type Clip = { id: string; assetId: string; inFrame: number; frames: number; volume: number; track?: Track; startFrame?: number; transitionFrames?: number; scale?: number; x?: number; y?: number; opacity?: number };
+export type Project = { format: 'ordo-project'; version: 2; name: string; fps: 30; width: 1280; height: 720; assets: Asset[]; clips: Clip[] };
 export const clone = <T>(value: T): T => structuredClone(value);
-export const fresh = (): Project => ({ format: 'ordo-project', version: 1, name: 'Untitled sequence', fps: 30, width: 1280, height: 720, assets: [], clips: [] });
-export const duration = (p: Project): number => p.clips.reduce((sum, c) => sum + c.frames, 0);
+export const fresh = (): Project => ({ format: 'ordo-project', version: 2, name: 'Untitled sequence', fps: 30, width: 1280, height: 720, assets: [], clips: [] });
+export const trackOf = (c: Clip): Track => c.track ?? 'v1';
+export type Placement = { clip: Clip; start: number; end: number; index: number; track: Track };
+export function transitionLength(p: Project, clip: Clip): number {
+ const main=p.clips.filter(c=>trackOf(c)==='v1'),next=main[main.findIndex(c=>c.id===clip.id)+1];
+ return trackOf(clip)==='v1'&&next?Math.min(clip.transitionFrames??0,Math.floor(clip.frames/2),Math.floor(next.frames/2)):0;
+}
+export function placements(p: Project): Placement[] {
+ let mainStart=0;
+ const main=p.clips.filter(c=>trackOf(c)==='v1'),nextById=new Map(main.map((c,i)=>[c.id,main[i+1]]));
+ return p.clips.map((clip,index)=>{const track=trackOf(clip),start=track==='v1'?mainStart:clip.startFrame??0,next=nextById.get(clip.id);
+  if(track==='v1')mainStart+=clip.frames-(next?Math.min(clip.transitionFrames??0,Math.floor(clip.frames/2),Math.floor(next.frames/2)):0);
+  return {clip,start,end:start+clip.frames,index,track};
+ });
+}
+export const duration = (p: Project): number => Math.max(0,...placements(p).map(e=>e.end));
+export function layersAt(p: Project, frame: number) {
+ const entries=placements(p),main=entries.filter(e=>e.track==='v1');
+ return entries.filter(e=>frame>=e.start&&frame<e.end).map(e=>{
+  let weight=1;
+  if(e.track==='v1'){
+   const i=main.findIndex(m=>m.clip.id===e.clip.id),previous=main[i-1],next=main[i+1];
+   if(previous&&frame<previous.end)weight=Math.min(1,(frame-e.start)/Math.max(1,previous.end-e.start));
+   if(next&&frame>=next.start)weight=Math.min(weight,(e.end-frame)/Math.max(1,e.end-next.start));
+  }
+  return {...e,offset:frame-e.start,weight};
+ }).sort((a,b)=>TRACKS.indexOf(a.track)-TRACKS.indexOf(b.track)||a.start-b.start);
+}
+export function validateTracks(p: Project) {
+ for(const track of TRACKS.filter(t=>t!=='v1')){
+  const entries=placements(p).filter(e=>e.track===track).sort((a,b)=>a.start-b.start);
+  for(let i=1;i<entries.length;i++)if(entries[i].start<entries[i-1].end)throw new Error(`Clips on ${track.toUpperCase()} overlap. Choose another track or start time.`);
+ }
+ if(duration(p)>86400*30)throw new Error('Keep the timeline within 24 hours.');
+}
 export const sourceFrames = (a: Asset): number => Math.floor(a.duration * 30 + 1e-6);
 export function locate(p: Project, frame: number): { clip: Clip; start: number; offset: number; index: number } | null {
- let start = 0;
- for (let index = 0; index < p.clips.length; index++) {
-  const clip = p.clips[index];
-  if (frame >= start && frame < start + clip.frames) return { clip, start, offset: frame - start, index };
-  start += clip.frames;
- }
- return null;
+ const entry=layersAt(p,frame).find(e=>e.track==='v1')??layersAt(p,frame)[0];
+ return entry?{clip:entry.clip,start:entry.start,offset:entry.offset,index:entry.index}:null;
 }
 export function split(p: Project, clipId: string, frame: number, newId: string): Project {
  const result = clone(p); const index = result.clips.findIndex(c => c.id === clipId);
  if (index < 0) throw new Error('Select a clip first.');
- const start = result.clips.slice(0, index).reduce((s, c) => s + c.frames, 0);
+ const start = placements(p).find(e=>e.clip.id===clipId)!.start;
  const left = frame - start; const clip = result.clips[index];
  if (left <= 0 || left >= clip.frames) throw new Error('Move the playhead inside the selected clip to split it.');
- result.clips.splice(index, 1, { ...clip, frames: left }, { ...clip, id: newId, inFrame: clip.inFrame + left, frames: clip.frames - left });
+ const right={ ...clip, id: newId, inFrame: clip.inFrame + left, frames: clip.frames - left };
+ if(trackOf(clip)!=='v1')right.startFrame=start+left;
+ result.clips.splice(index, 1, { ...clip, frames: left, ...(clip.transitionFrames!==undefined?{transitionFrames:0}:{}) }, right);
+ validateTracks(result);
  return result;
 }
 export function trim(p: Project, id: string, inFrame: number, outFrame: number): Project {
@@ -28,7 +61,7 @@ export function trim(p: Project, id: string, inFrame: number, outFrame: number):
  if (!clip) throw new Error('Select a clip first.');
  const asset = result.assets.find(a => a.id === clip.assetId)!;
  if (![inFrame, outFrame].every(Number.isSafeInteger) || inFrame < 0 || outFrame <= inFrame || outFrame > sourceFrames(asset)) throw new Error('Set a valid source range of at least one frame.');
- Object.assign(clip, { inFrame, frames: outFrame - inFrame }); return result;
+ Object.assign(clip, { inFrame, frames: outFrame - inFrame }); validateTracks(result);return result;
 }
 export class History {
  private past: Project[] = []; private future: Project[] = [];
@@ -41,7 +74,7 @@ export class History {
 export function parseProject(text: string): Project {
  if (text.length > 5_000_000) throw new Error('Project files must be smaller than 5 MB.');
  const p = JSON.parse(text);
- if (!p || p.format !== 'ordo-project' || p.version !== 1) throw new Error('Unsupported Ordo project format or version.');
+ if (!p || p.format !== 'ordo-project' || ![1,2].includes(p.version)) throw new Error('Unsupported Ordo project format or version.');
  if (p.fps !== 30 || p.width !== 1280 || p.height !== 720) throw new Error('This release supports 1280 × 720 projects at 30 fps.');
  if (typeof p.name !== 'string' || p.name.length > 200 || !Array.isArray(p.assets) || !Array.isArray(p.clips) || p.assets.length > 1000 || p.clips.length > 1000) throw new Error('Invalid project structure.');
  const ids = new Set<string>();
@@ -53,9 +86,15 @@ export function parseProject(text: string): Project {
  const clips: Clip[] = p.clips.map((c: Clip) => {
   const asset = c && assetMap.get(c.assetId);
   if (!asset || typeof c.id !== 'string' || !c.id || ids.has(c.id) || !Number.isSafeInteger(c.inFrame) || c.inFrame < 0 || !Number.isSafeInteger(c.frames) || c.frames < 1 || c.inFrame + c.frames > sourceFrames(asset) || !Number.isFinite(c.volume) || c.volume < 0 || c.volume > 1) throw new Error('Invalid clip or source range.');
-  ids.add(c.id); return { id: c.id, assetId: c.assetId, inFrame: c.inFrame, frames: c.frames, volume: c.volume };
+  if(c.track!==undefined&&!TRACKS.includes(c.track))throw new Error('Invalid timeline track.');
+  if(c.startFrame!==undefined&&(!Number.isSafeInteger(c.startFrame)||c.startFrame<0||c.startFrame>86400*30))throw new Error('Invalid clip start time.');
+  if(c.transitionFrames!==undefined&&(!Number.isSafeInteger(c.transitionFrames)||c.transitionFrames<0||c.transitionFrames>60||trackOf(c)!=='v1'))throw new Error('Invalid transition.');
+  for(const [key,min,max] of [['scale',.1,2],['x',0,1],['y',0,1],['opacity',0,1]] as const)if(c[key]!==undefined&&(!Number.isFinite(c[key])||c[key]!<min||c[key]!>max))throw new Error('Invalid clip transform.');
+  ids.add(c.id); const clip:Clip={ id: c.id, assetId: c.assetId, inFrame: c.inFrame, frames: c.frames, volume: c.volume };
+  for(const key of ['track','startFrame','transitionFrames','scale','x','y','opacity'] as const)if(c[key]!==undefined)Object.assign(clip,{[key]:c[key]});
+  return clip;
  });
- return { ...fresh(), name: p.name, assets, clips };
+ const result={ ...fresh(), name: p.name, assets, clips };validateTracks(result);return result;
 }
 export function timecode(frame: number) {
  const f = Math.max(0, Math.floor(frame)); return [Math.floor(f / 108000), Math.floor(f / 1800) % 60, Math.floor(f / 30) % 60, f % 30].map(v => String(v).padStart(2, '0')).join(':');

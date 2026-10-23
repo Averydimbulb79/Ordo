@@ -51,3 +51,7 @@ Keep dependency licence texts with distributed code and generate a complete dist
 Capacitor core/android/cli 8.5.3 (MIT) wrap the shared build. A small repository-owned Java plugin uses Android's Storage Access Framework for explicit Save as destinations, with chunked writes and completion checks. Capacitor's built-in SystemBars integration handles insets with viewport-fit=contain. Android's Back action is bridged to the editor so panels can close before exiting.
 
 Primary references: https://capacitorjs.com/docs/android ; https://capacitorjs.com/docs/plugins/android ; https://capacitorjs.com/docs/android/configuration .
+
+## Shared composition: 0.3.0
+
+Repository-owned model.ts computes four-track placements and transition weights; composition.ts paints the same layers/transforms for preview and export. Preview uses browser media elements for the active layers. Mediabunny CanvasSink supplies export frames and cached media-card thumbnails; AudioBufferSink plus Web Audio mix independent audio in one-second blocks. This is a first multitrack implementation, with real-device sync/performance still to validate. No keyframe automation engine or additional transition catalogue is integrated yet.

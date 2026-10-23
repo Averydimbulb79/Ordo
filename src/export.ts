@@ -1,9 +1,9 @@
 import { ALL_FORMATS, AudioBufferSink, AudioBufferSource, BlobSource, BufferTarget, CanvasSink, CanvasSource, Input, Mp4OutputFormat, Output, WebMOutputFormat, canEncodeAudio, canEncodeVideo } from 'mediabunny';
 import type { AudioCodec, VideoCodec } from 'mediabunny';
 import type { Project } from './model';
-import { duration } from './model';
+import { duration, layersAt, placements } from './model';
 import type { LocalMedia } from './media';
-import { drawContained } from './media';
+import { paintComposition } from './composition';
 export type Format = 'mp4' | 'webm';
 export const LIMIT_SECONDS = 120;
 const codecs: Record<Format, { video: VideoCodec; audio: AudioCodec }> = { mp4: { video: 'avc', audio: 'aac' }, webm: { video: 'vp8', audio: 'opus' } };
@@ -31,7 +31,7 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
    const video = await input.getPrimaryVideoTrack(), audio = await input.getPrimaryAudioTrack();
    if (video) {
     if (!await video.canDecode()) throw new Error(`Video decoder unavailable for ${local.file.name}.`);
-    videos.set(clip.assetId, new CanvasSink(video, { width: project.width, height: project.height, fit: 'contain', poolSize: 2 }));
+    videos.set(clip.assetId, new CanvasSink(video, { width: Math.max(1,Math.round(video.displayWidth*Math.min(1,project.width/video.displayWidth,project.height/video.displayHeight))), poolSize: 2 }));
    }
    if (audio) {
     if (!await audio.canDecode()) throw new Error(`Audio decoder unavailable for ${local.file.name}. Audio will not be silently omitted.`);
@@ -49,47 +49,54 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
   output.addVideoTrack(videoSource, { frameRate: 30 });
   const audioSource = includeAudio ? new AudioBufferSource({ codec: codecs[format].audio, bitrate: 128000 }) : null;
   if (audioSource) output.addAudioTrack(audioSource);
-  await output.start(); let timelineFrame = 0;
-  for (const clip of project.clips) {
-   check(); const seconds = clip.frames / 30, sourceIn = clip.inFrame / 30;
-   let renderedAudio: AudioBuffer | null = null;
-   if (audioSource) {
-    progress(timelineFrame / frames, 'Preparing audio');
-    const offline = new OfflineAudioContext(2, clip.frames * 1600, 48000);
-    const sink = audios.get(clip.assetId);
-    if (sink && clip.volume > 0) {
-     const gain = offline.createGain(); gain.gain.value = clip.volume; gain.connect(offline.destination);
-     for await (const packet of sink.buffers(sourceIn, sourceIn + seconds)) {
-      check();
-      const left = Math.max(sourceIn, packet.timestamp), right = Math.min(sourceIn + seconds, packet.timestamp + packet.buffer.duration);
-      if (right > left) {
-       const node = offline.createBufferSource(); node.buffer = packet.buffer; node.connect(gain);
-       node.start(left - sourceIn, left - packet.timestamp, right - left);
-      }
+  await output.start();
+  const videoIterators=new Map<string,ReturnType<CanvasSink["canvasesAtTimestamps"]>>();
+  const copies=new Map<string,HTMLCanvasElement>();
+  for(const entry of placements(project)){
+   if(entry.track==='a1'||entry.track==='a2')continue;
+   const sink=videos.get(entry.clip.assetId);if(!sink)continue;
+   const stamps=function*(){for(let f=0;f<entry.clip.frames;f++)yield (entry.clip.inFrame+f)/30;};
+   videoIterators.set(entry.clip.id,sink.canvasesAtTimestamps(stamps()));
+  }
+  let renderedAudio:AudioBuffer|null=null;
+  for(let frame=0;frame<frames;frame++){
+   check();
+   if(audioSource&&frame%30===0){
+    const blockFrames=Math.min(30,frames-frame),offline=new OfflineAudioContext(2,blockFrames*1600,48000),blockEnd=frame+blockFrames;
+    for(const entry of placements(project)){
+     const clip=entry.clip,sink=audios.get(clip.assetId),left=Math.max(frame,entry.start),right=Math.min(blockEnd,entry.end);
+     if(!sink||clip.volume===0||right<=left)continue;
+     const sourceIn=(clip.inFrame+left-entry.start)/30,sourceOut=(clip.inFrame+right-entry.start)/30;
+     const gain=offline.createGain();gain.connect(offline.destination);
+     for(let f=left;f<right;f++)gain.gain.setValueAtTime(clip.volume*(layersAt(project,f).find(e=>e.clip.id===clip.id)?.weight??0),(f-frame)/30);
+     for await(const packet of sink.buffers(sourceIn,sourceOut)){
+      check();const a=Math.max(sourceIn,packet.timestamp),b=Math.min(sourceOut,packet.timestamp+packet.buffer.duration);
+      if(b>a){const node=offline.createBufferSource();node.buffer=packet.buffer;node.connect(gain);node.start((left-frame)/30+a-sourceIn,a-packet.timestamp,b-a);}
      }
     }
-    renderedAudio = await offline.startRendering(); check();
+    renderedAudio=await offline.startRendering();check();
    }
-   const sink = videos.get(clip.assetId);
-   // Monotonic timestamp iteration avoids re-decoding the same GOP for each output frame.
-   const stamps = function* () { for (let f = 0; f < clip.frames; f++) yield (clip.inFrame + f) / 30; };
-   const iterator = sink?.canvasesAtTimestamps(stamps());
-   for (let f = 0; f < clip.frames; f++) {
-    check(); const item = iterator ? await iterator.next() : null; const image = item && !item.done ? item.value : null;
-    if (sink && !image) throw new Error('A source video frame could not be decoded. Export stopped.');
-    drawContained(ctx, image?.canvas, image?.canvas.width, image?.canvas.height);
-    await videoSource.add((timelineFrame + f) / 30, 1 / 30);
-    // Feed audio in small matching chunks so muxing does not buffer an entire video track.
-    if (audioSource && renderedAudio) {
-     const start = f * 1600, buffer = new AudioBuffer({ length: 1600, numberOfChannels: 2, sampleRate: 48000 });
-     for (let channel = 0; channel < 2; channel++) buffer.copyToChannel(renderedAudio.getChannelData(channel).subarray(start, start + 1600), channel);
-     await audioSource.add(buffer);
-    }
-    progress((timelineFrame + f + 1) / frames, 'Rendering');
-    if (f % 10 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+   const images=new Map<string,CanvasImageSource>(),activeLayers=layersAt(project,frame),activeIds=new Set(activeLayers.map(e=>e.clip.id));
+   for(const [id,copy] of copies)if(!activeIds.has(id)){copy.width=0;copy.height=0;copies.delete(id);}
+   for(const layer of activeLayers){
+    const iterator=videoIterators.get(layer.clip.id);if(!iterator)continue;
+    const next=await iterator.next(),image=next.done?null:next.value;
+    if(!image)throw new Error('A source video frame could not be decoded. Export stopped.');
+    // The same source can appear on several tracks. Copy before advancing its shared decoder pool.
+    let copy=copies.get(layer.clip.id);if(!copy){copy=document.createElement('canvas');copy.width=image.canvas.width;copy.height=image.canvas.height;copies.set(layer.clip.id,copy);}
+    copy.getContext('2d')!.drawImage(image.canvas,0,0,copy.width,copy.height);images.set(layer.clip.id,copy);
    }
-   timelineFrame += clip.frames;
+   paintComposition(ctx,project,frame,images);
+   for(const layer of activeLayers)if(layer.end===frame+1){const iterator=videoIterators.get(layer.clip.id);if(iterator){await iterator.return(undefined);videoIterators.delete(layer.clip.id);}}
+   await videoSource.add(frame/30,1/30);
+   if(audioSource&&renderedAudio){
+    const offset=(frame%30)*1600,buffer=new AudioBuffer({length:1600,numberOfChannels:2,sampleRate:48000});
+    for(let channel=0;channel<2;channel++)buffer.copyToChannel(renderedAudio.getChannelData(channel).subarray(offset,offset+1600),channel);
+    await audioSource.add(buffer);
+   }
+   progress((frame+1)/frames,'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));
   }
+  for(const iterator of videoIterators.values())await iterator.return(undefined);
   check(); progress(1, 'Finalising'); await output.finalize(); check();
   if (!target.buffer) throw new Error('No output was produced.');
   return new Blob([target.buffer], { type: format === 'mp4' ? 'video/mp4' : 'video/webm' });
