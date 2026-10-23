@@ -11,8 +11,10 @@ export class Preview {
  constructor(private canvas:HTMLCanvasElement,private onTime:(f:number)=>void,private onState:()=>void,private onError:(s:string)=>void){}
  setProject(project:Project,files:Map<string,LocalMedia>){this.pause();this.project=project;this.files=files;for(const media of this.players.values()){media.removeAttribute('src');media.load();}this.players.clear();}
  pause(){this.token++;this.playing=false;for(const media of this.players.values())media.pause();cancelAnimationFrame(this.request);this.onState();}
- setDraft(project:Project){this.project=project;if(this.canvas.width!==project.width||this.canvas.height!==project.height){this.canvas.width=project.width;this.canvas.height=project.height;}void this.seek(this.frame);}
- private paint(){const images=new Map<string,CanvasImageSource>();for(const [id,media] of this.players)if(media.readyState>=2)images.set(id,media);paintComposition(this.canvas.getContext('2d')!,this.project,this.frame,images);}
+ private bypassAdjustments=false;
+ setBypassAdjustments(value:boolean){this.bypassAdjustments=value;this.paint();}
+ setDraft(project:Project,live=false){this.project=project;if(this.canvas.width!==project.width||this.canvas.height!==project.height){this.canvas.width=project.width;this.canvas.height=project.height;}if(live)this.paint();else void this.seek(this.frame);}
+ private paint(){const images=new Map<string,CanvasImageSource>();for(const [id,media] of this.players)if(media.readyState>=2)images.set(id,media);paintComposition(this.canvas.getContext('2d')!,this.project,this.frame,images,this.bypassAdjustments);}
  async seek(frame:number,resume=false){
   this.pause();const token=this.token;this.frame=Math.min(Math.max(0,Math.round(frame)),Math.max(0,duration(this.project)-1));this.onTime(this.frame);
   const layers=layersAt(this.project,this.frame);this.active=layers.map(e=>e.clip.id).join(',');

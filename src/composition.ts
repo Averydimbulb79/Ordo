@@ -6,7 +6,7 @@ import { paintText } from './text-renderer';
 
 type Buffers={a:HTMLCanvasElement;b:HTMLCanvasElement;source:HTMLCanvasElement;color?:ColorProcessor};
 const cache=new WeakMap<CanvasRenderingContext2D,Buffers>();
-export function paintComposition(ctx:CanvasRenderingContext2D,project:Project,frame:number,images:Map<string,CanvasImageSource>){
+export function paintComposition(ctx:CanvasRenderingContext2D,project:Project,frame:number,images:Map<string,CanvasImageSource>,bypassAdjustments=false){
  const {width,height}=ctx.canvas;let buffers=cache.get(ctx);
  if(!buffers){buffers={a:document.createElement('canvas'),b:document.createElement('canvas'),source:document.createElement('canvas')};cache.set(ctx,buffers);}
 
@@ -16,7 +16,7 @@ export function paintComposition(ctx:CanvasRenderingContext2D,project:Project,fr
   const iw=source.videoWidth||source.width||asset.width,ih=source.videoHeight||source.height||asset.height;
   const sw=iw*crop.width,sh=ih*crop.height,aspect=asset.width*crop.width/(asset.height*crop.height);
   const baseWidth=Math.min(width,height*aspect),baseHeight=baseWidth/aspect;let drawable:CanvasImageSource=image;
-  if(clip.adjustments&&Object.values(clip.adjustments).some(v=>v!==0)){
+  if(!bypassAdjustments&&clip.adjustments&&Object.values(clip.adjustments).some(v=>v!==0)){
    const scratch=buffers!.source,w=Math.max(1,Math.round(baseWidth)),h=Math.max(1,Math.round(baseHeight));if(scratch.width!==w||scratch.height!==h){scratch.width=w;scratch.height=h;}
    scratch.getContext('2d')!.drawImage(image,iw*crop.x,ih*crop.y,sw,sh,0,0,w,h);buffers!.color??=new ColorProcessor();drawable=buffers!.color.render(scratch,clip.adjustments);
   }

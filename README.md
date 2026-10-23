@@ -4,6 +4,15 @@ An Android-first video editor, with a shared web build. Local editing, no accoun
 
 [Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
+### v0.4.1: bulk editing and preview comparison
+
+- Project media has Add all media, with separate video (V1/V2) and audio (A1/A2) destinations. Available files append in bin order; missing files are skipped with feedback. One Undo removes the whole insertion.
+- Transitions has Apply to all joins for adjacent V1 clips. It replaces the join settings and clamps overlaps for short clips. Cut removes transitions at all joins.
+- Adjust has Apply to all video clips. It replaces grades on V1/V2, preserving crop, placement, audio, text and transitions. Each bulk action is one undoable edit.
+- Adjust is a compact scrolling panel below the preview in portrait and beside it in landscape/desktop. Playback and sliders remain available together. Apply commits the draft; Cancel restores the saved grade.
+- The preview's Adjusted button toggles to Original · No adjustments during playback or while paused. This bypasses picture adjustments only; crop, placement, text and transitions remain visible. It never changes saved projects or exported grades.
+- Edit now uses an information icon, distinct from Adjust's sliders. Branding and Android application identity are unchanged.
+
 ### v0.4.0: creative tools, crop and export settings
 
 - Dedicated Transitions, Title, Captions, Adjust and Crop buttons on desktop and in the Android dock.

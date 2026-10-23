@@ -51,3 +51,4 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm run build
       - run: npm run test:creative
+      - run: npm run test:bulk

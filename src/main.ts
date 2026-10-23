@@ -1,3 +1,4 @@
+import { appendMedia } from './bulk';
 import { setupCreative } from './creative';
 import { exportDimensions } from './export-settings';
 import type { ExportSettings } from './export-settings';
@@ -22,10 +23,10 @@ const svg = (name: string) => `<svg viewBox="0 0 24 24" fill="none" stroke="curr
 const button = (id:string, icon:string, label:string, extra='') => `<button id="${id}" title="${label}" aria-label="${label}" ${extra}>${svg(icon)}<span>${label}</span></button>`;
 const $ = <T extends HTMLElement = HTMLElement>(id:string) => document.getElementById(id) as T;
 $('app').innerHTML = `
-<header class="topbar"><a class="brand" href="./">ordo<span></span></a><span class="version">v0.4.0</span><div class="project-name"><input id="project-name" aria-label="Project name" maxlength="200" value="Untitled sequence"><span id="save-state">Not saved</span></div><button id="help" class="help-button">Quick guide</button>${button('fullscreen','fullscreen','Full screen')}${button('export','export','Export','class="accent"')}</header>
+<header class="topbar"><a class="brand" href="./">ordo<span></span></a><span class="version">v0.4.1</span><div class="project-name"><input id="project-name" aria-label="Project name" maxlength="200" value="Untitled sequence"><span id="save-state">Not saved</span></div><button id="help" class="help-button">Quick guide</button>${button('fullscreen','fullscreen','Full screen')}${button('export','export','Export','class="accent"')}</header>
 <nav class="toolbar" aria-label="Project tools">${button('new','new','New')}${button('open','open','Open')}${button('save','save','Save project')}<i></i>${button('import','import','Import media')}<i></i>${button('undo','undo','Undo')}${button('redo','redo','Redo')}<div class="creative-tools">${button('tool-transitions','transitions','Transitions')}${button('tool-title','title','Title')}${button('tool-captions','captions','Captions')}${button('tool-adjust','adjust','Adjust')}${button('tool-crop','crop','Crop')}</div><span class="toolbar-note">LOCAL EDITING · 720p / 30 fps</span></nav>
-<main class="workspace"><section class="panel media-panel"><div class="panel-heading"><h2>Project media</h2><span id="media-count">0 items</span></div><p id="import-feedback" class="import-feedback" role="status" aria-live="polite" aria-atomic="true" hidden></p><div id="media-list" class="media-list"></div><p class="panel-foot">Files stay on your device.</p></section>
-<section class="panel monitor"><div class="panel-heading"><h2>Program</h2><span id="program-settings">1280 × 720 · 30 fps</span></div><div class="screen"><canvas id="preview" width="1280" height="720" aria-label="Sequence preview"></canvas><div id="preview-empty" class="preview-empty">${svg('film')}<h2 id="empty-heading">Your story starts here</h2><p id="empty-description">Import media, then add clips to the timeline.</p><button id="import-empty" class="accent">Import media</button></div></div><div class="transport"><span id="current-time" class="timecode">00:00:00:00</span><div>${button('previous','back','Previous frame')}${button('play','play','Play / pause')}${button('next','next','Next frame')}</div><span id="total-time" class="timecode dim">00:00:00:00</span></div><input id="scrub" class="scrubber" type="range" min="0" max="0" value="0" aria-label="Sequence playhead"></section>
+<main class="workspace"><section class="panel media-panel"><div class="panel-heading"><h2>Project media</h2><span id="media-count">0 items</span></div><p id="import-feedback" class="import-feedback" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="bulk-media"><label>Videos<select id="bulk-video"><option value="v1">V1 · Main</option><option value="v2">V2 · Overlay</option></select></label><label>Audio<select id="bulk-audio"><option value="a1">A1</option><option value="a2">A2</option></select></label><button id="add-all-media" class="accent">Add all media</button></div><div id="media-list" class="media-list"></div><p class="panel-foot">Files stay on your device.</p></section>
+<section class="panel monitor"><div class="panel-heading"><h2>Program</h2><span id="program-settings">1280 × 720 · 30 fps</span></div><div class="screen"><canvas id="preview" width="1280" height="720" aria-label="Sequence preview"></canvas><div id="preview-empty" class="preview-empty">${svg('film')}<h2 id="empty-heading">Your story starts here</h2><p id="empty-description">Import media, then add clips to the timeline.</p><button id="import-empty" class="accent">Import media</button></div></div><div class="transport"><span id="current-time" class="timecode">00:00:00:00</span><div>${button('previous','back','Previous frame')}${button('play','play','Play / pause')}${button('next','next','Next frame')}</div><span id="total-time" class="timecode dim">00:00:00:00</span></div><div class="compare-bar"><button id="compare-adjustments" aria-pressed="false" title="Show original picture without adjustments">Adjusted</button><span>Preview comparison</span></div><input id="scrub" class="scrubber" type="range" min="0" max="0" value="0" aria-label="Sequence playhead"></section>
 <section class="panel inspector"><div class="panel-heading"><h2>Clip properties</h2></div><div id="inspector"></div></section>
 <section class="panel timeline-panel"><div class="panel-heading timeline-heading"><div><h2>Multitrack timeline</h2><span>V1 assembly · V2 overlay · A1 / A2 audio</span></div><div class="timeline-tools">${button('split','split','Split')}${button('delete','trash','Delete')}${button('duplicate','plus','Duplicate')}<label class="zoom-label">Zoom<input id="zoom" type="range" min="12" max="120" value="48" aria-label="Timeline zoom"></label><button id="fit">Fit</button></div></div><div class="timeline-scroll" id="timeline-scroll"><div class="timeline-content" id="timeline-content"><div id="ruler" class="ruler"></div><div id="track-labels"></div><div id="clips" class="clips"></div><div id="playhead" class="playhead"><span></span></div></div></div><div class="timeline-footer"><span id="clip-count">0 clips</span><span>Space Play · S Split · Delete Remove · Ctrl+Z Undo</span></div></section></main>
 <footer class="statusbar"><span id="status" role="status">Ready. Import video or audio to begin.</span><button id="recover" hidden>Restore autosave</button><a href="https://github.com/Averydimbulb79/Ordo" target="_blank" rel="noopener">GitHub ↗</a></footer>
@@ -52,7 +53,7 @@ function updateTime(frame:number) {
 function updateButtons() {
  const set = (id:string,disabled:boolean) => { $<HTMLButtonElement>(id).disabled=disabled; };
  set('undo',busy||!history.canUndo);set('redo',busy||!history.canRedo);set('split',busy||!current());set('delete',busy||!current());set('duplicate',busy||!current());
- for(const id of ['play','previous','next','export'])set(id,busy||!duration(project));
+ for(const id of ['play','previous','next','export','compare-adjustments'])set(id,busy||!duration(project));
  for(const id of ['new','open','import','import-empty','save','tool-transitions','tool-title','tool-captions','tool-adjust','tool-crop'])set(id,busy);
  $('play').innerHTML=svg(preview?.playing?'pause':'play')+'<span>Play / pause</span>';
 }
@@ -67,6 +68,7 @@ function apply(next:Project, selection=selected) {
 function render() {
  const canvas=$<HTMLCanvasElement>("preview");if(canvas.width!==project.width||canvas.height!==project.height){canvas.width=project.width;canvas.height=project.height;}$("program-settings").textContent=`${project.width} × ${project.height} · 30 fps`;
  $<HTMLInputElement>('project-name').value=project.name;
+ $<HTMLButtonElement>('add-all-media').disabled=busy||!project.assets.some(a=>files.has(a.id));
  $('media-count').textContent=`${project.assets.length} ${project.assets.length===1?'item':'items'}`;
  const extraImport=document.getElementById('mobile-import');if(extraImport){extraImport.textContent=project.assets.length?'Import more':'Import media';extraImport.classList.toggle('accent',!project.assets.length);}
  $('import-feedback').textContent=importNotice;
@@ -199,6 +201,14 @@ $('redo').onclick=()=>{if(busy)return;project=history.redo(project);markDirty();
 $('split').onclick=()=>{try{if(!busy)apply(split(project,selected,preview.frame,crypto.randomUUID()));}catch(e){error(e);}};
 $('delete').onclick=remove;
 $('duplicate').onclick=()=>{if(busy)return;const index=project.clips.findIndex(c=>c.id===selected);if(index<0)return;const p=clone(project),id=crypto.randomUUID();const copy={...p.clips[index],id};if(trackOf(copy)!=='v1')copy.startFrame=placements(project).find(e=>e.clip.id===selected)!.end;p.clips.splice(index+1,0,copy);try{apply(p,id);}catch(e){error(e);}};
+$('add-all-media').onclick=()=>{
+ if(busy)return;
+ const ids=project.assets.filter(a=>files.has(a.id)).map(a=>a.id);if(!ids.length)return;
+ try{const p=appendMedia(project,ids,$<HTMLSelectElement>('bulk-video').value as 'v1'|'v2',$<HTMLSelectElement>('bulk-audio').value as 'a1'|'a2',preview.frame,()=>crypto.randomUUID());apply(p,p.clips.at(-1)!.id);const skipped=project.assets.length-ids.length;say(`Added ${ids.length} media files.${skipped?` ${skipped} missing files skipped; relink them to add.`:''}`);}catch(e){error(e);}
+};
+let showingOriginal=false;
+function compareOriginal(value:boolean){showingOriginal=value;preview.setBypassAdjustments(value);$('compare-adjustments').textContent=value?'Original · No adjustments':'Adjusted';$('compare-adjustments').setAttribute('aria-pressed',String(value));$('compare-adjustments').title=value?'Show adjusted picture':'Show original picture without adjustments';}
+$('compare-adjustments').onclick=()=>compareOriginal(!showingOriginal);
 $('play').onclick=()=>{if(!busy)void preview.toggle();};$('previous').onclick=()=>{if(!busy)void preview.seek(preview.frame-1);};$('next').onclick=()=>{if(!busy)void preview.seek(preview.frame+1);};
 $('scrub').oninput=()=>{if(!busy)void preview.seek(Number($<HTMLInputElement>('scrub').value));};
 $('ruler').onclick=e=>{if(busy)return;const x=e.clientX-$('timeline-content').getBoundingClientRect().left-56;void preview.seek(x/scale*30);};
@@ -284,8 +294,8 @@ const mobile = setupMobile({
  trimRange:id=>{const c=project.clips.find(c=>c.id===id);return c?{inFrame:c.inFrame,outFrame:c.inFrame+c.frames,sourceFrames:sourceFrames(assetFor(c.assetId))}:null;},
  commitTrim:(id,inFrame,outFrame)=>{if(busy)return;try{apply(trim(project,id,inFrame,outFrame),id);}catch(e){error(e);}}
 });
-const creative=setupCreative({project:()=>project,selected:current,frame:()=>preview.frame,busy:()=>busy,commit:p=>apply(p),draft:p=>{const draft=parseProject(JSON.stringify(p));$('preview-empty').hidden=!!duration(draft);$('program-settings').textContent=`${draft.width} × ${draft.height} · 30 fps`;preview.setDraft(draft);},restore:()=>{$('preview-empty').hidden=!!duration(project);$('program-settings').textContent=`${project.width} × ${project.height} · 30 fps`;preview.setDraft(project);},media:id=>files.get(id),beforeOpen:()=>{mobile.closeSheet();preview.pause();}});
-for(const kind of ['transitions','title','captions','adjust','crop'])$('tool-'+kind).onclick=()=>creative.open(kind);
+const creative=setupCreative({project:()=>project,selected:current,frame:()=>preview.frame,busy:()=>busy,commit:p=>apply(p),draft:(p,live)=>{const draft=parseProject(JSON.stringify(p));$('preview-empty').hidden=!!duration(draft);$('program-settings').textContent=`${draft.width} × ${draft.height} · 30 fps`;preview.setDraft(draft,live);},restore:(live)=>{compareOriginal(false);$('preview-empty').hidden=!!duration(project);$('program-settings').textContent=`${project.width} × ${project.height} · 30 fps`;preview.setDraft(project,live);},media:id=>files.get(id),beforeOpen:live=>{mobile.closeSheet();if(!live)preview.pause();}});
+for(const kind of ['transitions','title','captions','adjust','crop'])$('tool-'+kind).onclick=()=>{if(!document.querySelector('.creative-dialog[open]'))creative.open(kind);};
 if(isAndroid){document.body.classList.add('android-app');$('fullscreen').hidden=true;}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)preview.pause();});
 window.addEventListener('ordo-back',()=>{

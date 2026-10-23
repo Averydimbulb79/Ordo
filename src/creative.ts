@@ -1,4 +1,5 @@
-import { clone, placements, trackOf, transitionLength } from './model';
+import { setTransitions, setAdjustments } from './bulk';
+import { clone, placements, trackOf } from './model';
 import type { Project, Clip } from './model';
 import { ADJUSTMENTS, TRANSITIONS, FONT_NAMES, newText, importCaptions, captionsToSrt } from './creative-model';
 import type { TextItem, Transition } from './creative-model';
@@ -8,32 +9,41 @@ import { download } from './media';
 import type { LocalMedia } from './media';
 import { ALL_FORMATS, BlobSource, Input, CanvasSink } from 'mediabunny';
 
-type Hooks={project:()=>Project;selected:()=>Clip|undefined;frame:()=>number;busy:()=>boolean;commit:(p:Project)=>void;draft:(p:Project)=>void;restore:()=>void;media:(id:string)=>LocalMedia|undefined;beforeOpen:()=>void};
+type Hooks={project:()=>Project;selected:()=>Clip|undefined;frame:()=>number;busy:()=>boolean;commit:(p:Project)=>void;draft:(p:Project,live?:boolean)=>void;restore:(live?:boolean)=>void;media:(id:string)=>LocalMedia|undefined;beforeOpen:(live?:boolean)=>void};
 export function setupCreative(hooks:Hooks){
  const sourceName=(p:Project,c:Clip)=>p.assets.find(a=>a.id===c.assetId)?.name??'Clip';
- function shell(title:string){
-  hooks.beforeOpen();const dialog=document.createElement('dialog');dialog.className='creative-dialog';dialog.setAttribute('aria-label',title);
+ function shell(title:string,live=false){
+  hooks.beforeOpen(live);const dialog=document.createElement('dialog');dialog.className='creative-dialog';dialog.setAttribute('aria-label',title);
   dialog.innerHTML='<div class="dialog-head"><h2></h2><button class="creative-close" aria-label="Close panel">×</button></div><div class="creative-body"></div><p class="creative-error" role="alert"></p><div class="dialog-actions"><button class="creative-cancel">Cancel</button><button class="creative-apply accent">Apply</button></div>';
   dialog.querySelector('h2')!.textContent=title;document.body.append(dialog);
   const $=<T extends HTMLElement=HTMLElement>(selector:string)=>dialog.querySelector<T>(selector)!;
+  dialog.addEventListener('keydown',event=>{if(live&&event.key==='Escape'){event.preventDefault();dialog.close();}});
   $('.creative-close').onclick=$('.creative-cancel').onclick=()=>dialog.close();
-  dialog.addEventListener('close',()=>{hooks.restore();dialog.remove();});
+  dialog.addEventListener('close',()=>{hooks.restore(live);dialog.remove();document.body.classList.remove('adjusting');for(const element of locked)element.inert=false;});
+  const locked:HTMLElement[]=[];
+  if(live){
+   dialog.classList.add('adjust-panel');document.querySelector('.workspace')!.append(dialog);document.body.classList.add('adjusting');
+   for(const element of document.querySelectorAll<HTMLElement>('.topbar,.toolbar,#mobile-dock,.statusbar,.workspace > :not(.monitor):not(.adjust-panel)'))if(!element.inert){element.inert=true;locked.push(element);}
+  }
   const fail=(error:unknown)=>{$('.creative-error').textContent=error instanceof Error?error.message:String(error);};
-  const preview=(read:()=>Project)=>{try{$('.creative-error').textContent='';hooks.draft(read());}catch(error){fail(error);}};
+  const preview=(read:()=>Project)=>{try{$('.creative-error').textContent='';hooks.draft(read(),live);}catch(error){fail(error);}};
   const apply=(read:()=>Project)=>{$('.creative-apply').onclick=()=>{try{hooks.commit(read());dialog.close();}catch(error){fail(error);}};};
-  return{dialog,$,body:$('.creative-body'),fail,preview,apply,open:()=>dialog.showModal()};
+  return{dialog,$,body:$('.creative-body'),fail,preview,apply,open:()=>live?dialog.show():dialog.showModal()};
  }
  function transitions(){
   const base=hooks.project(),main=base.clips.filter(c=>trackOf(c)==='v1'),panel=shell('Transitions');
-  panel.body.innerHTML='<label>Between clips<select id="transition-join"></select></label><div class="transition-grid"></div><label>Duration (seconds)<input id="transition-duration" type="number" min="0.1" max="2" step="0.1" value="0.5"></label><p class="note">Transitions overlap adjacent V1 clips and crossfade their sound. Short clips use a shorter overlap.</p>';
+  panel.body.innerHTML='<label>Between clips<select id="transition-join"></select></label><div class="transition-grid"></div><label>Duration (seconds)<input id="transition-duration" type="number" min="0.1" max="2" step="0.1" value="0.5"></label><label class="bulk-option"><input id="transition-all" type="checkbox"> Apply to all joins</label><p class="note">Transitions overlap adjacent V1 clips and crossfade their sound. Short clips use a shorter overlap.</p>';
   const join=panel.$<HTMLSelectElement>('#transition-join'),length=panel.$<HTMLInputElement>('#transition-duration');
   for(let i=0;i<main.length-1;i++){const option=document.createElement('option');option.value=main[i].id;option.textContent=`${i+1}. ${sourceName(base,main[i])} → ${sourceName(base,main[i+1])}`;join.append(option);}
   if(main.slice(0,-1).some(c=>c.id===hooks.selected()?.id))join.value=hooks.selected()!.id;
   let chosen:Transition|'cut'='cut';
-  const read=()=>{const p=clone(base),c=p.clips.find(c=>c.id===join.value);if(!c)throw new Error('Add two clips to V1 to create a transition.');
+  const all=panel.$<HTMLInputElement>('#transition-all');
+  const read=()=>{
+   if(main.length<2)throw new Error('Add two clips to V1 to create a transition.');
    const seconds=Number(length.value);if(!Number.isFinite(seconds)||seconds<.1||seconds>2)throw new Error('Choose a duration between 0.1 and 2 seconds.');
-   c.transitionFrames=chosen==='cut'?0:Math.round(seconds*30);if(chosen==='cut')delete c.transition;else c.transition=chosen;
-   if(chosen!=='cut'&&transitionLength(p,c)<1)throw new Error('These clips are too short for an overlap.');return p;};
+   return setTransitions(base,all.checked?main.slice(0,-1).map(c=>c.id):[join.value],chosen,Math.round(seconds*30));
+  };
+  all.onchange=()=>{join.disabled=all.checked;panel.$('.creative-apply').textContent=all.checked?'Apply to all joins':'Apply';panel.preview(read);};
   const update=()=>{for(const button of panel.dialog.querySelectorAll<HTMLButtonElement>('[data-transition]'))button.setAttribute('aria-pressed',String(button.dataset.transition===chosen));};
   for(const [id,label] of [['cut','Cut · None'],...TRANSITIONS]){
    const button=document.createElement('button');button.type='button';button.dataset.transition=id;button.className='transition-choice';
@@ -44,11 +54,15 @@ export function setupCreative(hooks:Hooks){
   if(main.length<2){panel.fail(new Error('Add two clips to V1, then choose the join to edit.'));panel.$<HTMLButtonElement>('.creative-apply').disabled=true;}panel.open();
  }
  function adjust(){
-  const base=hooks.project(),clip=hooks.selected(),panel=shell('Adjust');
+  const base=hooks.project(),clip=hooks.selected(),panel=shell('Adjust',true);
   if(!clip||base.assets.find(a=>a.id===clip.assetId)?.kind!=='video'||trackOf(clip).startsWith('a')){panel.body.textContent='Select a video clip on V1 or V2 to adjust its picture.';panel.$<HTMLButtonElement>('.creative-apply').disabled=true;panel.open();return;}
   const caption=document.createElement('p');caption.className='note';caption.textContent=sourceName(base,clip);panel.body.append(caption);
   for(const [key,name,min,max,neutral] of ADJUSTMENTS){const label=document.createElement('label');label.className='adjust-row';label.htmlFor=`adjust-${key}`;label.textContent=name;const value=document.createElement('output');value.id=`value-${key}`;const input=document.createElement('input');input.id=`adjust-${key}`;input.type='range';input.min=String(min);input.max=String(max);input.step=key==='exposure'?'.05':'1';input.value=String(clip.adjustments?.[key]??neutral);value.textContent=input.value;input.oninput=()=>{value.textContent=input.value;panel.preview(read);};label.append(value,input);panel.body.append(label);}
-  const read=()=>{const p=clone(base),c=p.clips.find(c=>c.id===clip.id)!;c.adjustments={};for(const [key] of ADJUSTMENTS)c.adjustments[key]=Number(panel.$<HTMLInputElement>(`#adjust-${key}`).value);return p;};
+  const scope=document.createElement('label');scope.className='bulk-option';scope.innerHTML='<input id="adjust-all" type="checkbox"> Apply to all video clips';panel.body.prepend(scope);
+  const note=document.createElement('p');note.className='note';note.textContent='When checked, replaces existing adjustments on V1 and V2. Crop and placement stay as set.';scope.after(note);
+  const all=panel.$<HTMLInputElement>('#adjust-all');
+  const read=()=>{const values:NonNullable<Clip['adjustments']>={};for(const [key] of ADJUSTMENTS)values[key]=Number(panel.$<HTMLInputElement>(`#adjust-${key}`).value);return setAdjustments(base,all.checked?base.clips.map(c=>c.id):[clip.id],values);};
+  all.onchange=()=>{panel.$('.creative-apply').textContent=all.checked?'Apply to all clips':'Apply';panel.preview(read);};
   const reset=document.createElement('button');reset.textContent='Reset adjustments';reset.id='reset-adjustments';reset.onclick=()=>{for(const [key,,,,value] of ADJUSTMENTS){panel.$<HTMLInputElement>(`#adjust-${key}`).value=String(value);panel.$(`#value-${key}`).textContent=String(value);}panel.preview(read);};panel.body.append(reset);panel.apply(read);panel.open();
  }
  function text(kind:TextItem['kind'],id?:string){
