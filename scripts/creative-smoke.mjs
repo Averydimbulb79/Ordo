@@ -31,7 +31,7 @@ try{
  await page.locator('.clip').first().click();
  const seek=async f=>{await page.locator('#scrub').evaluate((el,f)=>{el.value=String(f);el.dispatchEvent(new Event('input'));},f);await page.waitForTimeout(200);};
  await seek(22);await page.locator('#tool-transitions').click();assert.equal(await page.locator('[data-transition]').count(),14);
- const samples=()=>page.locator('#preview').evaluate(c=>{const x=c.getContext('2d');return [[.25,.5],[.75,.5],[.5,.25],[.5,.75],[.5,.5]].map(([a,b])=>Array.from(x.getImageData(Math.floor(c.width*a),Math.floor(c.height*b),1,1).data));});
+ const samples=()=>page.locator('#preview').evaluate(c=>{const x=c.getContext('2d');return [[.25,.5],[.75,.5],[.5,.25],[.5,.75],[.5,.5],[.05,.5]].map(([a,b])=>Array.from(x.getImageData(Math.floor(c.width*a),Math.floor(c.height*b),1,1).data));});
  for(const type of ['dissolve','fade-black','fade-white','wipe-left','wipe-right','wipe-up','wipe-down','slide-left','slide-right','push-left','push-right','zoom-in','zoom-out']){
   await page.locator(`[data-transition="${type}"]`).click();await page.waitForTimeout(200);const p=await samples();
   if(type==='dissolve')assert.ok(p[4][0]>80&&p[4][2]>80,`${type}: ${p}`);
@@ -40,6 +40,7 @@ try{
   if(['wipe-left','slide-left','push-left'].includes(type))assert.ok(p[0][0]>180&&p[1][2]>180,`${type}: ${p}`);
   if(['wipe-right','slide-right','push-right'].includes(type))assert.ok(p[0][2]>180&&p[1][0]>180,`${type}: ${p}`);
   if(type==='wipe-up')assert.ok(p[2][0]>180&&p[3][2]>180,`${type}: ${p}`);
+  if(type==='zoom-out')assert.ok(p[5][2]>180&&p[5][0]<40,`Zoom out shrinks the outgoing picture: ${p}`);
   if(type==='wipe-down')assert.ok(p[2][2]>180&&p[3][0]>180,`${type}: ${p}`);
  }
  await page.locator('[data-transition="wipe-left"]').click();await page.locator('.creative-apply').click();

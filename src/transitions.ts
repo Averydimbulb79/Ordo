@@ -14,7 +14,7 @@ export function paintTransition(ctx:CanvasRenderingContext2D,a:HTMLCanvasElement
  }else if(type==='zoom-in'){
   draw(a);draw(b,t,0,0,.5+.5*t);
  }else if(type==='zoom-out'){
-  draw(b);draw(a,1-t,0,0,1+.5*t);
+  draw(b);draw(a,1-t,0,0,1-.5*t);
  }else{draw(a);draw(b,t);}
  ctx.restore();
 }
