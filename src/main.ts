@@ -284,7 +284,7 @@ const mobile = setupMobile({
  trimRange:id=>{const c=project.clips.find(c=>c.id===id);return c?{inFrame:c.inFrame,outFrame:c.inFrame+c.frames,sourceFrames:sourceFrames(assetFor(c.assetId))}:null;},
  commitTrim:(id,inFrame,outFrame)=>{if(busy)return;try{apply(trim(project,id,inFrame,outFrame),id);}catch(e){error(e);}}
 });
-const creative=setupCreative({project:()=>project,selected:current,frame:()=>preview.frame,busy:()=>busy,commit:p=>apply(p),draft:p=>preview.setDraft(parseProject(JSON.stringify(p))),restore:()=>{preview.setDraft(project);},media:id=>files.get(id),beforeOpen:()=>{mobile.closeSheet();preview.pause();}});
+const creative=setupCreative({project:()=>project,selected:current,frame:()=>preview.frame,busy:()=>busy,commit:p=>apply(p),draft:p=>{const draft=parseProject(JSON.stringify(p));$('preview-empty').hidden=!!duration(draft);$('program-settings').textContent=`${draft.width} × ${draft.height} · 30 fps`;preview.setDraft(draft);},restore:()=>{$('preview-empty').hidden=!!duration(project);$('program-settings').textContent=`${project.width} × ${project.height} · 30 fps`;preview.setDraft(project);},media:id=>files.get(id),beforeOpen:()=>{mobile.closeSheet();preview.pause();}});
 for(const kind of ['transitions','title','captions','adjust','crop'])$('tool-'+kind).onclick=()=>creative.open(kind);
 if(isAndroid){document.body.classList.add('android-app');$('fullscreen').hidden=true;}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)preview.pause();});

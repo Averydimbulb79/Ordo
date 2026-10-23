@@ -9,7 +9,7 @@ An Android-first video editor, with a shared web build. Local editing, no accoun
 - Dedicated Transitions, Title, Captions, Adjust and Crop buttons on desktop and in the Android dock.
 - 13 transitions between adjacent V1 clips: dissolve, black/white fades, four wipes, left/right slides, left/right pushes and zoom in/out. Duration controls and sound crossfades are included.
 - Timed titles and manual captions with 10 bundled Google Fonts, size, colour, rotation, bold, italic, underline, strikethrough, alignment, position, outline and background. Captions import SRT/VTT and export SRT.
-- 11 picture controls: brightness, contrast, saturation, exposure, highlights, shadows, temperature, tint, sharpen, vignette and fade. Drafts preview live; Apply makes one undoable edit and Cancel restores the original.
+- 11 picture controls: brightness, contrast, saturation, exposure, highlights, shadows, temperature, tint, sharpen, vignette and fade. Drafts preview live, including titles on a blank project; Apply makes one undoable edit and Cancel restores the original.
 - Crop presets for original, 16:9, 9:16, 1:1, 4:3, 3:4, 4:5 and 21:9; Free size supports corner resizing, moving and numeric coordinates. Optionally match the project canvas to the crop.
 - Export at 480p, 720p, 1080p or 2160p, with 24/25/30/50/60 FPS and compact/standard/high quality, when supported by the device's encoder. The output preserves the canvas orientation.
 - V1/V2 video, A1/A2 sound and T/C title/caption lanes; thumbnails, touch trimming/zoom/panning, project saving/relinking and recovery remain available.
