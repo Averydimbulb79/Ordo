@@ -3,6 +3,12 @@ import { ALL_FORMATS, BlobSource, Input } from 'mediabunny';
 import type { Asset } from './model';
 export type LocalMedia = { file: File; url: string };
 export async function inspect(file: File): Promise<Asset> {
+ if(isImage(file)){
+  const image=await decodeImage(file);try{
+   if(!image.width||!image.height||image.width>32768||image.height>32768)throw new Error('Image dimensions are unsupported.');
+   return{id:crypto.randomUUID(),name:file.name,size:file.size,modified:file.lastModified,duration:6,kind:'image',width:image.width,height:image.height};
+  }finally{image.close();}
+ }
  const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
  try {
   const [seconds, video, audio] = await Promise.all([input.computeDuration(), input.getPrimaryVideoTrack(), input.getPrimaryAudioTrack()]);
@@ -26,4 +32,10 @@ export function drawContained(ctx: CanvasRenderingContext2D, source?: CanvasImag
  if (!source || !sourceWidth || !sourceHeight) return;
  const scale = Math.min(width / sourceWidth, height / sourceHeight), w = sourceWidth * scale, h = sourceHeight * scale;
  ctx.drawImage(source, (width - w) / 2, (height - h) / 2, w, h);
+}
+
+export const isImage=(file:File)=>/^image\/(jpeg|png|webp|avif|bmp|gif)$/.test(file.type)||/\.(jpe?g|png|webp|avif|bmp|gif)$/i.test(file.name);
+// ImageBitmap captures one still frame, including for animated image formats.
+export async function decodeImage(file:File):Promise<ImageBitmap>{
+ try{return await createImageBitmap(file);}catch{throw new Error('This device cannot decode this image. Try JPEG, PNG or WebP.');}
 }

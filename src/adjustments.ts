@@ -6,14 +6,14 @@ void main(){vec3 c=texture2D(image,uv).rgb;
  c*=pow(2.0,exposure);float l=dot(c,vec3(.2126,.7152,.0722));c+=vec3(shadows*.35*pow(1.0-clamp(l,0.0,1.0),2.0)+highlights*.35*pow(clamp(l,0.0,1.0),2.0));
  c+=vec3(temperature*.1,-tint*.1,-temperature*.1);c=(c-.5)*(1.0+contrast)+.5+brightness*.25;
  c=mix(vec3(dot(c,vec3(.2126,.7152,.0722))),c,1.0+saturation);c=mix(c,vec3(.5),fade*.4);
- float r=length(uv-.5),v=smoothstep(.25,.7,r);c*=1.0-vignette*v*.8;gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);}`;
+ float r=length(uv-.5),v=smoothstep(.25,.7,r);c*=1.0-vignette*v*.8;gl_FragColor=vec4(clamp(c,0.0,1.0),texture2D(image,uv).a);}`;
 
 /** Conventional colour/edge operations; WebGL is GPU processing, not AI. */
 export class ColorProcessor{
  private canvas=document.createElement('canvas');private gl:WebGLRenderingContext|null=null;private program:WebGLProgram|null=null;
  constructor(){
   try{
-   const gl=this.canvas.getContext('webgl',{preserveDrawingBuffer:true,alpha:false});if(!gl)return;
+   const gl=this.canvas.getContext('webgl',{preserveDrawingBuffer:true,alpha:true,premultipliedAlpha:false});if(!gl)return;
    const compile=(type:number,source:string)=>{const s=gl.createShader(type)!;gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error('Shader unavailable');return s;};
    const program=gl.createProgram()!;gl.attachShader(program,compile(gl.VERTEX_SHADER,'attribute vec2 point;varying vec2 uv;void main(){uv=(point+1.0)*.5;gl_Position=vec4(point,0,1);}'));gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error('Shader unavailable');gl.useProgram(program);
    const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);const point=gl.getAttribLocation(program,'point');gl.enableVertexAttribArray(point);gl.vertexAttribPointer(point,2,gl.FLOAT,false,0,0);

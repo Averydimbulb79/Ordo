@@ -1,4 +1,4 @@
-import { clone, placements, sourceFrames, trackOf, transitionLength } from './model.ts';
+import { clone, placements, defaultFrames, trackOf, transitionLength } from './model.ts';
 import type { Project, Track } from './model.ts';
 import type { Adjustments, Transition } from './creative-model.ts';
 
@@ -8,7 +8,7 @@ export function appendMedia(base:Project, ids:string[], video:'v1'|'v2', audio:'
  for(const e of placements(p))ends.set(e.track,Math.max(ends.get(e.track)??0,e.end));
  for(const id of ids){
   const asset=p.assets.find(a=>a.id===id);if(!asset)continue;
-  const track=asset.kind==='video'?video:audio,frames=sourceFrames(asset);
+  const track=asset.kind==='audio'?audio:video,frames=defaultFrames(asset);
   const start=Math.max(frame,ends.get(track)??0);
   p.clips.push({id:makeId(),assetId:id,inFrame:0,frames,volume:1,...(track==='v1'?{}:{track,startFrame:start}),...(track==='v2'?{scale:.4,x:.75,y:.75}:{})});
   ends.set(track,(track==='v1'?(ends.get(track)??0):start)+frames);
@@ -25,7 +25,15 @@ export function setTransitions(base:Project, ids:string[], type:Transition|'cut'
  return p;
 }
 export function setAdjustments(base:Project, ids:string[], values:Adjustments):Project {
- const p=clone(base),videos=new Set(p.assets.filter(a=>a.kind==='video').map(a=>a.id));
+ const p=clone(base),videos=new Set(p.assets.filter(a=>a.kind!=='audio').map(a=>a.id));
  for(const c of p.clips)if(ids.includes(c.id)&&videos.has(c.assetId)&&['v1','v2'].includes(trackOf(c)))c.adjustments={...values};
+ return p;
+}
+
+export function setEdgeTransitions(base:Project,ids:string[],edge:'start'|'end',type:Transition|'cut',frames:number):Project{
+ const p=clone(base),key=edge==='start'?'startTransition':'endTransition';
+ for(const c of p.clips)if(ids.includes(c.id)&&!trackOf(c).startsWith('a')&&p.assets.find(a=>a.id===c.assetId)?.kind!=='audio'){
+  if(type==='cut')delete c[key];else c[key]={type,frames};
+ }
  return p;
 }

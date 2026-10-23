@@ -45,7 +45,7 @@ try{
  await seek(75);values=await pixels();assert.ok(values.centre[0]>80&&values.centre[2]>80,`Preview dissolve is purple: ${JSON.stringify(values)}`);
  if(process.env.ORDO_COMPOSITION_SCREENSHOT)await page.screenshot({path:process.env.ORDO_COMPOSITION_SCREENSHOT});
  const saved=page.waitForEvent('download');await page.locator('#save').click();const projectFile=join(folder,'layers.ordo');await(await saved).saveAs(projectFile);
- const json=JSON.parse(await readFile(projectFile,'utf8'));assert.equal(json.version,4);assert.equal(json.clips.filter(c=>c.track==='a1'||c.track==='a2').length,2);
+ const json=JSON.parse(await readFile(projectFile,'utf8'));assert.equal(json.version,5);assert.equal(json.clips.filter(c=>c.track==='a1'||c.track==='a2').length,2);
  await page.locator('#export').click();await page.locator('#format').selectOption('webm');await page.waitForFunction(()=>!document.querySelector('#start-export').disabled);
  const exported=page.waitForEvent('download',{timeout:120000});await page.locator('#start-export').click();const output=join(folder,'layers.webm');await(await exported).saveAs(output);
  const info=JSON.parse(execFileSync('ffprobe',['-v','error','-count_frames','-show_entries','stream=codec_type,nb_read_frames','-of','json',output],{encoding:'utf8'}));assert.equal(info.streams.find(s=>s.codec_type==='video').nb_read_frames,'150');

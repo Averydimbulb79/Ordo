@@ -1,14 +1,14 @@
 import { AUDIO_CONTROLS, audioTrack, crossfadeAudio, edgeFades, copyAudio } from './audio-model';
 import type { AudioSettings } from './audio-model';
 import { protectTouchRange } from './touch-range';
-import { setTransitions, setAdjustments } from './bulk';
+import { setTransitions, setEdgeTransitions, setAdjustments } from './bulk';
 import { clone, placements, trackOf } from './model';
 import type { Project, Clip } from './model';
 import { ADJUSTMENTS, TRANSITIONS, FONT_NAMES, newText, importCaptions, captionsToSrt } from './creative-model';
 import type { TextItem, Transition } from './creative-model';
 import { CROP_RATIOS, cropPreset, validateCrop } from './crop';
 import type { Crop } from './crop';
-import { download } from './media';
+import { download, decodeImage } from './media';
 import type { LocalMedia } from './media';
 import { ALL_FORMATS, BlobSource, Input, CanvasSink } from 'mediabunny';
 
@@ -58,11 +58,23 @@ export function setupCreative(hooks:Hooks){
  function audioTransitions(){
   const base=hooks.project(),panel=shell('Audio transitions');
   panel.body.innerHTML='<label>Audio track<select id="audio-transition-track"><option value="a1">A1</option><option value="a2">A2</option></select></label><label>Between clips<select id="audio-transition-join"></select></label><label class="bulk-option"><input id="audio-crossfade-enabled" type="checkbox"> Crossfade</label><label>Crossfade duration (seconds)<input id="audio-crossfade-duration" type="number" min="0.1" max="10" step="0.1" value="0.5"></label><label class="bulk-option"><input id="audio-crossfade-all" type="checkbox"> Apply to all adjacent joins</label><label>Fade in first audio clip (seconds)<input id="audio-first-fade" type="number" min="0" max="120" step="0.1" value="0"></label><label>Fade out last audio clip (seconds)<input id="audio-last-fade" type="number" min="0" max="120" step="0.1" value="0"></label><p class="note">Crossfades overlap touching clips on this audio track, shortening its assembly. Gaps are kept. Video timing stays as set. Short clips use a shorter overlap. Fades apply to the first and last clip on the chosen track. Zero removes a fade.</p>';
+  const crossfadeGroup=document.createElement('div');while(panel.body.firstChild)crossfadeGroup.append(panel.body.firstChild);panel.body.append(crossfadeGroup);
+  const modeLabel=document.createElement('label');modeLabel.innerHTML='Transition<select id="audio-transition-type"><option value="fadeIn">Fade in</option><option value="fadeOut">Fade out</option><option value="crossfade" selected>Crossfade</option></select>';panel.body.prepend(modeLabel);
+  const fadeGroup=document.createElement('div');fadeGroup.hidden=true;fadeGroup.innerHTML='<label>Audio clip<select id="audio-fade-clip"></select></label><label>Duration (seconds)<input id="audio-fade-duration" type="number" min="0" max="120" step="0.1" value="0.5"></label><label class="bulk-option"><input id="audio-fade-all" type="checkbox"> Apply to all audio clips</label><p class="note">Zero removes the fade. Short clips clamp the fade to their duration. Video timing stays as set.</p>';panel.body.append(fadeGroup);
+  const mode=panel.$<HTMLSelectElement>('#audio-transition-type'),fadeClip=panel.$<HTMLSelectElement>('#audio-fade-clip'),fadeLength=panel.$<HTMLInputElement>('#audio-fade-duration'),fadeAll=panel.$<HTMLInputElement>('#audio-fade-all');
+  const candidates=base.clips.filter(c=>trackOf(c).startsWith('a')||base.assets.find(a=>a.id===c.assetId)?.kind==='audio');
+  for(const c of candidates){const option=document.createElement('option');option.value=c.id;option.textContent=trackOf(c).toUpperCase()+' · '+sourceName(base,c);fadeClip.append(option);}if(candidates.some(c=>c.id===hooks.selected()?.id))fadeClip.value=hooks.selected()!.id;
+  const loadFade=()=>{const c=candidates.find(c=>c.id===fadeClip.value);fadeLength.value=String(c?.audio?.[mode.value as 'fadeIn'|'fadeOut']??.5);};
+  mode.onchange=()=>{hooks.restore();const fade=mode.value!=='crossfade';crossfadeGroup.hidden=fade;fadeGroup.hidden=!fade;loadFade();panel.$<HTMLButtonElement>('.creative-apply').disabled=fade?!candidates.length:!audioTrack(base,track.value as 'a1'|'a2').length;};fadeClip.onchange=()=>{loadFade();panel.preview(read);};fadeAll.onchange=()=>{fadeClip.disabled=fadeAll.checked;panel.preview(read);};
   const track=panel.$<HTMLSelectElement>('#audio-transition-track'),join=panel.$<HTMLSelectElement>('#audio-transition-join'),enabled=panel.$<HTMLInputElement>('#audio-crossfade-enabled');
   if(trackOf(hooks.selected()!).startsWith('a'))track.value=trackOf(hooks.selected()!);
   const loadJoin=()=>{const c=base.clips.find(c=>c.id===join.value);enabled.checked=!!c?.audioCrossfadeFrames;panel.$<HTMLInputElement>('#audio-crossfade-duration').value=String((c?.audioCrossfadeFrames||15)/30);};
   const load=()=>{const lane=audioTrack(base,track.value as 'a1'|'a2');join.replaceChildren();for(let i=0;i<lane.length-1;i++){const option=document.createElement('option');option.value=lane[i].id;option.textContent=sourceName(base,lane[i])+' → '+sourceName(base,lane[i+1]);join.append(option);}if(lane.slice(0,-1).some(c=>c.id===hooks.selected()?.id))join.value=hooks.selected()!.id;loadJoin();for(const id of ['audio-crossfade-enabled','audio-crossfade-duration','audio-crossfade-all'])panel.$<HTMLInputElement>('#'+id).disabled=lane.length<2;join.disabled=lane.length<2||panel.$<HTMLInputElement>('#audio-crossfade-all').checked;panel.$<HTMLInputElement>('#audio-first-fade').value=String(lane[0]?.audio?.fadeIn??0);panel.$<HTMLInputElement>('#audio-last-fade').value=String(lane.at(-1)?.audio?.fadeOut??0);panel.$<HTMLButtonElement>('.creative-apply').disabled=!lane.length;};
   const read=()=>{const number=(id:string,min:number,max:number)=>{const n=Number(panel.$<HTMLInputElement>(id).value);if(!Number.isFinite(n)||n<min||n>max)throw new Error('Choose a fade duration within the displayed range.');return n;};
+   if(mode.value!=='crossfade'){
+    const seconds=number('#audio-fade-duration',0,120),p=clone(base),ids=fadeAll.checked?candidates.map(c=>c.id):[fadeClip.value];
+    for(const c of p.clips)if(ids.includes(c.id))c.audio={...c.audio,[mode.value]:Math.min(seconds,c.frames/30)};return p;
+   }
    const lane=audioTrack(base,track.value as 'a1'|'a2'),ids=panel.$<HTMLInputElement>('#audio-crossfade-all').checked?lane.slice(0,-1).map(c=>c.id):[join.value];
    const p=crossfadeAudio(base,track.value as 'a1'|'a2',ids,enabled.checked?Math.round(number('#audio-crossfade-duration',.1,10)*30):0);
    return edgeFades(p,track.value as 'a1'|'a2',number('#audio-first-fade',0,120),number('#audio-last-fade',0,120));
@@ -74,35 +86,44 @@ export function setupCreative(hooks:Hooks){
  }
  function transitions(){
   if(isAudio())return audioTransitions();
-  const base=hooks.project(),main=base.clips.filter(c=>trackOf(c)==='v1'),panel=shell('Transitions');
-  panel.body.innerHTML='<label>Between clips<select id="transition-join"></select></label><div class="transition-grid"></div><label>Duration (seconds)<input id="transition-duration" type="number" min="0.1" max="2" step="0.1" value="0.5"></label><label class="bulk-option"><input id="transition-all" type="checkbox"> Apply to all joins</label><p class="note">Transitions overlap adjacent V1 clips and crossfade their sound. Short clips use a shorter overlap.</p>';
-  const join=panel.$<HTMLSelectElement>('#transition-join'),length=panel.$<HTMLInputElement>('#transition-duration');
-  for(let i=0;i<main.length-1;i++){const option=document.createElement('option');option.value=main[i].id;option.textContent=`${i+1}. ${sourceName(base,main[i])} → ${sourceName(base,main[i+1])}`;join.append(option);}
-  if(main.slice(0,-1).some(c=>c.id===hooks.selected()?.id))join.value=hooks.selected()!.id;
+  const base=hooks.project(),pictures=base.clips.filter(c=>!trackOf(c).startsWith('a')&&base.assets.find(a=>a.id===c.assetId)?.kind!=='audio'),main=pictures.filter(c=>trackOf(c)==='v1'),panel=shell('Transitions');
+  panel.body.innerHTML='<label>Category<select id="transition-category"><option value="start">Start</option><option value="end">End</option><option value="between" selected>Between</option></select></label><label id="transition-target-label">Between clips<select id="transition-join"></select></label><div class="transition-grid"></div><label>Duration (seconds)<input id="transition-duration" type="number" min="0.1" max="2" step="0.1" value="0.5"></label><label class="bulk-option"><input id="transition-all" type="checkbox"> <span id="transition-all-label">Apply to all joins</span></label><p class="note" id="transition-note"></p>';
+  const category=panel.$<HTMLSelectElement>('#transition-category'),join=panel.$<HTMLSelectElement>('#transition-join'),length=panel.$<HTMLInputElement>('#transition-duration'),all=panel.$<HTMLInputElement>('#transition-all');
   let chosen:Transition|'cut'='cut';
-  const all=panel.$<HTMLInputElement>('#transition-all');
+  const targets=()=>category.value==='between'?main.slice(0,-1):pictures;
   const read=()=>{
-   if(main.length<2)throw new Error('Add two clips to V1 to create a transition.');
-   const seconds=Number(length.value);if(!Number.isFinite(seconds)||seconds<.1||seconds>2)throw new Error('Choose a duration between 0.1 and 2 seconds.');
-   return setTransitions(base,all.checked?main.slice(0,-1).map(c=>c.id):[join.value],chosen,Math.round(seconds*30));
+   if(!targets().length)throw new Error(category.value==='between'?'Add two picture clips to V1 to create a Between transition.':'Add a picture clip on V1 or V2 first.');
+   const seconds=Number(length.value),max=category.value==='between'?2:10;if(!Number.isFinite(seconds)||seconds<.1||seconds>max)throw new Error(`Choose a duration between 0.1 and ${max} seconds.`);
+   const ids=all.checked?targets().map(c=>c.id):[join.value];
+   return category.value==='between'?setTransitions(base,ids,chosen,Math.round(seconds*30)):setEdgeTransitions(base,ids,category.value as 'start'|'end',chosen,Math.round(seconds*30));
   };
-  all.onchange=()=>{join.disabled=all.checked;panel.$('.creative-apply').textContent=all.checked?'Apply to all joins':'Apply';panel.preview(read);};
   const update=()=>{for(const button of panel.dialog.querySelectorAll<HTMLButtonElement>('[data-transition]'))button.setAttribute('aria-pressed',String(button.dataset.transition===chosen));};
-  for(const [id,label] of [['cut','Cut · None'],...TRANSITIONS]){
+  for(const [id,label] of [['cut','None'],...TRANSITIONS]){
    const button=document.createElement('button');button.type='button';button.dataset.transition=id;button.className='transition-choice';
    const swatch=document.createElement('span');swatch.className=`transition-swatch ${id}`;const text=document.createElement('span');text.textContent=label;button.append(swatch,text);button.onclick=()=>{chosen=id as Transition|'cut';update();panel.preview(read);};panel.$('.transition-grid').append(button);
   }
-  const load=()=>{const c=base.clips.find(c=>c.id===join.value);chosen=c?.transitionFrames?(c.transition??'dissolve'):'cut';length.value=String((c?.transitionFrames||15)/30);update();};
-  join.onchange=()=>{load();panel.preview(read);};length.oninput=()=>panel.preview(read);load();panel.apply(read);
-  if(main.length<2){panel.fail(new Error('Add two clips to V1, then choose the join to edit.'));panel.$<HTMLButtonElement>('.creative-apply').disabled=true;}panel.open();
+  const load=()=>{const c=base.clips.find(c=>c.id===join.value),edge=category.value==='start'?c?.startTransition:c?.endTransition;
+   chosen=category.value==='between'?(c?.transitionFrames?(c.transition??'dissolve'):'cut'):(edge?.type??'cut');length.value=String((category.value==='between'?(c?.transitionFrames||15):(edge?.frames||15))/30);update();};
+  const scope=()=>{join.disabled=all.checked||!targets().length;panel.$('#transition-all-label').textContent=category.value==='between'?'Apply to all joins':'Apply to all picture clips';panel.$('.creative-apply').textContent=all.checked?(category.value==='between'?'Apply to all joins':'Apply to all clips'):'Apply';};
+  const loadCategory=()=>{
+   join.replaceChildren();const between=category.value==='between';
+   for(const c of targets()){const option=document.createElement('option');option.value=c.id;const i=main.findIndex(m=>m.id===c.id);option.textContent=between?`${i+1}. ${sourceName(base,c)} → ${sourceName(base,main[i+1])}`:`${trackOf(c).toUpperCase()} · ${sourceName(base,c)}`;join.append(option);}
+   if(targets().some(c=>c.id===hooks.selected()?.id))join.value=hooks.selected()!.id;
+   panel.$('#transition-target-label').firstChild!.textContent=between?'Between clips':'Clip';length.max=between?'2':'10';
+   panel.$('#transition-note').textContent=between?'Between transitions overlap adjacent V1 picture clips and crossfade their sound. Short clips use a shorter overlap.':'Start and End animate a clip’s picture without moving it or changing its sound. Available on V1 and V2; short clips clamp the animation to their duration.';
+   panel.$('.creative-error').textContent='';panel.$<HTMLButtonElement>('.creative-apply').disabled=!targets().length;if(!targets().length)panel.fail(new Error(between?'Add two picture clips to V1, or choose Start or End.':'Add a video or image clip to V1 or V2.'));scope();load();
+  };
+  all.onchange=()=>{scope();panel.preview(read);};category.onchange=()=>{hooks.restore();loadCategory();};join.onchange=()=>{load();panel.preview(read);};length.oninput=()=>panel.preview(read);
+  if(main.length<2||trackOf(hooks.selected()??{id:'',assetId:'',inFrame:0,frames:1,volume:1})==='v2')category.value='start';
+  loadCategory();panel.apply(read);panel.open();
  }
  function adjust(){
   if(isAudio())return audioAdjust();
   const base=hooks.project(),clip=hooks.selected(),panel=shell('Adjust',true);
-  if(!clip||base.assets.find(a=>a.id===clip.assetId)?.kind!=='video'||trackOf(clip).startsWith('a')){panel.body.textContent='Select a video clip on V1 or V2 to adjust its picture.';panel.$<HTMLButtonElement>('.creative-apply').disabled=true;panel.open();return;}
+  if(!clip||base.assets.find(a=>a.id===clip.assetId)?.kind==='audio'||trackOf(clip).startsWith('a')){panel.body.textContent='Select a video or image clip on V1 or V2 to adjust its picture.';panel.$<HTMLButtonElement>('.creative-apply').disabled=true;panel.open();return;}
   const caption=document.createElement('p');caption.className='note';caption.textContent=sourceName(base,clip)+' · Drag sideways to adjust; swipe vertically to scroll.';panel.body.append(caption);
   for(const [key,name,min,max,neutral] of ADJUSTMENTS){const label=document.createElement('label');label.className='adjust-row';label.htmlFor=`adjust-${key}`;label.textContent=name;const value=document.createElement('output');value.id=`value-${key}`;const input=document.createElement('input');input.id=`adjust-${key}`;input.type='range';input.min=String(min);input.max=String(max);input.step=key==='exposure'?'.05':'1';input.value=String(clip.adjustments?.[key]??neutral);value.textContent=input.value;protectTouchRange(input);input.oninput=()=>{value.textContent=input.value;panel.preview(read);};label.append(value,input);panel.body.append(label);}
-  const scope=document.createElement('label');scope.className='bulk-option';scope.innerHTML='<input id="adjust-all" type="checkbox"> Apply to all video clips';panel.body.prepend(scope);
+  const scope=document.createElement('label');scope.className='bulk-option';scope.innerHTML='<input id="adjust-all" type="checkbox"> Apply to all picture clips';panel.body.prepend(scope);
   const note=document.createElement('p');note.className='note';note.textContent='When checked, replaces existing adjustments on V1 and V2. Crop and placement stay as set.';scope.after(note);
   const all=panel.$<HTMLInputElement>('#adjust-all');
   const read=()=>{const values:NonNullable<Clip['adjustments']>={};for(const [key] of ADJUSTMENTS)values[key]=Number(panel.$<HTMLInputElement>(`#adjust-${key}`).value);return setAdjustments(base,all.checked?base.clips.map(c=>c.id):[clip.id],values);};
@@ -112,7 +133,7 @@ export function setupCreative(hooks:Hooks){
  function text(kind:TextItem['kind'],id?:string){
   const base=hooks.project(),items=(base.texts??[]).filter(t=>t.kind===kind),panel=shell(kind==='title'?'Title':'Captions');
   let item=items.find(t=>t.id===id)??newText(kind,hooks.frame());
-  panel.body.innerHTML=`<label>${kind==='title'?'Title':'Caption'}<select id="text-item"><option value="new">Add new ${kind}</option></select></label><label>Text<textarea id="text-content" rows="3" maxlength="5000"></textarea></label><div class="form-grid"><label>Start (seconds)<input id="text-start" type="number" min="0" step="0.033333"></label><label>Duration (seconds)<input id="text-duration" type="number" min="0.033333" step="0.033333"></label></div><label>Google Font<select id="text-font"></select></label><p class="font-note">10 bundled Google Fonts · available offline</p><div class="text-style-tools"><button type="button" data-style="bold" aria-label="Bold"><b>B</b></button><button type="button" data-style="italic" aria-label="Italic"><i>I</i></button><button type="button" data-style="underline" aria-label="Underline"><u>U</u></button><button type="button" data-style="strike" aria-label="Strikethrough"><s>S</s></button></div><div class="form-grid"><label>Font size<input id="text-size" type="number" min="12" max="240"></label><label>Colour<input id="text-color" type="color"></label><label>Rotation (degrees)<input id="text-rotation" type="number" min="-180" max="180"></label><label>Alignment<select id="text-align"><option value="left">Left</option><option value="center">Centre</option><option value="right">Right</option></select></label><label>Horizontal position (%)<input id="text-x" type="number" min="0" max="100"></label><label>Vertical position (%)<input id="text-y" type="number" min="0" max="100"></label></div><div class="check-row"><label><input id="text-background" type="checkbox"> Background</label><label><input id="text-outline" type="checkbox"> Outline</label></div><button id="delete-text" class="danger">Delete ${kind}</button>`;
+  panel.body.innerHTML=`<label>${kind==='title'?'Title':'Caption'}<select id="text-item"><option value="new">Add new ${kind}</option></select></label><label>Text<textarea id="text-content" rows="3" maxlength="5000"></textarea></label><div class="form-grid"><label>Start (seconds)<input id="text-start" type="number" min="0" step="0.033333"></label><label>Duration (seconds)<input id="text-duration" type="number" min="0.033333" step="0.033333"></label></div><label>Google Font<select id="text-font"></select></label><p class="font-note">66 bundled Google Fonts · available offline</p><div class="text-style-tools"><button type="button" data-style="bold" aria-label="Bold"><b>B</b></button><button type="button" data-style="italic" aria-label="Italic"><i>I</i></button><button type="button" data-style="underline" aria-label="Underline"><u>U</u></button><button type="button" data-style="strike" aria-label="Strikethrough"><s>S</s></button></div><div class="form-grid"><label>Font size<input id="text-size" type="number" min="12" max="240"></label><label>Colour<input id="text-color" type="color"></label><label>Rotation (degrees)<input id="text-rotation" type="number" min="-180" max="180"></label><label>Alignment<select id="text-align"><option value="left">Left</option><option value="center">Centre</option><option value="right">Right</option></select></label><label>Horizontal position (%)<input id="text-x" type="number" min="0" max="100"></label><label>Vertical position (%)<input id="text-y" type="number" min="0" max="100"></label></div><div class="check-row"><label><input id="text-background" type="checkbox"> Background</label><label><input id="text-outline" type="checkbox"> Outline</label></div><button id="delete-text" class="danger">Delete ${kind}</button>`;
   const pick=panel.$<HTMLSelectElement>('#text-item');
   for(const t of items){const option=document.createElement('option');option.value=t.id;option.textContent=`${(t.startFrame/30).toFixed(2)} s · ${t.text.slice(0,60)}`;pick.append(option);}
   for(const family of FONT_NAMES){const option=document.createElement('option');option.value=family;option.textContent=family;panel.$('#text-font').append(option);}
@@ -145,7 +166,7 @@ export function setupCreative(hooks:Hooks){
  }
  function crop(){
   const base=hooks.project(),clip=hooks.selected(),asset=base.assets.find(a=>a.id===clip?.assetId),panel=shell('Crop');
-  if(!clip||!asset||asset.kind!=='video'||trackOf(clip).startsWith('a')){panel.body.textContent='Select a video clip on V1 or V2 to crop.';panel.$<HTMLButtonElement>('.creative-apply').disabled=true;panel.open();return;}
+  if(!clip||!asset||asset.kind==='audio'||trackOf(clip).startsWith('a')){panel.body.textContent='Select a video or image clip on V1 or V2 to crop.';panel.$<HTMLButtonElement>('.creative-apply').disabled=true;panel.open();return;}
   let box:Crop=clip.crop??{x:0,y:0,width:1,height:1},picture:HTMLCanvasElement|null=null;
   panel.body.innerHTML='<label>Aspect ratio<select id="crop-ratio"></select></label><canvas id="crop-canvas" aria-label="Crop picture: drag the box or its corners"></canvas><p class="note">Drag a corner to resize. Drag inside the box to move it. Free size unlocks the aspect ratio.</p><div class="form-grid"></div><label class="check-row"><input id="crop-match" type="checkbox"> Match project canvas to cropped picture</label><button id="crop-reset">Reset crop</button>';
   for(const [id,name] of CROP_RATIOS){const option=document.createElement('option');option.value=id;option.textContent=name;panel.$('#crop-ratio').append(option);}panel.$<HTMLSelectElement>('#crop-ratio').value=clip.crop?'free':'original';
@@ -167,7 +188,7 @@ export function setupCreative(hooks:Hooks){
    }update();};
   canvas.onpointerup=canvas.onpointercancel=e=>{drag=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);};
   panel.apply(read);panel.open();update();
-  void(async()=>{const local=hooks.media(clip.assetId);if(!local){panel.fail(new Error('Relink this clip before choosing a crop.'));return;}const input=new Input({source:new BlobSource(local.file),formats:ALL_FORMATS});try{const track=await input.getPrimaryVideoTrack();if(!track)return;const factor=Math.min(600/asset.width,350/asset.height);canvas.width=Math.max(1,Math.round(asset.width*factor));canvas.height=Math.max(1,Math.round(asset.height*factor));const sink=new CanvasSink(track,{width:canvas.width,height:canvas.height,fit:'contain',poolSize:1});const entry=placements(base).find(e=>e.clip.id===clip.id)!,sample=await sink.getCanvas((clip.inFrame+Math.max(0,Math.min(clip.frames-1,hooks.frame()-entry.start)))/30);if(!sample)return;picture=document.createElement('canvas');picture.width=canvas.width;picture.height=canvas.height;picture.getContext('2d')!.drawImage(sample.canvas,0,0);canvas.dataset.ready='true';draw();}catch(error){panel.fail(error);}finally{input.dispose();}})();
+  void(async()=>{const local=hooks.media(clip.assetId);if(!local){panel.fail(new Error('Relink this clip before choosing a crop.'));return;}if(asset.kind==='image'){try{const image=await decodeImage(local.file);try{const factor=Math.min(600/image.width,350/image.height);canvas.width=Math.max(1,Math.round(image.width*factor));canvas.height=Math.max(1,Math.round(image.height*factor));picture=document.createElement('canvas');picture.width=canvas.width;picture.height=canvas.height;picture.getContext('2d')!.drawImage(image,0,0,canvas.width,canvas.height);canvas.dataset.ready='true';draw();}finally{image.close();}}catch(error){panel.fail(error);}return;}const input=new Input({source:new BlobSource(local.file),formats:ALL_FORMATS});try{const track=await input.getPrimaryVideoTrack();if(!track)return;const factor=Math.min(600/asset.width,350/asset.height);canvas.width=Math.max(1,Math.round(asset.width*factor));canvas.height=Math.max(1,Math.round(asset.height*factor));const sink=new CanvasSink(track,{width:canvas.width,height:canvas.height,fit:'contain',poolSize:1});const entry=placements(base).find(e=>e.clip.id===clip.id)!,sample=await sink.getCanvas((clip.inFrame+Math.max(0,Math.min(clip.frames-1,hooks.frame()-entry.start)))/30);if(!sample)return;picture=document.createElement('canvas');picture.width=canvas.width;picture.height=canvas.height;picture.getContext('2d')!.drawImage(sample.canvas,0,0);canvas.dataset.ready='true';draw();}catch(error){panel.fail(error);}finally{input.dispose();}})();
  }
  return{open:(kind:string,id?:string)=>{if(hooks.busy())return;if(kind==='transitions')transitions();else if(kind==='adjust')adjust();else if(kind==='crop')crop();else text(kind==='captions'?'caption':'title',id);}};
 }

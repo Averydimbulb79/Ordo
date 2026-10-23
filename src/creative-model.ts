@@ -33,7 +33,7 @@ export function parseTexts(value:unknown,fonts:readonly string[]):TextItem[]{
   ids.add(t.id);return {id:t.id,kind:t.kind,text:t.text,startFrame:t.startFrame,frames:t.frames,fontFamily:t.fontFamily,fontSize:t.fontSize,color:t.color,rotation:t.rotation,bold:t.bold,italic:t.italic,underline:t.underline,strike:t.strike,x:t.x,y:t.y,align:t.align,background:t.background,outline:t.outline};
  });
 }
-export const FONT_NAMES=['Roboto','Open Sans','Lato','Montserrat','Poppins','Nunito','Merriweather','Playfair Display','Source Sans 3','Roboto Mono'] as const;
+export const FONT_NAMES=["Roboto", "Open Sans", "Lato", "Montserrat", "Poppins", "Nunito", "Merriweather", "Playfair Display", "Source Sans 3", "Roboto Mono", "Oswald", "Raleway", "Inter", "Ubuntu", "Noto Sans", "Noto Serif", "PT Sans", "PT Serif", "Roboto Slab", "Rubik", "Work Sans", "Fira Sans", "Quicksand", "Barlow", "Mulish", "Manrope", "DM Sans", "DM Serif Display", "Libre Baskerville", "Libre Franklin", "Crimson Text", "Cormorant Garamond", "EB Garamond", "Lora", "Bitter", "Arvo", "Josefin Sans", "Josefin Slab", "Cabin", "Karla", "Inconsolata", "Source Code Pro", "Fira Code", "IBM Plex Sans", "IBM Plex Serif", "IBM Plex Mono", "Space Grotesk", "Space Mono", "Righteous", "Anton", "Bebas Neue", "Pacifico", "Dancing Script", "Great Vibes", "Lobster", "Satisfy", "Caveat", "Comfortaa", "Exo 2", "Titillium Web", "Assistant", "Hind", "Oxygen", "Varela Round", "Archivo", "Dosis"] as const;
 export function importCaptions(text:string):TextItem[]{
  if(text.length>1000000)throw new Error('Caption files must be smaller than 1 MB.');
  const normalized=text.replace(/^\uFEFF/,'').replace(/\r/g,''),blocks=normalized.split(/\n\s*\n/),items:TextItem[]=[];

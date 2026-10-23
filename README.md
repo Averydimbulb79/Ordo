@@ -4,6 +4,15 @@ An Android-first video editor, with a shared web build. Local editing, no accoun
 
 [Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
+### v0.6.0: still images, clip-edge transitions and 66 fonts
+
+- Import JPEG, PNG, WebP, AVIF, BMP and GIF images supported by the device. Animated formats are imported as a single still frame. Each image starts at 6 seconds, with a thumbnail and filename in Project media. Add all media includes images on the chosen picture track.
+- Extend or shorten images with the same trim handles and In/Out controls as video. Split, duplicate, placement, V1/V2 layering, crop, picture adjustments and exports support image clips. The 24-hour timeline guard and initial 2-minute export limit remain.
+- Transitions have Start, End and Between categories with 13 effects plus None. Start/End animate the picture on V1 or V2 without changing timing or sound; duration is 0.1–10 seconds, clamped to the clip length. Between overlaps adjacent V1 clips for 0.1–2 seconds. Apply to all works in each category.
+- Audio transitions offer Fade in, Fade out and Crossfade with durations in seconds. Fade in/out can target any selected audio clip or all audio clips. First/last fades and applying crossfades to all adjacent joins remain available. Zero removes a fade.
+- Titles and captions share 66 locally bundled Google Fonts. All work offline, including export. Where a family has no native bold or italic face, that style is synthesised. See [font catalogue](docs/FONTS.md) and bundled font licences.
+- Project format v5 saves images and edge transitions, and opens v1–v4 projects. Save with the new version after opening an older project; older Ordo versions cannot open v5 saves.
+
 ### v0.5.0: remembered media and audio editing
 
 - Remember media on this device reconnects assets when opening a project or restoring recovery. Android uses persistent read access granted through the system document picker; web imports and providers without persistent grants use local IndexedDB copies when storage permits. Forget remembered media clears those records/copies and Android read grants while leaving the current edit open.

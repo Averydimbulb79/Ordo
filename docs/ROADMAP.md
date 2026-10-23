@@ -77,3 +77,10 @@ Work on main with rollback checkpoints before substantial changes. Keep README c
 ## Shipped in v0.5.0
 
 Remembered Android media permissions/local web cache, streaming content fingerprints, batch relinking, selection-aware audio adjustment panel, volume/gain/pan/EQ/compression/limiting, per-clip fades, equal-power A1/A2 crossfades and first/last track fades. Preview and export share the processing chain; project format v4 preserves audio edits and media fingerprints. Native provider behavior across restarts remains a device validation task.
+
+## Shipped in v0.6.0
+
+- Six-second image clips with flexible duration, crop, grading, layering and export.
+- Start/End/Between transition categories and bulk application.
+- Per-clip audio fade in/out alongside crossfades and track-edge shortcuts.
+- 66 offline font families for titles and captions.

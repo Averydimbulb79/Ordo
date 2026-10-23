@@ -1,28 +1,39 @@
 import { layersAt } from './model';
 import type { Project, Clip } from './model';
 import { ColorProcessor } from './adjustments';
-import { paintTransition } from './transitions';
+import { paintTransition, paintEdge } from './transitions';
 import { paintText } from './text-renderer';
 
-type Buffers={a:HTMLCanvasElement;b:HTMLCanvasElement;source:HTMLCanvasElement;color?:ColorProcessor};
+type Buffers={a:HTMLCanvasElement;b:HTMLCanvasElement;source:HTMLCanvasElement;raw:HTMLCanvasElement;edge:HTMLCanvasElement;color?:ColorProcessor};
 const cache=new WeakMap<CanvasRenderingContext2D,Buffers>();
 export function paintComposition(ctx:CanvasRenderingContext2D,project:Project,frame:number,images:Map<string,CanvasImageSource>,bypassAdjustments=false){
  const {width,height}=ctx.canvas;let buffers=cache.get(ctx);
- if(!buffers){buffers={a:document.createElement('canvas'),b:document.createElement('canvas'),source:document.createElement('canvas')};cache.set(ctx,buffers);}
+ if(!buffers){buffers={a:document.createElement('canvas'),b:document.createElement('canvas'),source:document.createElement('canvas'),raw:document.createElement('canvas'),edge:document.createElement('canvas')};cache.set(ctx,buffers);}
 
- const draw=(target:CanvasRenderingContext2D,clip:Clip)=>{
-  const asset=project.assets.find(a=>a.id===clip.assetId),image=images.get(clip.id);if(!asset||asset.kind!=='video'||!image)return;
+ const drawPicture=(target:CanvasRenderingContext2D,clip:Clip)=>{
+  const asset=project.assets.find(a=>a.id===clip.assetId),image=images.get(clip.id);if(!asset||asset.kind==='audio'||!image)return;
   const crop=clip.crop??{x:0,y:0,width:1,height:1},source=image as {videoWidth?:number;videoHeight?:number;width?:number;height?:number};
   const iw=source.videoWidth||source.width||asset.width,ih=source.videoHeight||source.height||asset.height;
   const sw=iw*crop.width,sh=ih*crop.height,aspect=asset.width*crop.width/(asset.height*crop.height);
   const baseWidth=Math.min(width,height*aspect),baseHeight=baseWidth/aspect;let drawable:CanvasImageSource=image;
   if(!bypassAdjustments&&clip.adjustments&&Object.values(clip.adjustments).some(v=>v!==0)){
    const scratch=buffers!.source,w=Math.max(1,Math.round(baseWidth)),h=Math.max(1,Math.round(baseHeight));if(scratch.width!==w||scratch.height!==h){scratch.width=w;scratch.height=h;}
-   scratch.getContext('2d')!.drawImage(image,iw*crop.x,ih*crop.y,sw,sh,0,0,w,h);buffers!.color??=new ColorProcessor();drawable=buffers!.color.render(scratch,clip.adjustments);
+   scratch.getContext('2d')!.clearRect(0,0,w,h);scratch.getContext('2d')!.drawImage(image,iw*crop.x,ih*crop.y,sw,sh,0,0,w,h);buffers!.color??=new ColorProcessor();drawable=buffers!.color.render(scratch,clip.adjustments);
   }
   const w=baseWidth*(clip.scale??1),h=baseHeight*(clip.scale??1),x=(clip.x??.5)*width-w/2,y=(clip.y??.5)*height-h/2;
   target.save();target.globalAlpha*=clip.opacity??1;
   if(drawable===image)target.drawImage(image,iw*crop.x,ih*crop.y,sw,sh,x,y,w,h);else target.drawImage(drawable,x,y,w,h);target.restore();
+ };
+ const draw=(target:CanvasRenderingContext2D,clip:Clip)=>{
+  const entry=layersAt(project,frame).find(e=>e.clip.id===clip.id),offset=entry?.offset??0;
+  const start=clip.startTransition,end=clip.endTransition;
+  const startFrames=Math.min(start?.frames??0,clip.frames),endFrames=Math.min(end?.frames??0,clip.frames);
+  const activeStart=!!start&&offset<startFrames,activeEnd=!!end&&offset>=clip.frames-endFrames;
+  if(!activeStart&&!activeEnd){drawPicture(target,clip);return;}
+  for(const canvas of [buffers!.raw,buffers!.edge]){if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}else canvas.getContext('2d')!.clearRect(0,0,width,height);}
+  const raw=buffers!.raw,edge=buffers!.edge;drawPicture(raw.getContext('2d')!,clip);
+  if(activeStart)paintEdge(edge.getContext('2d')!,raw,start!.type,offset/startFrames,true);else edge.getContext('2d')!.drawImage(raw,0,0);
+  if(activeEnd)paintEdge(target,edge,end!.type,(offset-(clip.frames-endFrames))/endFrames,false);else target.drawImage(edge,0,0);
  };
  ctx.fillStyle='#000';ctx.fillRect(0,0,width,height);
  const layers=layersAt(project,frame),main=layers.filter(e=>e.track==='v1');

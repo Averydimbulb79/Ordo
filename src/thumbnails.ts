@@ -1,3 +1,4 @@
+import { isImage, decodeImage, drawContained } from './media';
 import { ALL_FORMATS, BlobSource, CanvasSink, Input } from 'mediabunny';
 
 // One small image per live File. A weak cache releases images with imported media.
@@ -6,6 +7,7 @@ let queue=Promise.resolve();
 export function thumbnail(file: File): Promise<string|null> {
  const known=cache.get(file);if(known)return known;
  const result=queue.then(async()=>{
+  if(isImage(file)){try{const image=await decodeImage(file);try{const canvas=document.createElement('canvas');canvas.width=240;canvas.height=135;drawContained(canvas.getContext('2d')!,image,image.width,image.height);return canvas.toDataURL('image/jpeg',.75);}finally{image.close();}}catch{return null;}}
   const input=new Input({source:new BlobSource(file),formats:ALL_FORMATS});
   try{
    const track=await input.getPrimaryVideoTrack();if(!track)return null;

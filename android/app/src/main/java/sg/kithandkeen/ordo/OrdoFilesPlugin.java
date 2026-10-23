@@ -47,7 +47,7 @@ public class OrdoFilesPlugin extends Plugin {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] { "video/*", "audio/*", "application/octet-stream" });
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] { "video/*", "audio/*", "image/*", "application/octet-stream" });
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         try { startActivityForResult(call, intent, "mediaChosen"); }

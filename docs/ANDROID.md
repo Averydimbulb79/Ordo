@@ -89,3 +89,9 @@ The bottom-right preview button expands the player with its controls. Android us
 Import and Locate missing media use ACTION_OPEN_DOCUMENT with multiple selection and read-only persistable URI grants when Remember media is enabled. Permission records remain device-local and are not stored in .ordo project files. File bytes are read through Capacitor's content-URI route and verified with a full streaming SHA-256 fingerprint. Providers with temporary grants use the same local-copy fallback as web imports. Clearing remembered media releases read grants and removes the cache. Deleting/moving a file, revoking provider permission or clearing application data requires relinking. Cloud providers may need network access to supply their selected file. Real-provider permission retention across app restarts still needs phone verification.
 
 Audio processing uses one AudioContext for preview and a continuous OfflineAudioContext for export, with gain, three EQ bands, pan, compressor, compressor-based limiter and a separate fader/envelope. Export suspends at one-second boundaries while fetching source audio windows so processing state does not reset at each block. The final stereo mix is retained in memory, up to about 46 MB at 120 seconds / stereo 48 kHz. The encoded output is also retained, so the existing export/save limits remain.
+
+### Images and typography (v0.6.0)
+
+The native picker includes images. JPEG, PNG, WebP, AVIF, BMP and GIF are decoded as stills when supported by the WebView; animated images use one still frame. All 66 title/caption fonts are bundled in the APK. No Google Fonts network access is needed.
+
+On a phone, import a camera photo and a transparent PNG, extend/shorten them with the trim handles, apply a crop and adjustments, preview Start/End/Between transitions, then export. Reopen the saved project to verify remembered image-provider access. Confirm audio Fade in/out/Crossfade duration controls with an MP3.

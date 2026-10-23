@@ -8,6 +8,7 @@ import type { ExportSettings } from './export-settings';
 import { ALL_FORMATS, AudioBufferSink, AudioBufferSource, BlobSource, BufferTarget, CanvasSink, CanvasSource, Input, Mp4OutputFormat, Output, WebMOutputFormat, canEncodeAudio, canEncodeVideo } from 'mediabunny';
 import type { Project } from './model';
 import { duration, layersAt, placements } from './model';
+import { decodeImage } from './media';
 import type { LocalMedia } from './media';
 import { paintComposition } from './composition';
 export const LIMIT_SECONDS = 120;
@@ -23,14 +24,16 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
  if (timelineFrames > LIMIT_SECONDS * 30) throw new Error('This initial release supports exports up to 2 minutes. Shorten the sequence before exporting.');
  const check = () => { if (signal.aborted) throw new DOMException('Export cancelled', 'AbortError'); };
  check();await loadProjectFonts(project);check();
+ const pictures=new Map<string,ImageBitmap>(),imageAssets=new Set<string>();
  const inputs = new Map<string, Input>();
  const videos = new Map<string, CanvasSink>();
  const audios = new Map<string, AudioBufferSink>();
  let output: Output | undefined;
  try {
   for (const clip of project.clips) {
-   check(); if (inputs.has(clip.assetId)) continue;
+   check(); if (inputs.has(clip.assetId)||imageAssets.has(clip.assetId)) continue;
    const local = files.get(clip.assetId); if (!local) throw new Error('Relink all timeline media before exporting.');
+   if(project.assets.find(a=>a.id===clip.assetId)?.kind==='image'){imageAssets.add(clip.assetId);continue;}
    const input = new Input({ source: new BlobSource(local.file), formats: ALL_FORMATS }); inputs.set(clip.assetId, input);
    const video = await input.getPrimaryVideoTrack(), audio = await input.getPrimaryAudioTrack();
    if (video) {
@@ -66,8 +69,11 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
   for(let frame=0;frame<frames;frame++){
    check();
    const images=new Map<string,CanvasImageSource>(),activeLayers=layersAt(project,frame*30/fps),activeIds=new Set(activeLayers.map(e=>e.clip.id));
+   const activeAssets=new Set(activeLayers.map(e=>e.clip.assetId));for(const [id,image] of pictures)if(!activeAssets.has(id)){image.close();pictures.delete(id);}
    for(const [id,copy] of copies)if(!activeIds.has(id)){copy.width=0;copy.height=0;copies.delete(id);}
    for(const layer of activeLayers){
+    if(imageAssets.has(layer.clip.assetId)&&!pictures.has(layer.clip.assetId)){pictures.set(layer.clip.assetId,await decodeImage(files.get(layer.clip.assetId)!.file));check();}
+    const still=pictures.get(layer.clip.assetId);if(still){images.set(layer.clip.id,still);continue;}
     const iterator=videoIterators.get(layer.clip.id);if(!iterator)continue;
     const next=await iterator.next(),image=next.done?null:next.value;
     if(!image)throw new Error('A source video frame could not be decoded. Export stopped.');
@@ -92,5 +98,5 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
  } catch (error) {
   if (output && output.state !== 'finalized' && output.state !== 'canceled') await output.cancel().catch(() => {});
   throw error;
- } finally { for (const input of inputs.values()) input.dispose(); }
+ } finally { for(const image of pictures.values())image.close();for (const input of inputs.values()) input.dispose(); }
 }

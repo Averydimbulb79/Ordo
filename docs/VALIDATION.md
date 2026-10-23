@@ -76,3 +76,13 @@ Unit checks cover equal-power crossfade envelopes, independent track timing, sho
 A simulated Capacitor bridge also verifies native picker options, URI-reference storage without copying, reopening through the content-URI route, Android-save bridge serialization and the Forget permission-release call. A fast touch sequence checks that opening Project cannot click through into another native import. This does not substitute for Android OS/provider grant validation on a physical phone.
 
 Browser regression jobs allow 15 minutes for slow dependency setup and reuse an installed FFmpeg binary when available. Edge-fade tests include intentional gaps with crossfade disabled.
+
+## v0.6.0 images, edge transitions and fonts
+
+`npm test` covers six-second defaults, extending and shortening images, image crop/adjustment persistence, independent edge transitions, splitting outer edges, transition validation, all 66 title/caption font names and v1–v4 migration.
+
+`npm run test:images` imports real PNGs, checks thumbnails/bulk add, extends an image beyond six seconds, plays image-only footage, crops and grades, verifies Start/End/Between categories and pixels, loads 66 local font families in normal/bold/italic/bold-italic styles, saves/reopens with remembered images, and decodes a 480p/24 fps WebM to verify baked grading and fades. Mobile transition controls are checked at 390 px.
+
+`npm run test:audio` also exercises per-clip Fade in/out and Apply to all. Existing creative, mobile, composition, bulk and touch/preview smoke suites remain regression checks.
+
+Android's native picker now accepts image MIME types. Real-device image-provider compatibility and memory use for very large photos still require phone testing.
