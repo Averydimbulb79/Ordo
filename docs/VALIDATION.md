@@ -53,3 +53,10 @@ Model checks cover overlapping main-track transitions/weights/duration, independ
 The composition browser test imports red/blue video with 440/880 Hz sound. It verifies thumbnails and duration labels, creates V1/V2/A1/A2 clips, checks picture-in-picture and blended preview pixels, plays across a dissolve, saves format-v2 settings and exports 150 frames. FFmpeg verifies the blended output pixels, complete decode and both soundtrack frequencies with main-track audio muted. Existing browser export/relink/cancel checks remain, alongside touch checks for destination/placement controls and vertical track panning.
 
 These synthetic checks do not certify smooth playback, exact audio sync or export performance on an Android phone. MP4 hardware codecs, long edits and real variable-frame-rate footage remain device validation requirements.
+
+
+## v0.4.0: creative, crop and export choices
+
+Core tests validate new project fields and font/style bounds, caption timing/SRT round trips, crop ratios/bounds, output size/orientation/FPS choices and each adjustment's effect on pixels. The creative browser test checks all 13 transition previews; GPU grading; a bold/italic/underlined/struck/rotated coloured title; offline bundled-font loading; manual captions with SRT/VTT; ratio and free corner cropping; project persistence; mobile tool visibility; and fully decoded portrait 480p outputs at 60 and 24 FPS. Decoded frames are checked for baked text and grading. Existing desktop/touch/multitrack regressions remain in the workflow.
+
+This does not certify 4K export or performance on an Android phone. Tests use synthetic VP8/Opus video in Chromium. Actual MP4 codecs, real phone footage, OS keyboard/file-provider interactions and sustained device performance remain device checks. Fonts cover bundled Latin subsets, with system fallback for other scripts.

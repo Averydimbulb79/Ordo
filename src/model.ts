@@ -1,10 +1,14 @@
+import { validateCrop } from './crop.ts';
+import type { Crop } from './crop.ts';
+import { TRANSITIONS, FONT_NAMES, validateAdjustments, parseTexts } from './creative-model.ts';
+import type { Transition, Adjustments, TextItem } from './creative-model.ts';
 export type Asset = { id: string; name: string; size: number; modified: number; duration: number; kind: 'video' | 'audio'; width: number; height: number };
 export const TRACKS = ['v1','v2','a1','a2'] as const;
 export type Track = typeof TRACKS[number];
-export type Clip = { id: string; assetId: string; inFrame: number; frames: number; volume: number; track?: Track; startFrame?: number; transitionFrames?: number; scale?: number; x?: number; y?: number; opacity?: number };
-export type Project = { format: 'ordo-project'; version: 2; name: string; fps: 30; width: 1280; height: 720; assets: Asset[]; clips: Clip[] };
+export type Clip = { id: string; assetId: string; inFrame: number; frames: number; volume: number; track?: Track; startFrame?: number; transitionFrames?: number; scale?: number; x?: number; y?: number; opacity?: number; transition?: Transition; adjustments?: Adjustments; crop?: Crop };
+export type Project = { format: 'ordo-project'; version: 3; name: string; fps: 30; width: number; height: number; assets: Asset[]; clips: Clip[]; texts?: TextItem[] };
 export const clone = <T>(value: T): T => structuredClone(value);
-export const fresh = (): Project => ({ format: 'ordo-project', version: 2, name: 'Untitled sequence', fps: 30, width: 1280, height: 720, assets: [], clips: [] });
+export const fresh = (): Project => ({ format: 'ordo-project', version: 3, name: 'Untitled sequence', fps: 30, width: 1280, height: 720, assets: [], clips: [] });
 export const trackOf = (c: Clip): Track => c.track ?? 'v1';
 export type Placement = { clip: Clip; start: number; end: number; index: number; track: Track };
 export function transitionLength(p: Project, clip: Clip): number {
@@ -19,7 +23,7 @@ export function placements(p: Project): Placement[] {
   return {clip,start,end:start+clip.frames,index,track};
  });
 }
-export const duration = (p: Project): number => Math.max(0,...placements(p).map(e=>e.end));
+export const duration = (p: Project): number => Math.max(0,...placements(p).map(e=>e.end),...(p.texts??[]).map(t=>t.startFrame+t.frames));
 export function layersAt(p: Project, frame: number) {
  const entries=placements(p),main=entries.filter(e=>e.track==='v1');
  return entries.filter(e=>frame>=e.start&&frame<e.end).map(e=>{
@@ -74,8 +78,8 @@ export class History {
 export function parseProject(text: string): Project {
  if (text.length > 5_000_000) throw new Error('Project files must be smaller than 5 MB.');
  const p = JSON.parse(text);
- if (!p || p.format !== 'ordo-project' || ![1,2].includes(p.version)) throw new Error('Unsupported Ordo project format or version.');
- if (p.fps !== 30 || p.width !== 1280 || p.height !== 720) throw new Error('This release supports 1280 × 720 projects at 30 fps.');
+ if (!p || p.format !== 'ordo-project' || ![1,2,3].includes(p.version)) throw new Error('Unsupported Ordo project format or version.');
+ if(p.fps!==30||![p.width,p.height].every(n=>Number.isSafeInteger(n)&&n>=64&&n<=4096&&n%2===0))throw new Error('Invalid canvas dimensions or timeline frame rate.');
  if (typeof p.name !== 'string' || p.name.length > 200 || !Array.isArray(p.assets) || !Array.isArray(p.clips) || p.assets.length > 1000 || p.clips.length > 1000) throw new Error('Invalid project structure.');
  const ids = new Set<string>();
  const assets: Asset[] = p.assets.map((a: Asset) => {
@@ -89,12 +93,14 @@ export function parseProject(text: string): Project {
   if(c.track!==undefined&&!TRACKS.includes(c.track))throw new Error('Invalid timeline track.');
   if(c.startFrame!==undefined&&(!Number.isSafeInteger(c.startFrame)||c.startFrame<0||c.startFrame>86400*30))throw new Error('Invalid clip start time.');
   if(c.transitionFrames!==undefined&&(!Number.isSafeInteger(c.transitionFrames)||c.transitionFrames<0||c.transitionFrames>60||trackOf(c)!=='v1'))throw new Error('Invalid transition.');
+  if(c.transition!==undefined&&(!TRANSITIONS.some(t=>t[0]===c.transition)||trackOf(c)!=='v1'))throw new Error('Invalid transition type.');
   for(const [key,min,max] of [['scale',.1,2],['x',0,1],['y',0,1],['opacity',0,1]] as const)if(c[key]!==undefined&&(!Number.isFinite(c[key])||c[key]!<min||c[key]!>max))throw new Error('Invalid clip transform.');
   ids.add(c.id); const clip:Clip={ id: c.id, assetId: c.assetId, inFrame: c.inFrame, frames: c.frames, volume: c.volume };
-  for(const key of ['track','startFrame','transitionFrames','scale','x','y','opacity'] as const)if(c[key]!==undefined)Object.assign(clip,{[key]:c[key]});
+  for(const key of ['track','startFrame','transitionFrames','scale','x','y','opacity','transition'] as const)if(c[key]!==undefined)Object.assign(clip,{[key]:c[key]});
+  if(c.adjustments!==undefined)clip.adjustments=validateAdjustments(c.adjustments);if(c.crop!==undefined)clip.crop=validateCrop(c.crop);
   return clip;
  });
- const result={ ...fresh(), name: p.name, assets, clips };validateTracks(result);return result;
+ const result:Project={ ...fresh(), name: p.name, width:p.width, height:p.height, assets, clips };if(p.texts!==undefined)result.texts=parseTexts(p.texts,FONT_NAMES);validateTracks(result);return result;
 }
 export function timecode(frame: number) {
  const f = Math.max(0, Math.floor(frame)); return [Math.floor(f / 108000), Math.floor(f / 1800) % 60, Math.floor(f / 30) % 60, f % 30].map(v => String(v).padStart(2, '0')).join(':');

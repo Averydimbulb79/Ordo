@@ -4,32 +4,35 @@ An Android-first video editor, with a shared web build. Local editing, no accoun
 
 [Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
-### v0.3.0: media thumbnails, multitrack and dissolves
+### v0.4.0: creative tools, crop and export settings
 
-- Project media shows a video thumbnail, duration badge and readable filename. Audio and missing media retain clear placeholders.
-- Four tracks: V1 for the main assembly, V2 for overlapping video, and A1/A2 for independent soundtracks. Choose a destination on each media card before adding.
-- V2 defaults to picture-in-picture. Edit controls change a clip's track, start time, scale, position, opacity and volume.
-- Cross-dissolves between adjacent V1 clips, including sound crossfades. Select the outgoing clip, open Edit and choose its transition to the next clip.
-- Shared composition rules for preview/export; splitting, trimming, duplication, undo/redo, project save/reopen/relink and local recovery remain available.
-- Portrait/landscape touch workspace with pinch zoom and horizontal/vertical timeline panning; native Android saving and install-over updates.
+- Dedicated Transitions, Title, Captions, Adjust and Crop buttons on desktop and in the Android dock.
+- 13 transitions between adjacent V1 clips: dissolve, black/white fades, four wipes, left/right slides, left/right pushes and zoom in/out. Duration controls and sound crossfades are included.
+- Timed titles and manual captions with 10 bundled Google Fonts, size, colour, rotation, bold, italic, underline, strikethrough, alignment, position, outline and background. Captions import SRT/VTT and export SRT.
+- 11 picture controls: brightness, contrast, saturation, exposure, highlights, shadows, temperature, tint, sharpen, vignette and fade. Drafts preview live; Apply makes one undoable edit and Cancel restores the original.
+- Crop presets for original, 16:9, 9:16, 1:1, 4:3, 3:4, 4:5 and 21:9; Free size supports corner resizing, moving and numeric coordinates. Optionally match the project canvas to the crop.
+- Export at 480p, 720p, 1080p or 2160p, with 24/25/30/50/60 FPS and compact/standard/high quality, when supported by the device's encoder. The output preserves the canvas orientation.
+- V1/V2 video, A1/A2 sound and T/C title/caption lanes; thumbnails, touch trimming/zoom/panning, project saving/relinking and recovery remain available.
 
-### First edit on your phone
+### Use on your phone
 
-1. Import a short video. Project media opens with confirmation, a thumbnail and duration.
-2. Choose V1, then Add to sequence. Use V2 for an overlay, or A1/A2 for sound. Tap Done.
-3. Tap a timeline clip and open Edit for timing, picture placement, volume or a transition. Swipe vertically in the timeline to reach lower tracks.
-4. Save your .ordo project through Project. Keep the original footage for relinking.
-5. Export and save the finished video; play it in another player to verify sound and picture on your phone.
+1. Import footage, choose V1/V2/A1/A2 on its media card and Add to sequence.
+2. Select a video clip, then use Adjust or Crop. Use Transitions to pick a join between two V1 clips.
+3. Title and Captions create timed text. Tap an existing T/C timeline item to edit it. Swipe vertically in the timeline to reach lower lanes.
+4. Apply commits panel changes; Cancel discards the draft. Save your .ordo project through Project and keep the original footage for relinking.
+5. Export, choose format/resolution/FPS/quality, then save the finished video. Compatibility is checked for the selected settings.
 
-V1 closes gaps automatically; V2/A1/A2 have independent start times and allow gaps. Clips on the same independent track cannot overlap. New clips append to the chosen track at its end or the playhead, whichever is later. A dissolve overlaps two V1 clips, shortening the sequence by that overlap; short clips use a shorter dissolve. Other transition types and keyframe animation are not yet implemented.
+Transitions overlap V1 clips and shorten the sequence accordingly; very short clips use a shorter overlap. V2/A1/A2 have independent timing and allow gaps; clips on the same independent track cannot overlap. New clips append to that track's end or the playhead, whichever is later.
 
-Current export limits remain 1280 × 720 / 30 fps, two minutes and a 256 MB Android save limit. MP4 (H.264/AAC) and WebM (VP8/Opus) depend on device codec support. Keep the app in the foreground during export. Audio is mixed in one-second blocks; the final encoded output is still assembled in memory. Real-phone performance and hardware codecs require device testing.
+The timeline still edits at 30 FPS; output sampling uses the chosen FPS. A higher output FPS does not invent additional motion in a lower-frame-rate source. Two-minute export and 256 MB Android saving limits remain while final encoded output is held in memory. Higher resolution/FPS costs more memory and processing. Keep the app in the foreground during export and test the result on your phone.
 
-Project format v2 preserves the new settings and reads older v1 projects. Older Ordo versions cannot open newly saved v2 projects. Source media and thumbnail images are not embedded in .ordo files. Test APKs use the documented public development signing certificate, with the same application ID and increasing versionCode.
+Project format v3 stores text, transitions, grading, crop and canvas size, and reads older v1/v2 projects. Older Ordo versions cannot open v3 files. Media and thumbnail images are not embedded. The APK uses the same application ID/development signing certificate and an increasing versionCode for install-over updates.
 
-### Feature direction
+### Fonts and next features
 
-The goal is to rival Filmora Mobile and CapCut's traditional editing workflows. Keyframes are the diamond-shaped points that animate values such as position, scale, opacity and volume over time. They, speed curves, text/manual captions, masks, chroma key, more transitions, colour tools and advanced audio mixing remain roadmap targets. Windows work is deferred.
+Roboto, Open Sans, Lato, Montserrat, Poppins, Nunito, Merriweather, Playfair Display, Source Sans 3 and Roboto Mono are bundled with regular/bold/italic variants for offline use. These are a curated Google Fonts selection, not the complete online catalogue. The bundled files cover Latin text; other scripts use device fallback fonts. Font licences ship in FONT-LICENSES.txt.
+
+Keyframes, retiming, additional tracks, masks, chroma key and advanced audio tools remain roadmap targets. Windows work is deferred. No AI functions are included.
 
 ### Development
 
@@ -44,6 +47,7 @@ npx playwright install chromium
 npm run test:browser
 npm run test:mobile
 npm run test:composition
+npm run test:creative
 ```
 
 Browser tests require ffmpeg. Android builds require JDK 21 and Android SDK 36. GitHub Actions tests main, publishes the web build and builds an installable APK. Consult [Actions](https://github.com/Averydimbulb79/Ordo/actions) for current results.

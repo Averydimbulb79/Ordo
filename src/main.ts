@@ -1,3 +1,7 @@
+import { setupCreative } from './creative';
+import { exportDimensions } from './export-settings';
+import type { ExportSettings } from './export-settings';
+import { TRANSITIONS } from './creative-model';
 import { isAndroid, keepAwake, exitAndroid } from './native';
 import { setupMobile } from './mobile';
 import { openDB } from 'idb';
@@ -11,22 +15,22 @@ import type { Format } from './export';
 import { thumbnail, mediaLength } from './thumbnails';
 import './style.css';
 
-const icons: Record<string,string> = {
+const icons: Record<string,string> = {transitions:'M3 4h8v16H3V4Zm10 0h8v16h-8M5 8l4 4-4 4m14-8-4 4 4 4',title:'M4 5h16M12 5v15M8 20h8',captions:'M3 5h18v14H3V5Zm3 5h4m-4 4h4m4-4h4m-4 4h4',adjust:'M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M9 15v6',crop:'M7 3v14h14M3 7h14v14',
  import:'M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5', open:'M3 7h7l2 3h9l-3 10H3V7Zm0 0V4h7l2 3h7v3', save:'M5 3h12l4 4v14H3V3h2Zm2 0v7h10V3M7 21v-7h10v7', undo:'M9 4 3 10l6 6M3 10h10a7 7 0 0 1 7 7', redo:'m15 4 6 6-6 6m6-6H11a7 7 0 0 0-7 7', play:'m8 4 12 8-12 8V4Z', pause:'M8 4v16M16 4v16', split:'M12 3v18M4 7l5 5-5 5m16-10-5 5 5 5', trash:'M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7', fullscreen:'M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5', export:'M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6', back:'m14 6-6 6 6 6', next:'m10 6 6 6-6 6', plus:'M12 4v16M4 12h16', new:'M14 2H5v20h14V7l-5-5Zm0 0v6h5', film:'M3 3h18v18H3V3Zm4 0v18M17 3v18M3 8h4m-4 8h4M17 8h4m-4 8h4', audio:'M9 18V5l11-2v13M9 9l11-2M9 18c0 3-6 4-6 1s6-4 6-1Zm11-2c0 3-6 4-6 1s6-4 6-1Z'
 };
 const svg = (name: string) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(icons[name] ?? icons.film).split(/(?=M)/).map(d=>`<path d="${d}"/>`).join('')}</svg>`;
 const button = (id:string, icon:string, label:string, extra='') => `<button id="${id}" title="${label}" aria-label="${label}" ${extra}>${svg(icon)}<span>${label}</span></button>`;
 const $ = <T extends HTMLElement = HTMLElement>(id:string) => document.getElementById(id) as T;
 $('app').innerHTML = `
-<header class="topbar"><a class="brand" href="./">ordo<span></span></a><span class="version">v0.3.0</span><div class="project-name"><input id="project-name" aria-label="Project name" maxlength="200" value="Untitled sequence"><span id="save-state">Not saved</span></div><button id="help" class="help-button">Quick guide</button>${button('fullscreen','fullscreen','Full screen')}${button('export','export','Export','class="accent"')}</header>
-<nav class="toolbar" aria-label="Project tools">${button('new','new','New')}${button('open','open','Open')}${button('save','save','Save project')}<i></i>${button('import','import','Import media')}<i></i>${button('undo','undo','Undo')}${button('redo','redo','Redo')}<span class="toolbar-note">LOCAL EDITING · 720p / 30 fps</span></nav>
+<header class="topbar"><a class="brand" href="./">ordo<span></span></a><span class="version">v0.4.0</span><div class="project-name"><input id="project-name" aria-label="Project name" maxlength="200" value="Untitled sequence"><span id="save-state">Not saved</span></div><button id="help" class="help-button">Quick guide</button>${button('fullscreen','fullscreen','Full screen')}${button('export','export','Export','class="accent"')}</header>
+<nav class="toolbar" aria-label="Project tools">${button('new','new','New')}${button('open','open','Open')}${button('save','save','Save project')}<i></i>${button('import','import','Import media')}<i></i>${button('undo','undo','Undo')}${button('redo','redo','Redo')}<div class="creative-tools">${button('tool-transitions','transitions','Transitions')}${button('tool-title','title','Title')}${button('tool-captions','captions','Captions')}${button('tool-adjust','adjust','Adjust')}${button('tool-crop','crop','Crop')}</div><span class="toolbar-note">LOCAL EDITING · 720p / 30 fps</span></nav>
 <main class="workspace"><section class="panel media-panel"><div class="panel-heading"><h2>Project media</h2><span id="media-count">0 items</span></div><p id="import-feedback" class="import-feedback" role="status" aria-live="polite" aria-atomic="true" hidden></p><div id="media-list" class="media-list"></div><p class="panel-foot">Files stay on your device.</p></section>
-<section class="panel monitor"><div class="panel-heading"><h2>Program</h2><span>1280 × 720 · 30 fps</span></div><div class="screen"><canvas id="preview" width="1280" height="720" aria-label="Sequence preview"></canvas><div id="preview-empty" class="preview-empty">${svg('film')}<h2 id="empty-heading">Your story starts here</h2><p id="empty-description">Import media, then add clips to the timeline.</p><button id="import-empty" class="accent">Import media</button></div></div><div class="transport"><span id="current-time" class="timecode">00:00:00:00</span><div>${button('previous','back','Previous frame')}${button('play','play','Play / pause')}${button('next','next','Next frame')}</div><span id="total-time" class="timecode dim">00:00:00:00</span></div><input id="scrub" class="scrubber" type="range" min="0" max="0" value="0" aria-label="Sequence playhead"></section>
+<section class="panel monitor"><div class="panel-heading"><h2>Program</h2><span id="program-settings">1280 × 720 · 30 fps</span></div><div class="screen"><canvas id="preview" width="1280" height="720" aria-label="Sequence preview"></canvas><div id="preview-empty" class="preview-empty">${svg('film')}<h2 id="empty-heading">Your story starts here</h2><p id="empty-description">Import media, then add clips to the timeline.</p><button id="import-empty" class="accent">Import media</button></div></div><div class="transport"><span id="current-time" class="timecode">00:00:00:00</span><div>${button('previous','back','Previous frame')}${button('play','play','Play / pause')}${button('next','next','Next frame')}</div><span id="total-time" class="timecode dim">00:00:00:00</span></div><input id="scrub" class="scrubber" type="range" min="0" max="0" value="0" aria-label="Sequence playhead"></section>
 <section class="panel inspector"><div class="panel-heading"><h2>Clip properties</h2></div><div id="inspector"></div></section>
 <section class="panel timeline-panel"><div class="panel-heading timeline-heading"><div><h2>Multitrack timeline</h2><span>V1 assembly · V2 overlay · A1 / A2 audio</span></div><div class="timeline-tools">${button('split','split','Split')}${button('delete','trash','Delete')}${button('duplicate','plus','Duplicate')}<label class="zoom-label">Zoom<input id="zoom" type="range" min="12" max="120" value="48" aria-label="Timeline zoom"></label><button id="fit">Fit</button></div></div><div class="timeline-scroll" id="timeline-scroll"><div class="timeline-content" id="timeline-content"><div id="ruler" class="ruler"></div><div id="track-labels"></div><div id="clips" class="clips"></div><div id="playhead" class="playhead"><span></span></div></div></div><div class="timeline-footer"><span id="clip-count">0 clips</span><span>Space Play · S Split · Delete Remove · Ctrl+Z Undo</span></div></section></main>
 <footer class="statusbar"><span id="status" role="status">Ready. Import video or audio to begin.</span><button id="recover" hidden>Restore autosave</button><a href="https://github.com/Averydimbulb79/Ordo" target="_blank" rel="noopener">GitHub ↗</a></footer>
 <input id="media-file" type="file" accept="video/*,audio/*,.mkv,.mov,.wav,.mp3,.mp4,.webm" multiple hidden><input id="project-file" type="file" accept=".ordo,.json,application/json,application/octet-stream" hidden><input id="relink-file" type="file" accept="video/*,audio/*,.mkv,.mov,.wav,.mp3,.mp4,.webm" hidden>
-<dialog id="export-dialog"><div class="dialog-head"><h2>Export sequence</h2><button id="close-export" aria-label="Close export">×</button></div><p>Render the edited timeline locally at 1280 × 720, 30 fps.</p><label>Format<select id="format"><option value="mp4">MP4 · H.264 / AAC</option><option value="webm">WebM · VP8 / Opus</option></select></label><p id="format-status">Checking encoders…</p><p class="note">Initial export limit: 2 minutes. Output is assembled in memory; keep this tab open. Muted clips stay muted.</p><progress id="export-progress" max="1" value="0"></progress><div class="dialog-actions"><button id="cancel-export" disabled>Cancel export</button><button id="start-export" class="accent">Export video</button></div></dialog>
+<dialog id="export-dialog"><div class="dialog-head"><h2>Export sequence</h2><button id="close-export" aria-label="Close export">×</button></div><p id="export-description">Render your edited timeline locally.</p><label>Format<select id="format"><option value="mp4">MP4 · H.264 / AAC</option><option value="webm">WebM · VP8 / Opus</option></select></label><div class="form-grid"><label>Resolution<select id="export-resolution"><option value="480">480p</option><option value="720" selected>720p</option><option value="1080">1080p · Full HD</option><option value="2160">2160p · 4K</option></select></label><label>Frame rate<select id="export-fps"><option>24</option><option>25</option><option selected>30</option><option>50</option><option>60</option></select></label><label>Quality<select id="export-quality"><option value="compact">Compact</option><option value="standard" selected>Standard</option><option value="high">High</option></select></label></div><p id="format-status">Checking encoders…</p><p class="note">Initial export limit: 2 minutes. Output is assembled in memory; keep this tab open. Muted clips stay muted.</p><progress id="export-progress" max="1" value="0"></progress><div class="dialog-actions"><button id="cancel-export" disabled>Cancel export</button><button id="start-export" class="accent">Export video</button></div></dialog>
 <dialog id="help-dialog"><div class="dialog-head"><h2>Start your first edit</h2><button id="close-help" aria-label="Close guide">×</button></div><ol><li>Import video or audio. Choose a destination track, then Add to sequence on a media card. V2 starts as picture-in-picture; A1/A2 carry sound.</li><li>Click a timeline clip to select it. Reorder V1 clips by dragging. Use Clip settings for track, start time and picture placement.</li><li>Click the ruler to move the playhead. Press Space to play.</li><li>Press S to split the selected clip at the playhead.</li><li>Set source In and Out points in Clip properties, then Apply trim.</li><li>Save a .ordo project. Keep the original media; relink it after reopening.</li><li>Export up to 2 minutes as MP4 or WebM, depending on browser support.</li></ol><p>Four tracks support layered video and independent sound. Select a main-track clip in Edit to add a cross dissolve to the next clip. Keyframes, titles and more effects come later.</p></dialog>`;
 
 let project = fresh(), selected = '', dirty = false, busy = false, scale = 48, relinkId = '', saved = JSON.stringify(project);
@@ -48,8 +52,8 @@ function updateTime(frame:number) {
 function updateButtons() {
  const set = (id:string,disabled:boolean) => { $<HTMLButtonElement>(id).disabled=disabled; };
  set('undo',busy||!history.canUndo);set('redo',busy||!history.canRedo);set('split',busy||!current());set('delete',busy||!current());set('duplicate',busy||!current());
- for(const id of ['play','previous','next','export'])set(id,busy||!project.clips.length);
- for(const id of ['new','open','import','import-empty','save'])set(id,busy);
+ for(const id of ['play','previous','next','export'])set(id,busy||!duration(project));
+ for(const id of ['new','open','import','import-empty','save','tool-transitions','tool-title','tool-captions','tool-adjust','tool-crop'])set(id,busy);
  $('play').innerHTML=svg(preview?.playing?'pause':'play')+'<span>Play / pause</span>';
 }
 function markDirty() { dirty=JSON.stringify(project)!==saved; $('save-state').textContent=dirty?'Unsaved changes':'Project saved'; }
@@ -58,9 +62,10 @@ function queueAutosave() {
  autosaveTimer=setTimeout(async()=>{try{const db=await dbPromise;await db.put('recovery',JSON.stringify(project),'latest');say('Recovery snapshot saved locally. Save project to keep a portable copy.');}catch{say('Autosave storage unavailable. Use Save project regularly.');}},800);
 }
 function apply(next:Project, selection=selected) {
- validateTracks(next);history.push(project);project=next;selected=selection;markDirty();preview.setProject(project,files);render();void preview.seek(preview.frame);queueAutosave();
+ next=parseProject(JSON.stringify(next));validateTracks(next);history.push(project);project=next;selected=selection;markDirty();preview.setProject(project,files);render();void preview.seek(preview.frame);queueAutosave();
 }
 function render() {
+ const canvas=$<HTMLCanvasElement>("preview");if(canvas.width!==project.width||canvas.height!==project.height){canvas.width=project.width;canvas.height=project.height;}$("program-settings").textContent=`${project.width} × ${project.height} · 30 fps`;
  $<HTMLInputElement>('project-name').value=project.name;
  $('media-count').textContent=`${project.assets.length} ${project.assets.length===1?'item':'items'}`;
  const extraImport=document.getElementById('mobile-import');if(extraImport){extraImport.textContent=project.assets.length?'Import more':'Import media';extraImport.classList.toggle('accent',!project.assets.length);}
@@ -102,8 +107,8 @@ function render() {
  $('ruler').replaceChildren();const step=scale<24?10:scale<48?5:1;
  for(let second=0;second<=Math.max(total/30,10);second+=step){const tick=document.createElement('span');tick.style.left=`${56+second*scale}px`;tick.textContent=`${Math.floor(second/60)}:${String(second%60).padStart(2,'0')}`;$('ruler').append(tick);}
  $('clips').replaceChildren();$('track-labels').replaceChildren();
- $('timeline-content').style.minHeight='395px';$('clips').style.height='360px';
- for(const [row,track] of TRACKS.entries()){const label=document.createElement('div');label.className='track-label';label.style.top=`${row*88}px`;label.textContent=track.toUpperCase();label.title=trackName(track);$('track-labels').append(label);}
+ $('timeline-content').style.minHeight='570px';$('clips').style.height='535px';
+ for(const [row,track] of [...TRACKS,'T','C'].entries()){const label=document.createElement('div');label.className='track-label';label.style.top=`${row*88}px`;label.textContent=track.toUpperCase();label.title=track==='T'?'Titles':track==='C'?'Captions':trackName(track as Track);$('track-labels').append(label);}
  for(const entry of placements(project)){
   const {clip,start,track}=entry;
   const asset=assetFor(clip.assetId),node=document.createElement('button');node.className=`clip ${asset.kind} ${selected===clip.id?'selected':''} ${files.has(asset.id)?'':'missing'}`;node.draggable=!busy;node.disabled=busy;node.dataset.id=clip.id;node.dataset.track=track;node.style.top=`${10+TRACKS.indexOf(track)*88}px`;
@@ -117,9 +122,10 @@ function render() {
   node.ondrop=e=>{e.preventDefault();if(busy)return;const id=e.dataTransfer?.getData('text/ordo-clip');if(!id||id===clip.id)return;if(track!=='v1'||trackOf(project.clips.find(c=>c.id===id)!)!=='v1'){say('Use Clip settings to change the track and start time.');return;}const p=clone(project),from=p.clips.findIndex(c=>c.id===id);if(from<0)return;const [moved]=p.clips.splice(from,1);const target=p.clips.findIndex(c=>c.id===clip.id);p.clips.splice(target,0,moved);apply(p,id);};
   $('clips').append(node);
   const dissolve=transitionLength(project,clip);
-  if(dissolve){const join=document.createElement('button');join.className='transition-marker';join.style.left=`${56+(entry.end-dissolve)/30*scale}px`;join.style.width=`${Math.max(24,dissolve/30*scale)}px`;join.textContent='Dissolve';join.title=`Cross dissolve · ${(dissolve/30).toFixed(2)} s`;join.setAttribute('aria-label','Edit cross dissolve');join.onclick=()=>{selected=clip.id;renderSelection();if(document.body.classList.contains('mobile-ui'))mobile.showSheet('edit');};$('clips').append(join);}
+  if(dissolve){const join=document.createElement('button');join.className='transition-marker';join.style.left=`${56+(entry.end-dissolve)/30*scale}px`;join.style.width=`${Math.max(24,dissolve/30*scale)}px`;join.textContent=TRANSITIONS.find(t=>t[0]===(clip.transition??'dissolve'))![1];join.title=`${join.textContent} · ${(dissolve/30).toFixed(2)} s`;join.setAttribute('aria-label','Edit transition');join.onclick=()=>{selected=clip.id;renderSelection();creative.open('transitions');};$('clips').append(join);}
 
  }
+ for(const text of project.texts??[]){const node=document.createElement('button');node.className='text-clip';node.dataset.textId=text.id;node.style.left=`${56+text.startFrame/30*scale}px`;node.style.top=`${10+(text.kind==='title'?4:5)*88}px`;node.style.width=`${Math.max(30,text.frames/30*scale)}px`;node.textContent=text.text;node.title=`${text.kind}: ${text.text}`;node.disabled=busy;node.onclick=()=>{void preview.seek(text.startFrame);creative.open(text.kind==='title'?'title':'captions',text.id);};$('clips').append(node);}
  renderSelection();updateTime(Math.min(preview.frame,Math.max(0,total-1)));updateButtons();
 }
 function renderSelection(){
@@ -149,15 +155,10 @@ function renderTrackSettings(box:HTMLElement,id:string){
  $('apply-placement').onclick=()=>{try{
   const p=clone(project),c=p.clips.find(c=>c.id===id)!,track=$<HTMLSelectElement>('clip-track').value as Track,start=Number($<HTMLInputElement>('clip-start').value);
   if(!Number.isFinite(start)||start<0||start>86400)throw new Error('Set a timeline start within 24 hours.');
-  c.track=track;if(track==='v1'){delete c.startFrame;}else{c.startFrame=Math.round(start*30);delete c.transitionFrames;}
+  c.track=track;if(track==='v1'){delete c.startFrame;}else{c.startFrame=Math.round(start*30);delete c.transitionFrames;delete c.transition;}
   apply(p,id);
  }catch(e){error(e);}};
- if(entry.track==='v1'){
-  const controls=document.createElement('div');controls.innerHTML=`<div class="property-caption">TRANSITION TO NEXT CLIP</div><label>Join<select id="clip-transition"><option value="0">Cut · no transition</option><option value="8">Cross dissolve · 0.27 s</option><option value="15">Cross dissolve · 0.5 s</option><option value="30">Cross dissolve · 1 s</option></select></label><p class="note">Dissolves overlap the two clips and crossfade their sound. The sequence becomes shorter by the overlap. Very short clips use a shorter dissolve.</p>`;box.append(controls);
-  const select=$<HTMLSelectElement>('clip-transition');select.value=String(clip.transitionFrames??0);
-  const main=project.clips.filter(c=>trackOf(c)==='v1');select.disabled=busy||main.at(-1)?.id===id;
-  select.onchange=()=>{const p=clone(project);p.clips.find(c=>c.id===id)!.transitionFrames=Number(select.value);apply(p,id);};
- }
+ if(entry.track==='v1'){const button=document.createElement('button');button.id='clip-transition-button';button.className='wide';button.textContent='Transition to next clip…';button.onclick=()=>creative.open('transitions');box.append(button);}
  if((entry.track==='v1'||entry.track==='v2')&&assetFor(clip.assetId).kind==='video'){
   const controls=document.createElement('div');controls.innerHTML='<div class="property-caption">PICTURE</div>';
   for(const [key,label,min,max,value] of [['scale','Scale (%)',10,200,(clip.scale??1)*100],['x','Horizontal centre (%)',0,100,(clip.x??.5)*100],['y','Vertical centre (%)',0,100,(clip.y??.5)*100],['opacity','Opacity (%)',0,100,(clip.opacity??1)*100]] as const){
@@ -235,26 +236,27 @@ $<HTMLInputElement>('relink-file').onchange=async()=>{
  const input=$<HTMLInputElement>('relink-file'),file=input.files?.[0],id=relinkId;input.value='';if(!file||busy)return;
  try{const original=assetFor(id);if(!original)return;if(file.name!==original.name||file.size!==original.size)throw new Error('Choose the original file with the same name and size.');setBusy(true);const a=await inspect(file);if(Math.abs(a.duration-original.duration)>1/30||a.kind!==original.kind||a.width!==original.width||a.height!==original.height)throw new Error('This media does not match the saved source.');const previous=files.get(id);if(previous)URL.revokeObjectURL(previous.url);files.set(id,{file,url:URL.createObjectURL(file)});say('Media relinked.');}catch(e){error(e);}finally{setBusy(false);void preview.seek(preview.frame);}
 };
+function exportSettings():ExportSettings{return{resolution:Number($<HTMLSelectElement>("export-resolution").value),fps:Number($<HTMLSelectElement>("export-fps").value),quality:$<HTMLSelectElement>("export-quality").value as ExportSettings["quality"]};}
 async function checkFormat(){
  const serial=++checkSerial,format=$<HTMLSelectElement>('format').value as Format;
  $('format-status').textContent='Checking browser encoders…';$<HTMLButtonElement>('start-export').disabled=true;
  // Every source may contain audio, so preflight conservatively checks both codecs.
- const ok=await supported(format,project.clips.some(c=>c.volume>0));if(serial!==checkSerial)return;
+ const settings=exportSettings(),dimensions=exportDimensions(project,settings);$("export-description").textContent=`${dimensions.width} × ${dimensions.height} · ${dimensions.fps} fps · ${(dimensions.bitrate/1_000_000).toFixed(1)} Mbps`;const ok=await supported(format,project.clips.some(c=>c.volume>0),settings,project);if(serial!==checkSerial)return;
  $('format-status').textContent=ok?`${format.toUpperCase()} encoder checks passed. Source decoding will be checked during export.`:`${format.toUpperCase()} is unavailable here. Try the other format.`;
- $<HTMLButtonElement>('start-export').disabled=!ok||busy||!project.clips.length||duration(project)>LIMIT_SECONDS*30;
+ $<HTMLButtonElement>('start-export').disabled=!ok||busy||!duration(project)||duration(project)>LIMIT_SECONDS*30;
  if(duration(project)>LIMIT_SECONDS*30)$('format-status').textContent='Shorten the sequence to 2 minutes or less for this initial export release.';
 }
 $('export').onclick=()=>{preview.pause();$<HTMLProgressElement>('export-progress').value=0;$<HTMLDialogElement>('export-dialog').showModal();void checkFormat();};
-$('format').onchange=()=>void checkFormat();
+for(const id of ['format','export-resolution','export-fps','export-quality'])$(id).onchange=()=>void checkFormat();
 $('close-export').onclick=()=>{if(!controller)$<HTMLDialogElement>('export-dialog').close();};
 $('export-dialog').addEventListener('cancel',e=>{if(controller)e.preventDefault();});
 $('cancel-export').onclick=()=>{controller?.abort();$('format-status').textContent='Cancelling…';};
 $('start-export').onclick=async()=>{
- if(busy)return;const format=$<HTMLSelectElement>('format').value as Format;controller=new AbortController();setBusy(true);void keepAwake(true).catch(()=>{});
- $<HTMLButtonElement>('start-export').disabled=true;$<HTMLButtonElement>('cancel-export').disabled=false;$<HTMLSelectElement>('format').disabled=true;$<HTMLButtonElement>('close-export').disabled=true;
- try{const blob=await exportSequence(clone(project),files,format,controller.signal,(n,phase)=>{$<HTMLProgressElement>('export-progress').value=n;$('format-status').textContent=`${phase} · ${Math.round(n*100)}%`;});$('format-status').textContent=isAndroid?'Render complete. Choose where to save your video…':'Render complete. Preparing download…';const outcome=await download(blob,`${project.name.replace(/[^\p{L}\p{N} _-]/gu,'').trim()||'Ordo'}.${format}`);$('format-status').textContent=outcome==='saved'?'Video saved to your chosen location.':outcome==='cancelled'?'Saving cancelled. Export again to save a copy.':'Export complete. Download requested.';say($('format-status').textContent!);}
+ if(busy)return;const format=$<HTMLSelectElement>('format').value as Format,settings=exportSettings(),dimensions=exportDimensions(project,settings);if(isAndroid&&(dimensions.bitrate+128000)*duration(project)/30/8>250_000_000){$('format-status').textContent='Estimated file size exceeds the Android save limit. Choose a lower resolution or quality, or shorten the edit.';return;}controller=new AbortController();setBusy(true);void keepAwake(true).catch(()=>{});
+ $<HTMLButtonElement>('start-export').disabled=true;$<HTMLButtonElement>('cancel-export').disabled=false;for(const id of ['format','export-resolution','export-fps','export-quality'])$<HTMLSelectElement>(id).disabled=true;$<HTMLButtonElement>('close-export').disabled=true;
+ try{const blob=await exportSequence(clone(project),files,format,controller.signal,(n,phase)=>{$<HTMLProgressElement>('export-progress').value=n;$('format-status').textContent=`${phase} · ${Math.round(n*100)}%`;},settings);$('format-status').textContent=isAndroid?'Render complete. Choose where to save your video…':'Render complete. Preparing download…';const outcome=await download(blob,`${project.name.replace(/[^\p{L}\p{N} _-]/gu,'').trim()||'Ordo'}.${format}`);$('format-status').textContent=outcome==='saved'?'Video saved to your chosen location.':outcome==='cancelled'?'Saving cancelled. Export again to save a copy.':'Export complete. Download requested.';say($('format-status').textContent!);}
  catch(e){$('format-status').textContent=e instanceof Error?e.message:String(e);error(e);}
- finally{controller=null;void keepAwake(false).catch(()=>{});setBusy(false);$<HTMLButtonElement>('cancel-export').disabled=true;$<HTMLSelectElement>('format').disabled=false;$<HTMLButtonElement>('close-export').disabled=false;$<HTMLButtonElement>('start-export').disabled=false;}
+ finally{controller=null;void keepAwake(false).catch(()=>{});setBusy(false);$<HTMLButtonElement>('cancel-export').disabled=true;for(const id of ['format','export-resolution','export-fps','export-quality'])$<HTMLSelectElement>(id).disabled=false;$<HTMLButtonElement>('close-export').disabled=false;$<HTMLButtonElement>('start-export').disabled=false;}
 };
 $('recover').onclick=()=>{if(!busy&&recovery&&confirmDiscard()){resetTo(clone(recovery));saved='';markDirty();$('recover').hidden=true;say('Recovery restored. Relink media and save a project copy.');}};
 void dbPromise.then(async db=>{const text=await db.get('recovery','latest');if(text){try{recovery=parseProject(text);$('recover').hidden=false;}catch{say('An older recovery snapshot could not be opened.');}}}).catch(()=>say('Local recovery storage unavailable. Save project files regularly.'));
@@ -282,6 +284,8 @@ const mobile = setupMobile({
  trimRange:id=>{const c=project.clips.find(c=>c.id===id);return c?{inFrame:c.inFrame,outFrame:c.inFrame+c.frames,sourceFrames:sourceFrames(assetFor(c.assetId))}:null;},
  commitTrim:(id,inFrame,outFrame)=>{if(busy)return;try{apply(trim(project,id,inFrame,outFrame),id);}catch(e){error(e);}}
 });
+const creative=setupCreative({project:()=>project,selected:current,frame:()=>preview.frame,busy:()=>busy,commit:p=>apply(p),draft:p=>preview.setDraft(parseProject(JSON.stringify(p))),restore:()=>{preview.setDraft(project);},media:id=>files.get(id),beforeOpen:()=>{mobile.closeSheet();preview.pause();}});
+for(const kind of ['transitions','title','captions','adjust','crop'])$('tool-'+kind).onclick=()=>creative.open(kind);
 if(isAndroid){document.body.classList.add('android-app');$('fullscreen').hidden=true;}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)preview.pause();});
 window.addEventListener('ordo-back',()=>{

@@ -29,7 +29,7 @@ try{
  await page.locator('.media-card img').first().waitFor();assert.equal(await page.locator('.media-duration').first().innerText(),'0:03');
  const add=async(card,track)=>{await page.locator('.media-card').nth(card).locator('select').selectOption(track);await page.locator('.media-card').nth(card).getByRole('button',{name:'Add to sequence'}).click();};
  await add(0,'v1');await add(1,'v1');
- await page.locator('.clip').first().click();await page.locator('#clip-transition').selectOption('30');
+ await page.locator('.clip').first().click();await page.locator('#tool-transitions').click();await page.locator('[data-transition="dissolve"]').click();await page.locator('#transition-duration').fill('1');await page.locator('.creative-apply').click();
  assert.equal(await page.locator('#total-time').innerText(),'00:00:05:00');assert.equal(await page.locator('.transition-marker').count(),1);
  // Keep the main track silent so the exported soundtrack must come from A1 and A2.
  for(const index of [0,1]){await page.locator('.clip').nth(index).click();await page.locator('#volume').evaluate(el=>{el.value='0';el.dispatchEvent(new Event('change'));});}
@@ -45,7 +45,7 @@ try{
  await seek(75);values=await pixels();assert.ok(values.centre[0]>80&&values.centre[2]>80,`Preview dissolve is purple: ${JSON.stringify(values)}`);
  if(process.env.ORDO_COMPOSITION_SCREENSHOT)await page.screenshot({path:process.env.ORDO_COMPOSITION_SCREENSHOT});
  const saved=page.waitForEvent('download');await page.locator('#save').click();const projectFile=join(folder,'layers.ordo');await(await saved).saveAs(projectFile);
- const json=JSON.parse(await readFile(projectFile,'utf8'));assert.equal(json.version,2);assert.equal(json.clips.filter(c=>c.track==='a1'||c.track==='a2').length,2);
+ const json=JSON.parse(await readFile(projectFile,'utf8'));assert.equal(json.version,3);assert.equal(json.clips.filter(c=>c.track==='a1'||c.track==='a2').length,2);
  await page.locator('#export').click();await page.locator('#format').selectOption('webm');await page.waitForFunction(()=>!document.querySelector('#start-export').disabled);
  const exported=page.waitForEvent('download',{timeout:120000});await page.locator('#start-export').click();const output=join(folder,'layers.webm');await(await exported).saveAs(output);
  const info=JSON.parse(execFileSync('ffprobe',['-v','error','-count_frames','-show_entries','stream=codec_type,nb_read_frames','-of','json',output],{encoding:'utf8'}));assert.equal(info.streams.find(s=>s.codec_type==='video').nb_read_frames,'150');

@@ -1,5 +1,15 @@
 # Ordo for Android
 
+## v0.4.0: creative panels, crop and output settings
+
+Android has a second dock row for Transitions, Title, Captions, Crop and Adjust; landscape places all ten dock actions in one row. Creative panels open as bottom sheets in portrait, with live drafts, explicit Apply/Cancel and native Back cancellation. The original application identity, icon and signing certificate are retained.
+
+The shared Canvas compositor implements thirteen V1 transitions, timed styled text, cropped source regions and eleven grading controls. Colour processing uses conventional WebGL with a CPU fallback; it is not AI. Fonts are bundled via pinned Fontsource packages, so rendering the supported Latin font styles does not require Google network calls. Source media is not uploaded.
+
+Export choices are 480/720/1080/2160p, 24/25/30/50/60 FPS and three quality levels. The chosen short-edge resolution follows the canvas orientation; codec support is checked with those dimensions/FPS. Timeline events remain at 30 FPS and export samples their timestamps at the output FPS. Audio uses integer sample blocks for all offered frame rates. Final encoded output is still in memory; the two-minute and 256 MB save limits remain, with an estimate check for oversized Android exports. 4K/60 and every phone/codec combination are not certified by desktop tests.
+
+Crop can retain the canvas aspect or optionally match it to the selected source region. Free-size corner dragging and numeric coordinates are supported. Crop, grading, transition type, title/caption timing/styles and canvas dimensions persist in project format v3. Earlier v1/v2 files migrate when saved; older app versions cannot read v3. Caption imports support SRT and VTT; SRT exports contain text/timing, while the styled captions are burned into video output.
+
 ## v0.3.0: media and multitrack
 
 Media cards show a decoded video thumbnail, source duration and filename. Thumbnails are small, serially generated, cached against the live File and recreated after relinking. A failed thumbnail does not invalidate otherwise usable media.
@@ -68,4 +78,4 @@ ORDO_VERSION_CODE supplies the monotonically increasing test build number in Git
 
 ## Architecture and next engine decision
 
-Current import/export uses Mediabunny/WebCodecs with Canvas 2D and Web Audio, shared with the browser. Capacitor supplies Android integration, not a faster video engine. If phone benchmarks expose unacceptable export performance or codec coverage, evaluate an Android Media3 Transformer bridge against the same project model before changing the processing path. No native render engine is integrated in v0.3.0.
+Current import/export uses Mediabunny/WebCodecs with Canvas 2D and Web Audio, shared with the browser. Capacitor supplies Android integration, not a faster video engine. If phone benchmarks expose unacceptable export performance or codec coverage, evaluate an Android Media3 Transformer bridge against the same project model before changing the processing path. No native render engine is integrated in v0.4.0.

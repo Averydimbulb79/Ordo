@@ -46,7 +46,11 @@ Acceptance: build APK and lint; keep web editing tests passing; validate mobile 
 
 Remaining in the 0.3 series: additional overlay and soundtrack tracks, photo import, aspect ratio presets, timeline filmstrips, snapping and direct preview transforms. Preview and export must use the same timeline/composition rules. Add project media collection so ongoing edits do not rely only on transient file access.
 
-## 0.4: timing and animation
+## 0.4.0: creative and delivery tools delivered
+
+Dedicated panels now implement 13 transitions, styled titles/manual captions with 10 offline Google Fonts, SRT/VTT import/SRT export, 11 grading controls, ratio/free crop and selectable output resolution/FPS/quality. Project v3 persists these settings and reads v1/v2 files. This release does not implement keyframe animation or speed controls. Source/frame memory and real-phone performance remain areas for further work.
+
+## Next: timing and animation
 
 Speed/freeze/reverse, keyframes and easing. Diamond-shaped keyframes will animate position, scale, opacity and volume, with add/remove, previous/next and easing controls; preview and export must evaluate the same values. Keep clip duration, audio sync and undo correct when retiming. Variable speed follows constant-speed validation.
 

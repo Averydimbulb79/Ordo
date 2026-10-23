@@ -55,3 +55,10 @@ Primary references: https://capacitorjs.com/docs/android ; https://capacitorjs.c
 ## Shared composition: 0.3.0
 
 Repository-owned model.ts computes four-track placements and transition weights; composition.ts paints the same layers/transforms for preview and export. Preview uses browser media elements for the active layers. Mediabunny CanvasSink supplies export frames and cached media-card thumbnails; AudioBufferSink plus Web Audio mix independent audio in one-second blocks. This is a first multitrack implementation, with real-device sync/performance still to validate. No keyframe automation engine or additional transition catalogue is integrated yet.
+
+
+## Creative pipeline: 0.4.0
+
+creative-model.ts validates text/transition/grading data; creative.ts supplies dedicated panels; transitions.ts, text-renderer.ts and adjustments.ts provide shared rendering; crop.ts supplies normalized source cropping; export-settings.ts resolves output dimensions/bitrate. All operate locally. WebGL grading is conventional image processing with a CPU fallback. Ten pinned @fontsource packages provide Google Fonts and their real regular/bold/italic Latin styles. Their licences are retained in public/FONT-LICENSES.txt and copied into web/APK assets by Vite.
+
+Official font references: https://developers.google.com/fonts/docs/css2 ; https://github.com/google/fonts .

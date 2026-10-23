@@ -1,3 +1,4 @@
+import { loadProjectFonts } from './fonts';
 import { duration, layersAt } from './model';
 import type { Project } from './model';
 import type { LocalMedia } from './media';
@@ -10,6 +11,7 @@ export class Preview {
  constructor(private canvas:HTMLCanvasElement,private onTime:(f:number)=>void,private onState:()=>void,private onError:(s:string)=>void){}
  setProject(project:Project,files:Map<string,LocalMedia>){this.pause();this.project=project;this.files=files;for(const media of this.players.values()){media.removeAttribute('src');media.load();}this.players.clear();}
  pause(){this.token++;this.playing=false;for(const media of this.players.values())media.pause();cancelAnimationFrame(this.request);this.onState();}
+ setDraft(project:Project){this.project=project;if(this.canvas.width!==project.width||this.canvas.height!==project.height){this.canvas.width=project.width;this.canvas.height=project.height;}void this.seek(this.frame);}
  private paint(){const images=new Map<string,CanvasImageSource>();for(const [id,media] of this.players)if(media.readyState>=2)images.set(id,media);paintComposition(this.canvas.getContext('2d')!,this.project,this.frame,images);}
  async seek(frame:number,resume=false){
   this.pause();const token=this.token;this.frame=Math.min(Math.max(0,Math.round(frame)),Math.max(0,duration(this.project)-1));this.onTime(this.frame);
@@ -17,6 +19,7 @@ export class Preview {
   const keep=new Set(layers.map(e=>e.clip.id));
   for(const [id,media] of this.players)if(!keep.has(id)){media.removeAttribute('src');media.load();this.players.delete(id);}
   try{
+   await loadProjectFonts(this.project);if(token!==this.token)return;
    await Promise.all(layers.map(async entry=>{
     const local=this.files.get(entry.clip.assetId);if(!local)throw new Error('Media is missing. Use Relink in Project media.');
     let media=this.players.get(entry.clip.id);
