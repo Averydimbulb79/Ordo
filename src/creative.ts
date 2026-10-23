@@ -1,3 +1,4 @@
+import { protectTouchRange } from './touch-range';
 import { setTransitions, setAdjustments } from './bulk';
 import { clone, placements, trackOf } from './model';
 import type { Project, Clip } from './model';
@@ -56,8 +57,8 @@ export function setupCreative(hooks:Hooks){
  function adjust(){
   const base=hooks.project(),clip=hooks.selected(),panel=shell('Adjust',true);
   if(!clip||base.assets.find(a=>a.id===clip.assetId)?.kind!=='video'||trackOf(clip).startsWith('a')){panel.body.textContent='Select a video clip on V1 or V2 to adjust its picture.';panel.$<HTMLButtonElement>('.creative-apply').disabled=true;panel.open();return;}
-  const caption=document.createElement('p');caption.className='note';caption.textContent=sourceName(base,clip);panel.body.append(caption);
-  for(const [key,name,min,max,neutral] of ADJUSTMENTS){const label=document.createElement('label');label.className='adjust-row';label.htmlFor=`adjust-${key}`;label.textContent=name;const value=document.createElement('output');value.id=`value-${key}`;const input=document.createElement('input');input.id=`adjust-${key}`;input.type='range';input.min=String(min);input.max=String(max);input.step=key==='exposure'?'.05':'1';input.value=String(clip.adjustments?.[key]??neutral);value.textContent=input.value;input.oninput=()=>{value.textContent=input.value;panel.preview(read);};label.append(value,input);panel.body.append(label);}
+  const caption=document.createElement('p');caption.className='note';caption.textContent=sourceName(base,clip)+' · Drag sideways to adjust; swipe vertically to scroll.';panel.body.append(caption);
+  for(const [key,name,min,max,neutral] of ADJUSTMENTS){const label=document.createElement('label');label.className='adjust-row';label.htmlFor=`adjust-${key}`;label.textContent=name;const value=document.createElement('output');value.id=`value-${key}`;const input=document.createElement('input');input.id=`adjust-${key}`;input.type='range';input.min=String(min);input.max=String(max);input.step=key==='exposure'?'.05':'1';input.value=String(clip.adjustments?.[key]??neutral);value.textContent=input.value;protectTouchRange(input);input.oninput=()=>{value.textContent=input.value;panel.preview(read);};label.append(value,input);panel.body.append(label);}
   const scope=document.createElement('label');scope.className='bulk-option';scope.innerHTML='<input id="adjust-all" type="checkbox"> Apply to all video clips';panel.body.prepend(scope);
   const note=document.createElement('p');note.className='note';note.textContent='When checked, replaces existing adjustments on V1 and V2. Crop and placement stay as set.';scope.after(note);
   const all=panel.$<HTMLInputElement>('#adjust-all');

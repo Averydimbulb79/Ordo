@@ -4,13 +4,22 @@ An Android-first video editor, with a shared web build. Local editing, no accoun
 
 [Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
+### v0.4.2: touch precision, compact tracks and fullscreen preview
+
+- Touch adjustment sliders no longer jump on a tap. Vertical swipes scroll the panel without changing grades; deliberate horizontal drags adjust relative to the starting value at finer sensitivity. Mouse and keyboard controls remain available.
+- All six timeline lanes (V1, V2, A1, A2, T and C) use 52 px rows instead of 88 px. Clips keep 44 px touch targets and visible trim handles.
+- A fullscreen icon sits at the bottom right of the preview picture. Fullscreen keeps playback, scrubbing and the Adjusted checkbox available. Exit with the icon, Escape or Android Back without losing your edit.
+- Android fullscreen hides system bars and enables full sensor rotation, then restores the previous orientation and system-bar settings on exit. Web fullscreen follows browser/device rotation support and falls back to a window-filling preview when the Fullscreen API is unavailable.
+- Preview comparison is simply an Adjusted checkbox: checked shows grading, unchecked bypasses it. This affects preview only; exports retain adjustments.
+- MP4 export now offers H.265 (HEVC) / AAC alongside H.264 / AAC and WebM VP8 / Opus. Encoder checks use the chosen resolution, FPS and bitrate; unsupported combinations are blocked with an explanation. H.265 remains device-dependent, and files retain the standard .mp4 extension. There is no silent codec substitution.
+
 ### v0.4.1: bulk editing and preview comparison
 
 - Project media has Add all media, with separate video (V1/V2) and audio (A1/A2) destinations. Available files append in bin order; missing files are skipped with feedback. One Undo removes the whole insertion.
 - Transitions has Apply to all joins for adjacent V1 clips. It replaces the join settings and clamps overlaps for short clips. Cut removes transitions at all joins.
 - Adjust has Apply to all video clips. It replaces grades on V1/V2, preserving crop, placement, audio, text and transitions. Each bulk action is one undoable edit.
 - Adjust is a compact scrolling panel below the preview in portrait and beside it in landscape/desktop. Playback and sliders remain available together. Apply commits the draft; Cancel restores the saved grade.
-- The preview's Adjusted button toggles to Original · No adjustments during playback or while paused. This bypasses picture adjustments only; crop, placement, text and transitions remain visible. It never changes saved projects or exported grades.
+- The preview's Adjusted checkbox toggles between adjusted and original picture during playback or while paused. This bypasses picture adjustments only; crop, placement, text and transitions remain visible. It never changes saved projects or exported grades.
 - Edit now uses an information icon, distinct from Adjust's sliders. Branding and Android application identity are unchanged.
 
 ### v0.4.0: creative tools, crop and export settings

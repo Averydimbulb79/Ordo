@@ -2,6 +2,12 @@ package sg.kithandkeen.ordo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Base64;
@@ -25,6 +31,10 @@ public class OrdoFilesPlugin extends Plugin {
     private long written;
     private long expected;
     private boolean selecting;
+    private boolean previewing;
+    private int previousOrientation;
+    private int previousBarBehavior;
+    private int visibleBars;
 
     @PluginMethod
     public synchronized void beginSave(PluginCall call) {
@@ -101,6 +111,49 @@ public class OrdoFilesPlugin extends Plugin {
             else getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             call.resolve();
         });
+    }
+
+    @PluginMethod
+    public void previewMode(PluginCall call) {
+        boolean enabled = call.getBoolean("enabled", false);
+        getActivity().runOnUiThread(() -> {
+            try {
+                Activity activity = getActivity();
+                WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(activity.getWindow(), activity.getWindow().getDecorView());
+                if (enabled && !previewing) {
+                    previousOrientation = activity.getRequestedOrientation();
+                    previousBarBehavior = bars.getSystemBarsBehavior();
+                    WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(activity.getWindow().getDecorView());
+                    visibleBars = 0;
+                    for (int type : new int[] { WindowInsetsCompat.Type.statusBars(), WindowInsetsCompat.Type.navigationBars(), WindowInsetsCompat.Type.captionBar() }) {
+                        if (insets == null || insets.isVisible(type)) visibleBars |= type;
+                    }
+                    previewing = true;
+                    activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+                    bars.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                    bars.hide(WindowInsetsCompat.Type.systemBars());
+                } else if (!enabled && previewing) {
+                    activity.setRequestedOrientation(previousOrientation);
+                    bars.setSystemBarsBehavior(previousBarBehavior);
+                    bars.hide(WindowInsetsCompat.Type.systemBars());
+                    if (visibleBars != 0) bars.show(visibleBars);
+                    previewing = false;
+                }
+                call.resolve();
+            } catch (Exception error) { call.reject("Could not change fullscreen preview mode.", error); }
+        });
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        if (previewing) getActivity().runOnUiThread(() -> WindowCompat.getInsetsController(getActivity().getWindow(), getActivity().getWindow().getDecorView()).hide(WindowInsetsCompat.Type.systemBars()));
+    }
+
+    @Override
+    protected void handleOnConfigurationChanged(Configuration config) {
+        super.handleOnConfigurationChanged(config);
+        if (previewing) getActivity().runOnUiThread(() -> WindowCompat.getInsetsController(getActivity().getWindow(), getActivity().getWindow().getDecorView()).hide(WindowInsetsCompat.Type.systemBars()));
     }
 
     @PluginMethod

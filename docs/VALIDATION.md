@@ -64,3 +64,7 @@ This does not certify 4K export or performance on an Android phone. Tests use sy
 ## v0.4.1 bulk editing and comparison
 
 `npm test` includes bulk media ordering and track collision checks, short-transition clamping, grade scope and one-step history restoration. `npm run test:bulk` checks actual mobile controls, original/adjusted canvas pixels, slider updates without pausing playback, bulk persistence and undo, Cancel restoration and preview separation in portrait, landscape and desktop. The creative suite also renders adjusted output while Original comparison is enabled, verifying that preview comparison does not bypass export grading. Android hardware playback and touch feel still need real-device checks.
+
+## v0.4.2 touch and fullscreen checks
+
+`npm run test:touch-preview` uses Chromium touch input to verify that tapping a slider does not jump its value, vertical swipes actually scroll without changing any grade, horizontal dragging adjusts relatively and keyboard arrows still work. It checks the six 52 px lanes, 44 px clip targets, bottom-right fullscreen control, playback, orientation layout, Back/Escape exit and Fullscreen API fallback. MP4 HEVC selection probes the actual device: supported hosts encode and decode a real HEVC/AAC .mp4; unsupported hosts must block export with an explanation. Software-only test hosts do not establish phone HEVC support. Native rotation and immersive bars are compiled/linted in the APK workflow and still require device checks.

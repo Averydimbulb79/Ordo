@@ -79,3 +79,7 @@ ORDO_VERSION_CODE supplies the monotonically increasing test build number in Git
 ## Architecture and next engine decision
 
 Current import/export uses Mediabunny/WebCodecs with Canvas 2D and Web Audio, shared with the browser. Capacitor supplies Android integration, not a faster video engine. If phone benchmarks expose unacceptable export performance or codec coverage, evaluate an Android Media3 Transformer bridge against the same project model before changing the processing path. No native render engine is integrated in v0.4.0.
+
+### Fullscreen preview (v0.4.2)
+
+The bottom-right preview button expands the player with its controls. Android uses WindowInsetsControllerCompat to hide system bars and SCREEN_ORIENTATION_FULL_SENSOR while previewing, then restores the prior orientation and visible bars. Back exits preview before closing a panel or exiting the app. Resuming or rotating reapplies immersive bars. Multi-window and large-screen orientation policies may be controlled by Android. Real-device rotation, cutout insets and hardware HEVC encoding require phone verification; desktop browser tests cannot establish these.

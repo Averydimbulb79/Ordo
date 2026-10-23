@@ -1,6 +1,6 @@
 {
   "name": "ordo",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "type": "module",
   "description": "Android-first video editor with a shared web build",
@@ -15,7 +15,8 @@
     "test:mobile": "node scripts/mobile-smoke.mjs",
     "test:composition": "node scripts/composition-smoke.mjs",
     "test:creative": "node scripts/creative-smoke.mjs",
-    "test:bulk": "node scripts/bulk-smoke.mjs"
+    "test:bulk": "node scripts/bulk-smoke.mjs",
+    "test:touch-preview": "node scripts/touch-preview-smoke.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",

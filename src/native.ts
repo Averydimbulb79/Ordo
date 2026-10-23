@@ -5,11 +5,13 @@ interface OrdoFilesPlugin {
  finish(options: { token: string }): Promise<void>;
  abort(options: { token: string }): Promise<void>;
  keepAwake(options: { enabled: boolean }): Promise<void>;
+ previewMode(options: { enabled: boolean }): Promise<void>;
  exit(): Promise<void>;
 }
 const NativeFiles = registerPlugin<OrdoFilesPlugin>('OrdoFiles');
 export const isAndroid = Capacitor.getPlatform() === 'android';
 export async function keepAwake(enabled: boolean) { if (isAndroid) await NativeFiles.keepAwake({ enabled }); }
+export async function previewMode(enabled:boolean){if(isAndroid)await NativeFiles.previewMode({enabled});}
 export async function exitAndroid() { if (isAndroid) await NativeFiles.exit(); }
 export async function saveAndroid(blob: Blob, name: string): Promise<'saved' | 'cancelled'> {
  const result = await NativeFiles.beginSave({ name, mime: blob.type || 'application/octet-stream', size: blob.size });

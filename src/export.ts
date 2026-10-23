@@ -1,18 +1,18 @@
+import { EXPORT_FORMATS } from './export-formats';
+import type { Format } from './export-formats';
+export type { Format } from './export-formats';
 import { loadProjectFonts } from './fonts';
 import { DEFAULT_EXPORT, exportDimensions } from './export-settings';
 import type { ExportSettings } from './export-settings';
 import { ALL_FORMATS, AudioBufferSink, AudioBufferSource, BlobSource, BufferTarget, CanvasSink, CanvasSource, Input, Mp4OutputFormat, Output, WebMOutputFormat, canEncodeAudio, canEncodeVideo } from 'mediabunny';
-import type { AudioCodec, VideoCodec } from 'mediabunny';
 import type { Project } from './model';
 import { duration, layersAt, placements } from './model';
 import type { LocalMedia } from './media';
 import { paintComposition } from './composition';
-export type Format = 'mp4' | 'webm';
 export const LIMIT_SECONDS = 120;
-const codecs: Record<Format, { video: VideoCodec; audio: AudioCodec }> = { mp4: { video: 'avc', audio: 'aac' }, webm: { video: 'vp8', audio: 'opus' } };
 export async function supported(format: Format, includeAudio: boolean, settings:ExportSettings=DEFAULT_EXPORT, project:Pick<Project,"width"|"height">={width:1280,height:720}) {
  try {
-  const c = codecs[format],options=exportDimensions(project,settings);
+  const c = EXPORT_FORMATS[format],options=exportDimensions(project,settings);
   return await canEncodeVideo(c.video, {width:options.width,height:options.height,frameRate:options.fps,bitrate:options.bitrate}) && (!includeAudio || await canEncodeAudio(c.audio, { sampleRate: 48000, numberOfChannels: 2, bitrate: 128000 }));
  } catch { return false; }
 }
@@ -42,15 +42,15 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
    }
   }
   const includeAudio = project.clips.some(c => c.volume > 0 && audios.has(c.assetId));
-  if (!await supported(format, includeAudio, settings,project)) throw new Error(`${format.toUpperCase()} encoding is unavailable with these settings. Try the other format in Chrome or Edge.`);
+  if (!await supported(format, includeAudio, settings,project)) throw new Error(`${EXPORT_FORMATS[format].label} encoding is unavailable with these settings on this device. Choose another format or lower the resolution / FPS.`);
   check();
   const target = new BufferTarget();
-  output = new Output({ format: format === 'mp4' ? new Mp4OutputFormat({ fastStart: 'in-memory' }) : new WebMOutputFormat(), target });
+  output = new Output({ format: EXPORT_FORMATS[format].container === 'mp4' ? new Mp4OutputFormat({ fastStart: 'in-memory' }) : new WebMOutputFormat(), target });
   const canvas = document.createElement('canvas'); canvas.width = options.width; canvas.height = options.height;
   const ctx = canvas.getContext('2d')!;
-  const videoSource = new CanvasSource(canvas, { codec: codecs[format].video, bitrate: options.bitrate });
+  const videoSource = new CanvasSource(canvas, { codec: EXPORT_FORMATS[format].video, bitrate: options.bitrate });
   output.addVideoTrack(videoSource, { frameRate: fps });
-  const audioSource = includeAudio ? new AudioBufferSource({ codec: codecs[format].audio, bitrate: 128000 }) : null;
+  const audioSource = includeAudio ? new AudioBufferSource({ codec: EXPORT_FORMATS[format].audio, bitrate: 128000 }) : null;
   if (audioSource) output.addAudioTrack(audioSource);
   await output.start();
   const videoIterators=new Map<string,ReturnType<CanvasSink["canvasesAtTimestamps"]>>();
@@ -102,7 +102,7 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
   for(const iterator of videoIterators.values())await iterator.return(undefined);
   check(); progress(1, 'Finalising'); await output.finalize(); check();
   if (!target.buffer) throw new Error('No output was produced.');
-  return new Blob([target.buffer], { type: format === 'mp4' ? 'video/mp4' : 'video/webm' });
+  return new Blob([target.buffer], { type: EXPORT_FORMATS[format].mime });
  } catch (error) {
   if (output && output.state !== 'finalized' && output.state !== 'canceled') await output.cancel().catch(() => {});
   throw error;
