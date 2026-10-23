@@ -4,6 +4,16 @@ An Android-first video editor, with a shared web build. Local editing, no accoun
 
 [Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
 
+### v0.5.0: remembered media and audio editing
+
+- Remember media on this device reconnects assets when opening a project or restoring recovery. Android uses persistent read access granted through the system document picker; web imports and providers without persistent grants use local IndexedDB copies when storage permits. Forget remembered media clears those records/copies and Android read grants while leaving the current edit open.
+- Locate missing media accepts multiple files together. Full streaming SHA-256 fingerprints recognise renamed sources and reject different content with the same name and size. Re-importing missing assets also relinks them. Older projects need an initial relink/import before their media can be remembered; ambiguous legacy matches require the individual Relink button. Moved/deleted files, revoked permissions, cleared app/browser data or storage limits can require locating files again.
+- Selecting an MP3/audio clip or a clip on A1/A2 switches Adjust to audio controls: volume, gain, pan, three-band EQ, compressor, compressor-based limiter and per-clip fade in/out. Touch sliders keep their scroll protection. Reset, Apply to all audio clips, Cancel and one-step Undo remain available.
+- The Adjusted checkbox bypasses picture grading and audio processing during playback. Clip volume, audio fades, crossfades and timeline timing stay active. Preview and export use the same Web Audio processing chain; export preserves continuous filter and compressor state across decoding windows.
+- With an audio clip selected, Transitions opens audio crossfades on A1/A2, plus Fade in first audio clip and Fade out last audio clip. Crossfades use equal-power blending, clamp to half of either clip, overlap touching audio clips and shorten that track's assembly. Gaps and video timing remain intact. Apply to all adjacent joins and Undo are supported. Timeline markers expose joins and clip fade durations.
+- Touch menu openings no longer trigger an unintended control beneath the same tap.
+- Project format v4 stores audio settings, crossfades and source fingerprints and reads v1/v2/v3 projects. Older Ordo versions cannot open v4 saves. Projects contain neither media bytes nor Android content URIs.
+
 ### v0.4.2: touch precision, compact tracks and fullscreen preview
 
 - Touch adjustment sliders no longer jump on a tap. Vertical swipes scroll the panel without changing grades; deliberate horizontal drags adjust relative to the starting value at finer sensitivity. Mouse and keyboard controls remain available.
@@ -44,7 +54,7 @@ Transitions overlap V1 clips and shorten the sequence accordingly; very short cl
 
 The timeline still edits at 30 FPS; output sampling uses the chosen FPS. A higher output FPS does not invent additional motion in a lower-frame-rate source. Two-minute export and 256 MB Android saving limits remain while final encoded output is held in memory. Higher resolution/FPS costs more memory and processing. Keep the app in the foreground during export and test the result on your phone.
 
-Project format v3 stores text, transitions, grading, crop and canvas size, and reads older v1/v2 projects. Older Ordo versions cannot open v3 files. Media and thumbnail images are not embedded. The APK uses the same application ID/development signing certificate and an increasing versionCode for install-over updates.
+Project format v4 stores text, picture/audio processing, transitions, crop, canvas size and source fingerprints, and reads older v1/v2/v3 projects. Older Ordo versions cannot open v4 files. Media and thumbnail images are not embedded. The APK uses the same application ID/development signing certificate and an increasing versionCode for install-over updates.
 
 ### Fonts and next features
 

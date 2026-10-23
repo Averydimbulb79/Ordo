@@ -1,3 +1,5 @@
+import { AUDIO_CONTROLS, audioTrack, crossfadeAudio, edgeFades, copyAudio } from './audio-model';
+import type { AudioSettings } from './audio-model';
 import { protectTouchRange } from './touch-range';
 import { setTransitions, setAdjustments } from './bulk';
 import { clone, placements, trackOf } from './model';
@@ -31,7 +33,47 @@ export function setupCreative(hooks:Hooks){
   const apply=(read:()=>Project)=>{$('.creative-apply').onclick=()=>{try{hooks.commit(read());dialog.close();}catch(error){fail(error);}};};
   return{dialog,$,body:$('.creative-body'),fail,preview,apply,open:()=>live?dialog.show():dialog.showModal()};
  }
+ function isAudio(){const c=hooks.selected();return !!c&&(trackOf(c).startsWith('a')||hooks.project().assets.find(a=>a.id===c.assetId)?.kind==='audio');}
+ function audioAdjust(){
+  const base=hooks.project(),clip=hooks.selected()!,panel=shell('Adjust audio',true);
+  const hint=document.createElement('p');hint.className='note';hint.textContent=sourceName(base,clip)+' · Drag sideways to adjust; swipe vertically to scroll.';panel.body.append(hint);
+  const check=(key:string,label:string)=>{const row=document.createElement('label');row.className='bulk-option';const input=document.createElement('input');input.type='checkbox';input.id='audio-'+key;row.append(input,document.createTextNode(label));panel.body.append(row);};
+  const controls=[['volume','Volume (%)',0,100,100,1],...AUDIO_CONTROLS] as const;
+  for(const [key,name,min,max,neutral,step] of controls){
+   if(key==='threshold')check('compressor','Compressor');if(key==='fadeIn')check('limiter','Limiter');
+   const label=document.createElement('label');label.className='adjust-row';label.htmlFor='audio-'+key;label.textContent=name;
+   const output=document.createElement('output');output.id='audio-value-'+key;
+   const input=document.createElement('input');input.type='range';input.id='audio-'+key;input.min=String(min);input.max=String((key==='fadeIn'||key==='fadeOut')?Math.min(max,clip.frames/30):max);input.step=String(step);input.value=String(key==='volume'?clip.volume*100:clip.audio?.[key]??neutral);output.textContent=input.value;
+   protectTouchRange(input);input.oninput=()=>{output.textContent=input.value;panel.preview(read);};label.append(output,input);panel.body.append(label);
+  }
+  check('all','Apply to all audio clips');const note=document.createElement('p');note.className='note';note.textContent='Apply to all replaces audio settings and volume. Adjusted bypasses processing; volume and fades remain active.';panel.body.append(note);
+  for(const key of ['compressor','limiter'] as const)panel.$<HTMLInputElement>('#audio-'+key).checked=clip.audio?.[key]??false;
+  const read=()=>{const settings:AudioSettings={};for(const [key] of AUDIO_CONTROLS)settings[key]=Number(panel.$<HTMLInputElement>('#audio-'+key).value);for(const key of ['compressor','limiter'] as const)settings[key]=panel.$<HTMLInputElement>('#audio-'+key).checked;
+   const all=panel.$<HTMLInputElement>('#audio-all').checked,ids=all?base.clips.filter(c=>trackOf(c).startsWith('a')||base.assets.find(a=>a.id===c.assetId)?.kind==='audio').map(c=>c.id):[clip.id];
+   const p=copyAudio(base,ids,settings),volume=Number(panel.$<HTMLInputElement>('#audio-volume').value)/100;for(const c of p.clips)if(ids.includes(c.id))c.volume=volume;return p;
+  };
+  for(const key of ['all','compressor','limiter'])panel.$<HTMLInputElement>('#audio-'+key).onchange=()=>{panel.$('.creative-apply').textContent=panel.$<HTMLInputElement>('#audio-all').checked?'Apply to all clips':'Apply';panel.preview(read);};
+  const reset=document.createElement('button');reset.id='reset-audio';reset.textContent='Reset audio adjustments';reset.onclick=()=>{for(const [key,,,,neutral] of controls){panel.$<HTMLInputElement>('#audio-'+key).value=String(neutral);panel.$('#audio-value-'+key).textContent=String(neutral);}for(const key of ['compressor','limiter'])panel.$<HTMLInputElement>('#audio-'+key).checked=false;panel.preview(read);};panel.body.append(reset);panel.apply(read);panel.open();
+ }
+ function audioTransitions(){
+  const base=hooks.project(),panel=shell('Audio transitions');
+  panel.body.innerHTML='<label>Audio track<select id="audio-transition-track"><option value="a1">A1</option><option value="a2">A2</option></select></label><label>Between clips<select id="audio-transition-join"></select></label><label class="bulk-option"><input id="audio-crossfade-enabled" type="checkbox"> Crossfade</label><label>Crossfade duration (seconds)<input id="audio-crossfade-duration" type="number" min="0.1" max="10" step="0.1" value="0.5"></label><label class="bulk-option"><input id="audio-crossfade-all" type="checkbox"> Apply to all adjacent joins</label><label>Fade in first audio clip (seconds)<input id="audio-first-fade" type="number" min="0" max="120" step="0.1" value="0"></label><label>Fade out last audio clip (seconds)<input id="audio-last-fade" type="number" min="0" max="120" step="0.1" value="0"></label><p class="note">Crossfades overlap touching clips on this audio track, shortening its assembly. Gaps are kept. Video timing stays as set. Short clips use a shorter overlap. Fades apply to the first and last clip on the chosen track. Zero removes a fade.</p>';
+  const track=panel.$<HTMLSelectElement>('#audio-transition-track'),join=panel.$<HTMLSelectElement>('#audio-transition-join'),enabled=panel.$<HTMLInputElement>('#audio-crossfade-enabled');
+  if(trackOf(hooks.selected()!).startsWith('a'))track.value=trackOf(hooks.selected()!);
+  const loadJoin=()=>{const c=base.clips.find(c=>c.id===join.value);enabled.checked=!!c?.audioCrossfadeFrames;panel.$<HTMLInputElement>('#audio-crossfade-duration').value=String((c?.audioCrossfadeFrames||15)/30);};
+  const load=()=>{const lane=audioTrack(base,track.value as 'a1'|'a2');join.replaceChildren();for(let i=0;i<lane.length-1;i++){const option=document.createElement('option');option.value=lane[i].id;option.textContent=sourceName(base,lane[i])+' → '+sourceName(base,lane[i+1]);join.append(option);}if(lane.slice(0,-1).some(c=>c.id===hooks.selected()?.id))join.value=hooks.selected()!.id;loadJoin();for(const id of ['audio-crossfade-enabled','audio-crossfade-duration','audio-crossfade-all'])panel.$<HTMLInputElement>('#'+id).disabled=lane.length<2;join.disabled=lane.length<2||panel.$<HTMLInputElement>('#audio-crossfade-all').checked;panel.$<HTMLInputElement>('#audio-first-fade').value=String(lane[0]?.audio?.fadeIn??0);panel.$<HTMLInputElement>('#audio-last-fade').value=String(lane.at(-1)?.audio?.fadeOut??0);panel.$<HTMLButtonElement>('.creative-apply').disabled=!lane.length;};
+  const read=()=>{const number=(id:string,min:number,max:number)=>{const n=Number(panel.$<HTMLInputElement>(id).value);if(!Number.isFinite(n)||n<min||n>max)throw new Error('Choose a fade duration within the displayed range.');return n;};
+   const lane=audioTrack(base,track.value as 'a1'|'a2'),ids=panel.$<HTMLInputElement>('#audio-crossfade-all').checked?lane.slice(0,-1).map(c=>c.id):[join.value];
+   const p=crossfadeAudio(base,track.value as 'a1'|'a2',ids,enabled.checked?Math.round(number('#audio-crossfade-duration',.1,10)*30):0);
+   return edgeFades(p,track.value as 'a1'|'a2',number('#audio-first-fade',0,120),number('#audio-last-fade',0,120));
+  };
+  panel.$<HTMLInputElement>('#audio-crossfade-all').onchange=()=>{join.disabled=panel.$<HTMLInputElement>('#audio-crossfade-all').checked;};
+  track.onchange=()=>{load();panel.preview(read);};join.onchange=()=>{loadJoin();panel.preview(read);};
+  panel.body.addEventListener('input',event=>{if((event.target as HTMLElement).id!=='audio-transition-track'&&(event.target as HTMLElement).id!=='audio-transition-join')panel.preview(read);});
+  load();panel.apply(read);panel.open();
+ }
  function transitions(){
+  if(isAudio())return audioTransitions();
   const base=hooks.project(),main=base.clips.filter(c=>trackOf(c)==='v1'),panel=shell('Transitions');
   panel.body.innerHTML='<label>Between clips<select id="transition-join"></select></label><div class="transition-grid"></div><label>Duration (seconds)<input id="transition-duration" type="number" min="0.1" max="2" step="0.1" value="0.5"></label><label class="bulk-option"><input id="transition-all" type="checkbox"> Apply to all joins</label><p class="note">Transitions overlap adjacent V1 clips and crossfade their sound. Short clips use a shorter overlap.</p>';
   const join=panel.$<HTMLSelectElement>('#transition-join'),length=panel.$<HTMLInputElement>('#transition-duration');
@@ -55,6 +97,7 @@ export function setupCreative(hooks:Hooks){
   if(main.length<2){panel.fail(new Error('Add two clips to V1, then choose the join to edit.'));panel.$<HTMLButtonElement>('.creative-apply').disabled=true;}panel.open();
  }
  function adjust(){
+  if(isAudio())return audioAdjust();
   const base=hooks.project(),clip=hooks.selected(),panel=shell('Adjust',true);
   if(!clip||base.assets.find(a=>a.id===clip.assetId)?.kind!=='video'||trackOf(clip).startsWith('a')){panel.body.textContent='Select a video clip on V1 or V2 to adjust its picture.';panel.$<HTMLButtonElement>('.creative-apply').disabled=true;panel.open();return;}
   const caption=document.createElement('p');caption.className='note';caption.textContent=sourceName(base,clip)+' · Drag sideways to adjust; swipe vertically to scroll.';panel.body.append(caption);

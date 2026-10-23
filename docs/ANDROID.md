@@ -8,7 +8,7 @@ The shared Canvas compositor implements thirteen V1 transitions, timed styled te
 
 Export choices are 480/720/1080/2160p, 24/25/30/50/60 FPS and three quality levels. The chosen short-edge resolution follows the canvas orientation; codec support is checked with those dimensions/FPS. Timeline events remain at 30 FPS and export samples their timestamps at the output FPS. Audio uses integer sample blocks for all offered frame rates. Final encoded output is still in memory; the two-minute and 256 MB save limits remain, with an estimate check for oversized Android exports. 4K/60 and every phone/codec combination are not certified by desktop tests.
 
-Crop can retain the canvas aspect or optionally match it to the selected source region. Free-size corner dragging and numeric coordinates are supported. Crop, grading, transition type, title/caption timing/styles and canvas dimensions persist in project format v3. Earlier v1/v2 files migrate when saved; older app versions cannot read v3. Caption imports support SRT and VTT; SRT exports contain text/timing, while the styled captions are burned into video output.
+Crop can retain the canvas aspect or optionally match it to the selected source region. Free-size corner dragging and numeric coordinates are supported. Crop, grading, transition type, title/caption timing/styles and canvas dimensions persist in project format v4 alongside audio settings, audio crossfades and source fingerprints. Earlier v1/v2/v3 files migrate when saved; older app versions cannot read v4. Caption imports support SRT and VTT; SRT exports contain text/timing, while the styled captions are burned into video output.
 
 ## v0.3.0: media and multitrack
 
@@ -18,7 +18,7 @@ V1 is the main assembly track; V2 layers a second video; A1 and A2 carry indepen
 
 Format v2 persists track placement, transforms and transitions. Older v1 projects are read and upgraded when saved; older Ordo releases cannot read the new format. Keyframe automation is still planned.
 
-Preview uses several browser media players and a shared Canvas compositor. Export uses the same placement/blend rules, sequential video decoding, a reusable bounded frame copy per video clip and audio mixing in one-second blocks. Final encoded output is still held in memory, so the existing export/save limits remain. Device performance is not established by desktop tests.
+Preview uses several browser media players and a shared Canvas compositor. Export uses the same placement/blend rules, sequential video decoding, a reusable bounded frame copy per video clip and continuous audio processing with one-second source-decoding windows and an in-memory final stereo mix. Final encoded output is still held in memory, so the existing export/save limits remain. Device performance is not established by desktop tests.
 
 ## v0.2.1: import and saving fixes
 
@@ -83,3 +83,9 @@ Current import/export uses Mediabunny/WebCodecs with Canvas 2D and Web Audio, sh
 ### Fullscreen preview (v0.4.2)
 
 The bottom-right preview button expands the player with its controls. Android uses WindowInsetsControllerCompat to hide system bars and SCREEN_ORIENTATION_FULL_SENSOR while previewing, then restores the prior orientation and visible bars. Back exits preview before closing a panel or exiting the app. Resuming or rotating reapplies immersive bars. Multi-window and large-screen orientation policies may be controlled by Android. Real-device rotation, cutout insets and hardware HEVC encoding require phone verification; desktop browser tests cannot establish these.
+
+### Remembered media and audio (v0.5.0)
+
+Import and Locate missing media use ACTION_OPEN_DOCUMENT with multiple selection and read-only persistable URI grants when Remember media is enabled. Permission records remain device-local and are not stored in .ordo project files. File bytes are read through Capacitor's content-URI route and verified with a full streaming SHA-256 fingerprint. Providers with temporary grants use the same local-copy fallback as web imports. Clearing remembered media releases read grants and removes the cache. Deleting/moving a file, revoking provider permission or clearing application data requires relinking. Cloud providers may need network access to supply their selected file. Real-provider permission retention across app restarts still needs phone verification.
+
+Audio processing uses one AudioContext for preview and a continuous OfflineAudioContext for export, with gain, three EQ bands, pan, compressor, compressor-based limiter and a separate fader/envelope. Export suspends at one-second boundaries while fetching source audio windows so processing state does not reset at each block. The final stereo mix is retained in memory, up to about 46 MB at 120 seconds / stereo 48 kHz. The encoded output is also retained, so the existing export/save limits remain.

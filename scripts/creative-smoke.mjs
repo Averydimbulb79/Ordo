@@ -59,7 +59,7 @@ try{
  await page.mouse.move(rect.x+(x+w)*rect.width-2,rect.y+rect.height-2);await page.mouse.down();await page.mouse.move(rect.x+(x+w)*rect.width-35,rect.y+rect.height-30,{steps:5});await page.mouse.up();assert.ok(Number(await page.locator('#crop-width').inputValue())<oldWidth,'Free-size corner drag changes width');
  await page.locator('#crop-ratio').selectOption('9:16');await page.locator('#crop-match').check();await page.locator('.creative-apply').click();assert.match(await page.locator('#program-settings').innerText(),/720 × 1280/);
  const save=page.waitForEvent('download');await page.locator('#save').click();const projectFile=join(folder,'creative.ordo');await(await save).saveAs(projectFile);const project=JSON.parse(await readFile(projectFile,'utf8'));
- assert.equal(project.version,3);assert.equal(project.texts.length,3);assert.ok(project.texts[0].bold&&project.texts[0].italic&&project.texts[0].underline&&project.texts[0].strike);assert.equal(project.clips[0].transition,'wipe-left');assert.equal(project.clips[0].adjustments.saturation,-100);assert.ok(project.clips[0].crop.width<1);
+ assert.equal(project.version,4);assert.equal(project.texts.length,3);assert.ok(project.texts[0].bold&&project.texts[0].italic&&project.texts[0].underline&&project.texts[0].strike);assert.equal(project.clips[0].transition,'wipe-left');assert.equal(project.clips[0].adjustments.saturation,-100);assert.ok(project.clips[0].crop.width<1);
  await page.locator('#compare-adjustments').click();assert.equal(await page.locator('#compare-adjustments').isChecked(),false);
  // Export the actual creative edit at two frame rates and verify container dimensions and decoded pixels.
  for(const fps of [60,24]){

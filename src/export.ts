@@ -1,3 +1,4 @@
+import { renderAudioMix } from './audio-export';
 import { EXPORT_FORMATS } from './export-formats';
 import type { Format } from './export-formats';
 export type { Format } from './export-formats';
@@ -61,24 +62,9 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
    const stamps=function*(){for(let f=Math.ceil(entry.start/30*fps-1e-8);f<Math.ceil(entry.end/30*fps-1e-8);f++)yield entry.clip.inFrame/30+f/fps-entry.start/30;};
    videoIterators.set(entry.clip.id,sink.canvasesAtTimestamps(stamps()));
   }
-  let renderedAudio:AudioBuffer|null=null;
+  const renderedAudio=audioSource?await renderAudioMix(project,audios,frames,fps,signal,n=>progress(n*.2,'Mixing audio')):null;
   for(let frame=0;frame<frames;frame++){
    check();
-   if(audioSource&&frame%fps===0){
-    const blockFrames=Math.min(fps,frames-frame),offline=new OfflineAudioContext(2,blockFrames*samplesPerFrame,48000),blockEnd=frame+blockFrames;
-    for(const entry of placements(project)){
-     const clip=entry.clip,sink=audios.get(clip.assetId),left=Math.max(frame/fps,entry.start/30),right=Math.min(blockEnd/fps,entry.end/30);
-     if(!sink||clip.volume===0||right<=left)continue;
-     const sourceIn=clip.inFrame/30+left-entry.start/30,sourceOut=clip.inFrame/30+right-entry.start/30;
-     const gain=offline.createGain();gain.connect(offline.destination);
-     for(let f=Math.ceil(left*fps-1e-8);f<Math.ceil(right*fps-1e-8);f++)gain.gain.setValueAtTime(clip.volume*(layersAt(project,f*30/fps).find(e=>e.clip.id===clip.id)?.weight??0),(f-frame)/fps);
-     for await(const packet of sink.buffers(sourceIn,sourceOut)){
-      check();const a=Math.max(sourceIn,packet.timestamp),b=Math.min(sourceOut,packet.timestamp+packet.buffer.duration);
-      if(b>a){const node=offline.createBufferSource();node.buffer=packet.buffer;node.connect(gain);node.start(left-frame/fps+a-sourceIn,a-packet.timestamp,b-a);}
-     }
-    }
-    renderedAudio=await offline.startRendering();check();
-   }
    const images=new Map<string,CanvasImageSource>(),activeLayers=layersAt(project,frame*30/fps),activeIds=new Set(activeLayers.map(e=>e.clip.id));
    for(const [id,copy] of copies)if(!activeIds.has(id)){copy.width=0;copy.height=0;copies.delete(id);}
    for(const layer of activeLayers){
@@ -93,11 +79,11 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
    for(const layer of activeLayers)if(frame+1>=Math.ceil(layer.end/30*fps-1e-8)){const iterator=videoIterators.get(layer.clip.id);if(iterator){await iterator.return(undefined);videoIterators.delete(layer.clip.id);}}
    await videoSource.add(frame/fps,1/fps);
    if(audioSource&&renderedAudio){
-    const offset=(frame%fps)*samplesPerFrame,buffer=new AudioBuffer({length:samplesPerFrame,numberOfChannels:2,sampleRate:48000});
+    const offset=frame*samplesPerFrame,buffer=new AudioBuffer({length:samplesPerFrame,numberOfChannels:2,sampleRate:48000});
     for(let channel=0;channel<2;channel++)buffer.copyToChannel(renderedAudio.getChannelData(channel).subarray(offset,offset+samplesPerFrame),channel);
     await audioSource.add(buffer);
    }
-   progress((frame+1)/frames,'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));
+   progress((audioSource ? .2 : 0)+(audioSource ? .8 : 1)*(frame+1)/frames,'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));
   }
   for(const iterator of videoIterators.values())await iterator.return(undefined);
   check(); progress(1, 'Finalising'); await output.finalize(); check();

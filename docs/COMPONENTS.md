@@ -62,3 +62,7 @@ Repository-owned model.ts computes four-track placements and transition weights;
 creative-model.ts validates text/transition/grading data; creative.ts supplies dedicated panels; transitions.ts, text-renderer.ts and adjustments.ts provide shared rendering; crop.ts supplies normalized source cropping; export-settings.ts resolves output dimensions/bitrate. All operate locally. WebGL grading is conventional image processing with a CPU fallback. Ten pinned @fontsource packages provide Google Fonts and their real regular/bold/italic Latin styles. Their licences are retained in public/FONT-LICENSES.txt and copied into web/APK assets by Vite.
 
 Official font references: https://developers.google.com/fonts/docs/css2 ; https://github.com/google/fonts .
+
+### Audio and media identity (v0.5.0)
+
+Native Web Audio nodes power live/export audio gain, three-band EQ, panning, dynamics and fades. Android's Storage Access Framework provides per-document persistent read permission. IndexedDB stores permission references or local media copies. `@noble/hashes` 2.0.1 (MIT) computes SHA-256 incrementally without loading an entire file into a single JavaScript buffer; its license is bundled in public/THIRD-PARTY-LICENSES.txt.

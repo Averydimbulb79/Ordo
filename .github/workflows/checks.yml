@@ -53,3 +53,4 @@ jobs:
       - run: npm run test:creative
       - run: npm run test:bulk
       - run: npm run test:touch-preview
+      - run: npm run test:audio

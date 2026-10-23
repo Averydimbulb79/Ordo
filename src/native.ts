@@ -1,5 +1,8 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
+export type NativeMedia={uri:string;name:string;persisted:boolean;mime?:string};
 interface OrdoFilesPlugin {
+ pickMedia(options:{remember:boolean}):Promise<{files:NativeMedia[]}>;
+ forgetMedia():Promise<void>;
  beginSave(options: { name: string; mime: string; size: number }): Promise<{ cancelled: boolean; token?: string }>;
  append(options: { token: string; data: string; offset: number }): Promise<void>;
  finish(options: { token: string }): Promise<void>;
@@ -10,6 +13,9 @@ interface OrdoFilesPlugin {
 }
 const NativeFiles = registerPlugin<OrdoFilesPlugin>('OrdoFiles');
 export const isAndroid = Capacitor.getPlatform() === 'android';
+export async function pickNativeMedia(remember=true){return (await NativeFiles.pickMedia({remember})).files;}
+export async function forgetNativeMedia(){if(isAndroid)await NativeFiles.forgetMedia();}
+export function nativeMediaUrl(uri:string){return Capacitor.convertFileSrc(uri);}
 export async function keepAwake(enabled: boolean) { if (isAndroid) await NativeFiles.keepAwake({ enabled }); }
 export async function previewMode(enabled:boolean){if(isAndroid)await NativeFiles.previewMode({enabled});}
 export async function exitAndroid() { if (isAndroid) await NativeFiles.exit(); }

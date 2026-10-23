@@ -1,6 +1,6 @@
 {
   "name": "ordo",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "Android-first video editor with a shared web build",
@@ -16,7 +16,8 @@
     "test:composition": "node scripts/composition-smoke.mjs",
     "test:creative": "node scripts/creative-smoke.mjs",
     "test:bulk": "node scripts/bulk-smoke.mjs",
-    "test:touch-preview": "node scripts/touch-preview-smoke.mjs"
+    "test:touch-preview": "node scripts/touch-preview-smoke.mjs",
+    "test:audio": "node scripts/audio-relink-smoke.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
@@ -31,6 +32,7 @@
     "@fontsource/roboto": "5.3.0",
     "@fontsource/roboto-mono": "5.3.0",
     "@fontsource/source-sans-3": "5.3.1",
+    "@noble/hashes": "2.0.1",
     "idb": "8.0.4",
     "mediabunny": "1.62.0",
     "pixi.js": "8.22.0"

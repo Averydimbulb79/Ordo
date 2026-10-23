@@ -73,3 +73,7 @@ AI generation, AI object/background removal, speech recognition/automatic captio
 ## Release discipline
 
 Work on main with rollback checkpoints before substantial changes. Keep README concise and current. Retain stable app ID and test signing certificate for install-over updates. Apply an increasing Android versionCode. Run model, project, browser, touch and Android build checks appropriate to each change. Never equate a feature list or a successful build with Filmora/CapCut-level reliability.
+
+## Shipped in v0.5.0
+
+Remembered Android media permissions/local web cache, streaming content fingerprints, batch relinking, selection-aware audio adjustment panel, volume/gain/pan/EQ/compression/limiting, per-clip fades, equal-power A1/A2 crossfades and first/last track fades. Preview and export share the processing chain; project format v4 preserves audio edits and media fingerprints. Native provider behavior across restarts remains a device validation task.

@@ -42,10 +42,16 @@ export function setupMobile(hooks: Hooks) {
   panels[name].querySelector<HTMLElement>('button')?.focus();
  }
  backdrop.onclick=()=>closeSheet();
+ // Opening a sheet on pointerup can move another control under the finger
+ // before the compatibility click arrives. Suppress that click across targets,
+ // while allowing the next genuine touch and keyboard activation immediately.
+ let suppressDockClick=false;
+ document.addEventListener('pointerdown',()=>{suppressDockClick=false;},true);
+ document.addEventListener('click',event=>{if(suppressDockClick&&event.detail>0){suppressDockClick=false;event.preventDefault();event.stopImmediatePropagation();}},true);
  function activate(id:string,action:()=>void){
   const element=$(id);let lastTouch=-Infinity;
-  element.addEventListener('pointerup',event=>{if(event.pointerType!=='mouse'&&!(element as HTMLButtonElement).disabled){event.preventDefault();lastTouch=performance.now();action();}});
-  element.onclick=event=>{if(performance.now()-lastTouch<500){event.preventDefault();return;}action();};
+  element.addEventListener('pointerup',event=>{if(event.pointerType!=='mouse'&&!(element as HTMLButtonElement).disabled){event.preventDefault();lastTouch=performance.now();suppressDockClick=true;action();}});
+  element.onclick=event=>{if(event.detail>0&&performance.now()-lastTouch<500){event.preventDefault();return;}action();};
  }
  activate('dock-media',()=>showSheet('media'));activate('dock-edit',()=>showSheet('edit'));activate('dock-project',()=>showSheet('project'));
  for(const kind of ['transitions','title','captions','adjust','crop'])activate('dock-'+kind,()=>{if(!hooks.isBusy())$('tool-'+kind).click();});

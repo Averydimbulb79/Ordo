@@ -24,7 +24,7 @@ The reproducible test is scripts/browser-smoke.mjs, run by npm run test:browser.
 
 The synthetic test is not a codec/device compatibility certification or a perceptual audio-sync measurement. MP4/H.264/AAC export, real phone variable-frame-rate video, Safari/Firefox, long media, hardware performance, and Windows/Electron have not been verified here. Runtime capability checks apply. Real user footage remains an important next test.
 
-Export currently uses in-memory output and per-clip offline audio rendering; a 2-minute cap bounds the initial workload. Clip boundaries use integer frames at a fixed 30 fps. Preview uses browser media playback; export uses decoded frames and offline audio, so exact colour and seeking consistency need further real-media tests.
+Export currently uses in-memory encoded output and a continuous offline stereo mix with windowed source decoding; a 2-minute cap bounds the initial workload. Clip boundaries use integer frames at a fixed 30 fps. Preview uses browser media playback; export uses decoded frames and offline audio, so exact colour and seeking consistency need further real-media tests.
 
 GitHub Actions results are separate from local checks. Consult the Actions tab for current runs.
 
@@ -68,3 +68,9 @@ This does not certify 4K export or performance on an Android phone. Tests use sy
 ## v0.4.2 touch and fullscreen checks
 
 `npm run test:touch-preview` uses Chromium touch input to verify that tapping a slider does not jump its value, vertical swipes actually scroll without changing any grade, horizontal dragging adjusts relatively and keyboard arrows still work. It checks the six 52 px lanes, 44 px clip targets, bottom-right fullscreen control, playback, orientation layout, Back/Escape exit and Fullscreen API fallback. MP4 HEVC selection probes the actual device: supported hosts encode and decode a real HEVC/AAC .mp4; unsupported hosts must block export with an explanation. Software-only test hosts do not establish phone HEVC support. Native rotation and immersive bars are compiled/linted in the APK workflow and still require device checks.
+
+## v0.5.0 audio and relinking
+
+Unit checks cover equal-power crossfade envelopes, independent track timing, short-clip clamps, intentional gaps, overlap rejection, edge fades, editing around joins, undo, v4 migration, settings/fingerprint persistence, renamed matching and same-name/same-size impostors. `npm run test:audio` imports real MP3s, measures shared Web Audio gain/EQ/pan/compression/limiting/bypass, taps live preview channels, exports and decodes a crossfade with edge fades, checks audio across processing-window boundaries, reopens after a full page reload, clears remembered media and batch-relinks renamed assets without changing edits. Android's provider-specific grants and restart behavior require device verification beyond native build/lint checks.
+
+A simulated Capacitor bridge also verifies native picker options, URI-reference storage without copying, reopening through the content-URI route, Android-save bridge serialization and the Forget permission-release call. A fast touch sequence checks that opening Project cannot click through into another native import. This does not substitute for Android OS/provider grant validation on a physical phone.

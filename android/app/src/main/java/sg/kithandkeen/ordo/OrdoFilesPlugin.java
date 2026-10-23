@@ -2,6 +2,12 @@ package sg.kithandkeen.ordo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ClipData;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
+import com.getcapacitor.JSArray;
+import java.util.ArrayList;
+import java.util.List;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import androidx.core.view.ViewCompat;
@@ -35,6 +41,58 @@ public class OrdoFilesPlugin extends Plugin {
     private int previousOrientation;
     private int previousBarBehavior;
     private int visibleBars;
+
+    @PluginMethod
+    public void pickMedia(PluginCall call) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] { "video/*", "audio/*", "application/octet-stream" });
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        try { startActivityForResult(call, intent, "mediaChosen"); }
+        catch (Exception error) { call.reject("Could not open the media picker.", error); }
+    }
+
+    @ActivityCallback
+    private void mediaChosen(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
+            call.resolve(new JSObject().put("files", new JSArray())); return;
+        }
+        Intent data = result.getData();
+        List<Uri> uris = new ArrayList<>();
+        ClipData clips = data.getClipData();
+        if (clips != null) for (int i = 0; i < clips.getItemCount(); i++) uris.add(clips.getItemAt(i).getUri());
+        else if (data.getData() != null) uris.add(data.getData());
+        getBridge().execute(() -> {
+            JSArray files = new JSArray();
+            for (Uri selected : uris) {
+                boolean persisted = false;
+                try { if (call.getBoolean("remember", true)) { getContext().getContentResolver().takePersistableUriPermission(selected, Intent.FLAG_GRANT_READ_URI_PERMISSION); persisted = true; } }
+                catch (SecurityException ignored) { /* A provider may offer session-only access. */ }
+                String name = "Media";
+                try (Cursor cursor = getContext().getContentResolver().query(selected, new String[] { OpenableColumns.DISPLAY_NAME }, null, null, null)) {
+                    if (cursor != null && cursor.moveToFirst()) name = cursor.getString(0);
+                } catch (Exception ignored) { /* File decoding reports unreadable sources. */ }
+                String mime = "application/octet-stream";
+                try { mime = getContext().getContentResolver().getType(selected); } catch (Exception ignored) {}
+                files.put(new JSObject().put("uri", selected.toString()).put("name", name == null ? "Media" : name).put("persisted", persisted).put("mime", mime));
+            }
+            call.resolve(new JSObject().put("files", files));
+        });
+    }
+
+    @PluginMethod
+    public void forgetMedia(PluginCall call) {
+        for (android.content.UriPermission grant : getContext().getContentResolver().getPersistedUriPermissions()) {
+            if (grant.isReadPermission()) {
+                try { getContext().getContentResolver().releasePersistableUriPermission(grant.getUri(), Intent.FLAG_GRANT_READ_URI_PERMISSION); }
+                catch (SecurityException ignored) { /* Already revoked. */ }
+            }
+        }
+        call.resolve();
+    }
 
     @PluginMethod
     public synchronized void beginSave(PluginCall call) {
