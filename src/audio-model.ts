@@ -17,7 +17,7 @@ export function crossfadeAudio(base:Project,track:'a1'|'a2',ids:string[],frames:
  const p=structuredClone(base),clips=audioTrack(p,track);
  for(let i=0;i<clips.length-1;i++){
   const c=clips[i],next=clips[i+1];if(!ids.includes(c.id))continue;
-  const old=c.audioCrossfadeFrames??0,gap=(next.startFrame??0)-((c.startFrame??0)+c.frames)+old;
+  const old=c.audioCrossfadeFrames??0;if(frames===0&&old===0)continue;const gap=(next.startFrame??0)-((c.startFrame??0)+c.frames)+old;
   if(Math.abs(gap)>0){if(ids.length===1)throw new Error('Move these audio clips together before adding a crossfade.');continue;}
   const overlap=Math.max(0,Math.min(frames,Math.floor(c.frames/2),Math.floor(next.frames/2)));
   if(overlap)c.audioCrossfadeFrames=overlap;else delete c.audioCrossfadeFrames;

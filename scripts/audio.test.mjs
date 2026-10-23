@@ -23,8 +23,8 @@ test('first/last fades preserve the middle clip and round-trip with audio proces
 test('crossfades clamp short clips, preserve gaps and reject accidental or triple overlaps',()=>{
  const p=fixture();p.clips[0].frames=6;p.clips[1].startFrame=6;p.clips[2].startFrame=96;
  const q=crossfadeAudio(p,'a1',['a'],300);assert.equal(q.clips[0].audioCrossfadeFrames,3);validateTracks(q);
- p.clips[1].startFrame=30;assert.throws(()=>crossfadeAudio(p,'a1',['a'],10),/together/);
- assert.equal(crossfadeAudio(p,'a1',['a','b'],10).clips[1].startFrame,30);
+ p.clips[1].startFrame=30;p.clips[2].startFrame=120;assert.throws(()=>crossfadeAudio(p,'a1',['a'],10),/together/);
+ const gapped=crossfadeAudio(p,'a1',['a','b'],10);assert.equal(gapped.clips[1].startFrame,30);validateTracks(gapped);const fades=edgeFades(crossfadeAudio(p,'a1',['a'],0),'a1',.5,1);validateTracks(fades);assert.equal(fades.clips[1].startFrame,30);assert.equal(fades.clips[0].audio.fadeIn,.2);assert.equal(fades.clips[2].audio.fadeOut,1);
  const bad=fixture();bad.clips[1].startFrame=10;assert.throws(()=>validateTracks(bad),/overlap/);
  const linked=crossfadeAudio(fixture(),'a1',['a','b'],30);const removed=disconnectAudioJoins(linked,'b');removed.clips=removed.clips.filter(c=>c.id!=='b');validateTracks(removed);assert.equal(removed.clips.find(c=>c.id==='c').startFrame,120,'Removing a clip preserves the other independent start times');
  const cut=split(linked,'b',105,'new');validateTracks(cut);assert.equal(cut.clips.find(c=>c.id==='new').audioCrossfadeFrames,30);

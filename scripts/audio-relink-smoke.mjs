@@ -80,6 +80,10 @@ try{
  await page.locator('#locate-files').setInputFiles(impostor);await page.waitForFunction(()=>document.querySelector('#import-feedback').classList.contains('is-error'));assert.equal(await page.locator('.clip.missing').count(),2,'Wrong bytes with the same source name/size must not relink');
  await page.locator('#locate-files').setInputFiles([renamed,blue]);await page.waitForFunction(()=>!document.querySelector('.clip.missing'));assert.match(await page.locator('#import-feedback').innerText(),/2 media assets relinked/);
  const relinked=await saveProject();assert.deepEqual(relinked.p.clips,saved.p.clips,'Relinking preserves all edits');assert.deepEqual(relinked.p.assets,saved.p.assets,'Renamed source matches by content without changing asset identities');
+ // Edge fades must remain usable when clips have an intentional gap and no crossfade.
+ await page.locator('.clip').first().click();await page.locator('#tool-transitions').click();await page.locator('#audio-crossfade-enabled').uncheck();await page.locator('.creative-apply').click();
+ await page.locator('.clip').nth(1).click();await page.locator('#clip-start').fill('4');await page.locator('#apply-placement').click();await page.locator('.clip').first().click();await page.locator('#tool-transitions').click();await page.locator('#audio-first-fade').fill('.5');await page.locator('#audio-last-fade').fill('.5');await page.locator('.creative-apply').click();await page.locator('.creative-dialog').waitFor({state:'detached'});
+ const gap=await saveProject();assert.equal(gap.p.clips[1].startFrame,120);assert.equal(gap.p.clips[0].audio.fadeIn,.5);assert.equal(gap.p.clips[1].audio.fadeOut,.5);assert.equal(gap.p.clips[0].audioCrossfadeFrames,undefined);
  // Check the mobile audio panel and its accessible checkbox controls.
  await page.setViewportSize({width:390,height:844});await page.locator('.clip').first().click();await page.locator('#dock-adjust').click();await page.getByRole('dialog',{name:'Adjust audio'}).waitFor();await page.screenshot({path:resolve('../ordo-audio-panel.png')});await page.locator('.creative-cancel').click();
 
