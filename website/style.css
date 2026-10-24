@@ -55,3 +55,8 @@
 .platform-page .platform-detail p{margin:0 0 14px}
 .platform-page .platform-detail ul{padding-left:22px;margin:0}
 @media(max-width:650px){.platform-download-actions{flex-direction:column;align-items:stretch;gap:12px}.platform-download-actions .button{width:100%;justify-content:center}.platform-page{padding-block:55px 70px}.platform-page .platform-detail{padding:20px}}
+
+/* Explicit spacing prevents platform CTAs from visually merging at all widths. */
+.download-banner .platform-download-actions{display:flex!important;flex-flow:row wrap!important;column-gap:24px!important;row-gap:16px!important;align-items:stretch}
+.download-banner .platform-download-actions>a.button{display:inline-flex!important;flex:0 0 auto!important;margin:0!important;border-radius:8px!important}
+@media(max-width:650px){.download-banner .platform-download-actions{flex-direction:column!important}.download-banner .platform-download-actions>a.button{width:100%!important}}
