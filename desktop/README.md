@@ -4,7 +4,7 @@ The Windows build uses Electron to run the existing TypeScript editor, retaining
 
 Run `npm ci`, `npm run build`, then `npx electron .` after installing Electron as a development dependency.
 
-GitHub Actions workflow `Windows desktop` produces an unsigned Windows NSIS installer as a workflow artifact. It is not a GitHub Release download until a successful build is verified and published.
+GitHub Actions workflow `Windows desktop` produces an unsigned Windows NSIS installer as a workflow artifact. Successful main-branch builds publish [Ordo-Windows-Setup.exe](https://github.com/Averydimbulb79/Ordo/releases/download/windows-latest/Ordo-Windows-Setup.exe) to the Windows preview release.
 
 Desktop layout: media library left, program monitor centre, properties right, a single-row editing toolbar above the full-width timeline. Existing actions remain wired to their original handlers.
 

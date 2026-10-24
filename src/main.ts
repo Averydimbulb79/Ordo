@@ -48,16 +48,21 @@ $('app').innerHTML = `
 <dialog id="export-dialog"><div class="dialog-head"><h2>Export sequence</h2><button id="close-export" aria-label="Close export">×</button></div><p id="export-description">Render your edited timeline locally.</p><label>Format<select id="format"><option value="mp4">MP4 · H.264 / AAC</option><option value="mp4-hevc">MP4 · H.265 (HEVC) / AAC</option><option value="webm">WebM · VP8 / Opus</option></select></label><div class="form-grid"><label>Resolution<select id="export-resolution"><option value="480">480p</option><option value="720" selected>720p</option><option value="1080">1080p · Full HD</option><option value="2160">2160p · 4K</option></select></label><label>Frame rate<select id="export-fps"><option>24</option><option>25</option><option selected>30</option><option>50</option><option>60</option></select></label><label>Quality<select id="export-quality"><option value="compact">Compact</option><option value="standard" selected>Standard</option><option value="high">High</option></select></label></div><p id="format-status">Checking encoders…</p><p class="note">No fixed export duration limit. Longer exports need more memory. Native rendering can continue when you switch apps. Keep Ordo open during preparation and compatible rendering; return to choose where to save. Muted clips stay muted.</p><progress id="export-progress" max="1" value="0"></progress><div class="dialog-actions"><button id="cancel-export" disabled>Cancel export</button><button id="start-export" class="accent">Export video</button></div></dialog>
 <dialog id="help-dialog"><div class="dialog-head"><h2>Start your first edit</h2><button id="close-help" aria-label="Close guide">×</button></div><ol><li>Import video, audio or images. Choose a destination track, then Add to sequence on a media card. V2 starts as picture-in-picture; A1/A2 carry sound.</li><li>Click a timeline clip to select it. Reorder V1 clips by dragging. Use Clip settings for track, start time and picture placement.</li><li>Click the ruler to move the playhead. Press Space to play.</li><li>Press S to split the selected clip at the playhead.</li><li>Set source In and Out points in Clip properties, then Apply trim.</li><li>Save a .ordo project. Keep the original media; relink it after reopening.</li><li>Export as MP4 or WebM using the resolution, frame rate and quality supported by your device.</li></ol><p>Four tracks support layered video and independent sound. Use Transitions for Start, End or Between effects. Titles and captions have their own tools.</p></dialog>`;
 
-if (window.matchMedia('(min-width: 1050px)').matches) {
+function updateEditingToolbar() {
  const editing = document.getElementById('desktop-editing-actions');
  const creative = document.querySelector('.creative-tools');
  const timeline = document.querySelector('.timeline-tools');
  if (editing && creative && timeline) {
-  ['split','delete','duplicate'].forEach(id => { const item=document.getElementById(id); if(item)editing.append(item); });
-  editing.append(creative);
-  document.querySelector('.toolbar')?.classList.add('desktop-project-toolbar');
+  const desktop=window.matchMedia('(min-width: 1050px)').matches&&!document.body.classList.contains('mobile-ui');
+  const destination=desktop?editing:timeline;
+  ['split','delete','duplicate'].forEach(id => { const item=document.getElementById(id); if(item)destination.append(item); });
+  (desktop?editing:document.querySelector('.toolbar'))?.append(creative);
+  document.querySelector('.toolbar')?.classList.toggle('desktop-project-toolbar',desktop);
  }
 }
+window.addEventListener('resize',updateEditingToolbar);
+new MutationObserver(updateEditingToolbar).observe(document.body,{attributes:true,attributeFilter:['class']});
+updateEditingToolbar();
 let project = fresh(), selected = '', dirty = false, busy = false, scale = 48, relinkId = '', saved = JSON.stringify(project);
 let importNotice = '', importFailed = false, importing = false;
 const recentImports = new Set<string>();
@@ -130,8 +135,10 @@ function render() {
  $('empty-description').textContent=importing?importNotice:ready?`${ready} ${ready===1?'file is':'files are'} in Project media. Choose a clip and tap Add to sequence.`:project.assets.length?'Open Project media and relink the original files to start editing.':importFailed?'Open Project media for details, or try importing another file.':'Import media, then add clips to the timeline.';
  $('import-empty').textContent=importing?'Reading files…':project.assets.length?'Choose clips':importFailed?'View import details':'Import media';
  const total=duration(project);$('total-time').textContent=timecode(total);$<HTMLInputElement>('scrub').max=String(Math.max(0,total-1));
+ $<HTMLInputElement>('scrub').disabled=busy||!total;
  $('preview-empty').hidden=!!total;$('clip-count').textContent=`${project.clips.length} clips · ${timecode(total)}`;
  const width=Math.max(600,56+total/30*scale+100);$('timeline-content').style.width=`${width}px`;
+ $('timeline-content').style.minWidth='100%';
  $('ruler').replaceChildren();const step=scale<24?10:scale<48?5:1;
  for(let second=0;second<=Math.max(total/30,10);second+=step){const tick=document.createElement('span');tick.style.left=`${56+second*scale}px`;tick.textContent=`${Math.floor(second/60)}:${String(second%60).padStart(2,'0')}`;$('ruler').append(tick);}
  $('clips').replaceChildren();$('track-labels').replaceChildren();
@@ -261,6 +268,8 @@ $('add-all-media').onclick=()=>{
 function compareOriginal(value:boolean){preview.setBypassAdjustments(value);$<HTMLInputElement>('compare-adjustments').checked=!value;}
 $('compare-adjustments').onchange=()=>compareOriginal(!$<HTMLInputElement>('compare-adjustments').checked);
 $('play').onclick=()=>{if(!busy)void preview.toggle();};$('previous').onclick=()=>{if(!busy)void preview.seek(preview.frame-1);};$('next').onclick=()=>{if(!busy)void preview.seek(preview.frame+1);};
+// Stop the playback clock before native range dragging so ticks cannot reset the thumb.
+$('scrub').onpointerdown=()=>{if(!busy)preview.pause();};
 $('scrub').oninput=()=>{if(!busy)void preview.seek(Number($<HTMLInputElement>('scrub').value));};
 $('ruler').onclick=e=>{if(busy)return;const x=e.clientX-$('timeline-content').getBoundingClientRect().left-56;void preview.seek(x/scale*30);};
 $('zoom').oninput=()=>{scale=Number($<HTMLInputElement>('zoom').value);render();};
@@ -293,7 +302,7 @@ async function importChosen(chosen:(File|NativeMedia)[],relinkOnly=false,targetI
  importing=false;importFailed=failures.length>0;
  importNotice=[added?`${added} ${added===1?'file imported':'files imported'}. Tap Add to sequence to start editing.`:'',relinked?`${relinked} media ${relinked===1?'asset':'assets'} relinked.`:'',duplicates?`${duplicates} ${duplicates===1?'file is':'files are'} already in Project media.`:'',unremembered?`${unremembered} files are available for this session only; local storage could not remember them.`:'',...failures].filter(Boolean).join(' ');
  setBusy(false);if(JSON.stringify(p)!==JSON.stringify(project))apply(p);else{preview.setProject(project,files);render();void preview.seek(preview.frame);}say(importNotice);
- const newest=document.querySelector<HTMLElement>('.media-card.just-imported');if(newest)$('media-list').scrollTop=newest.offsetTop-$('media-list').offsetTop;
+ const newest=document.querySelector<HTMLElement>('.media-card.just-imported');if(newest){const container=document.body.classList.contains('mobile-ui')?$('media-list'):document.querySelector<HTMLElement>('.media-panel')!;container.scrollTop+=newest.getBoundingClientRect().top-container.getBoundingClientRect().top;}
 }
 async function chooseNative(relinkOnly:boolean,target=''){
  if(busy)return;setBusy(true);let chosen:NativeMedia[]=[];

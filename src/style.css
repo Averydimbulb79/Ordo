@@ -57,8 +57,8 @@ body.preview-expanded .compare-bar{position:absolute;left:max(12px,env(safe-area
 .text-trim-handle,.clip.image .trim-handle,.mobile-ui .clip.image .trim-handle{display:block;position:absolute;top:0;bottom:0;width:14px;height:auto;max-width:none;background:#95dfc980;z-index:2;touch-action:none;cursor:ew-resize}.text-trim-handle[data-side=in],.clip.image .trim-handle[data-side=in]{left:0}.text-trim-handle[data-side=out],.clip.image .trim-handle[data-side=out]{right:0}.text-clip{padding-left:16px;padding-right:16px}
 
 /* Windows desktop: full-width, single-row editing controls */
-@media (min-width:1050px) and (min-height:650px) {
- .workspace{grid-template-columns:minmax(215px,19%) minmax(390px,1fr) minmax(245px,23%);grid-template-rows:minmax(250px,1fr) 58px minmax(230px,36%);min-height:0}
+@media (min-width:1050px) {
+ body:not(.mobile-ui) .workspace{grid-template-columns:minmax(200px,19%) minmax(0,1fr) minmax(210px,23%);grid-template-rows:minmax(0,1fr) 58px minmax(160px,36%);min-height:0}
  .desktop-editbar{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 14px;background:#20252e}
  .desktop-editbar-label{font-size:10px;letter-spacing:1.2px;color:#9be1cc;white-space:nowrap}
  #desktop-editing-actions{display:flex;align-items:center;gap:7px;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
@@ -69,3 +69,12 @@ body.preview-expanded .compare-bar{position:absolute;left:max(12px,env(safe-area
  .desktop-project-toolbar .creative-tools{display:none}
 }
 @media(max-width:1049px){.desktop-editbar{display:none}}
+
+/* Flex children must shrink inside the viewport before their own scrollbars work. */
+body:not(.mobile-ui) .panel-heading,body:not(.mobile-ui) .panel-foot,
+body:not(.mobile-ui) .transport,body:not(.mobile-ui) .timeline-footer{flex-shrink:0}
+body:not(.mobile-ui) .media-panel{overflow-y:auto}
+body:not(.mobile-ui) .media-list{flex:1 0 120px;min-height:120px;overflow:visible}
+body:not(.mobile-ui) .timeline-scroll{min-height:0;min-width:0;overscroll-behavior:contain}
+body:not(.mobile-ui) .scrubber{height:24px;min-height:24px;flex-shrink:0;margin-bottom:4px;touch-action:none;cursor:ew-resize;position:relative;z-index:1}
+body.mobile-ui .desktop-editbar{display:none}

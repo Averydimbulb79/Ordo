@@ -8,6 +8,9 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/windows.yml'
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   windows:
     runs-on: windows-latest
@@ -19,7 +22,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm install --no-package-lock
+      - run: npm ci
       - run: npm run build
       - run: npx electron-builder --win nsis --x64 --publish never
         env:
@@ -31,6 +34,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish direct-download Windows installer
+        if: github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,4 +46,5 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             gh release create windows-latest --title 'Ordo for Windows (preview)' --notes 'Unsigned Windows x64 preview installer. Built from the Android editor core; Windows export and full feature parity require device testing.' --prerelease --target ${{ github.sha }}
           }
+          gh release edit windows-latest --title 'Ordo for Windows (preview)' --notes-file docs/WINDOWS-RELEASE.md --prerelease --target ${{ github.sha }}
           gh release upload windows-latest 'release/Ordo-Windows-Setup.exe' --clobber

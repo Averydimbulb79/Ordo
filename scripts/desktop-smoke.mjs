@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile,mkdtemp,rm} from 'node:fs/promises';
+import {resolve,join,extname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {execFileSync} from 'node:child_process';
+import {chromium} from 'playwright';
+const folder=await mkdtemp(join(tmpdir(),'ordo-desktop-'));
+const fixture=join(folder,'clip.webm');
+execFileSync('ffmpeg',['-v','error','-f','lavfi','-i','color=c=red:s=160x90:r=30','-t','4','-c:v','libvpx',fixture]);
+const root=resolve('dist');
+const server=createServer(async(req,res)=>{try{const pathname=new URL(req.url,'http://localhost').pathname;const path=pathname==='/'?join(root,'index.html'):join(root,pathname);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css'})[extname(path)]||'application/octet-stream');res.end(await readFile(path===root||path===root+'/'?join(root,'index.html'):path));}catch{res.writeHead(404).end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+let browser;
+try{
+ browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
+ const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(`http://127.0.0.1:${server.address().port}/`);
+ for(const [width,height] of [[1920,1080],[1260,630],[1050,540],[1600,850]]){
+  await page.setViewportSize({width,height});
+  const boxes=await page.evaluate(()=>{const rect=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};return {workspace:rect('.workspace'),bar:rect('.desktop-editbar'),timeline:rect('.timeline-panel'),content:rect('#timeline-content'),scroll:rect('#timeline-scroll'),scrub:rect('#scrub'),body:document.documentElement.scrollHeight};});
+  assert.ok(boxes.bar.width>=width-20,JSON.stringify(boxes));
+  assert.ok(boxes.timeline.y>=boxes.bar.bottom-1);
+  assert.ok(boxes.timeline.bottom<=height-20,JSON.stringify(boxes));
+  assert.ok(boxes.content.width>=boxes.scroll.width-2);
+  assert.ok(boxes.scrub.height>=24);assert.ok(boxes.body<=height);
+ }
+ await page.locator('#media-file').setInputFiles(fixture);
+ await page.getByRole('button',{name:'Add to sequence',exact:true}).click();
+ const scrub=page.locator('#scrub');const b=await scrub.boundingBox();
+ await page.locator('#play').click();
+ await page.mouse.move(b.x+8,b.y+b.height/2);await page.mouse.down();
+ await page.mouse.move(b.x+b.width*.75,b.y+b.height/2,{steps:15});await page.mouse.up();
+ await page.waitForFunction(()=>Number(document.querySelector('#scrub').value)>70);
+ const frame=Number(await scrub.inputValue());assert.ok(frame>70&&frame<110);
+ await scrub.focus();await page.keyboard.press('ArrowLeft');assert.equal(Number(await scrub.inputValue()),frame-1);
+ await page.setViewportSize({width:1050,height:540});
+ await page.evaluate(()=>document.querySelector('.media-storage').open=true);
+ await page.locator('.media-panel').hover();await page.mouse.wheel(0,900);
+ await page.waitForFunction(()=>document.querySelector('.media-panel').scrollTop>0);
+ await page.getByRole('button',{name:'Add to sequence',exact:true}).scrollIntoViewIfNeeded();
+ await page.locator('#timeline-scroll').hover();await page.mouse.wheel(0,900);
+ await page.waitForFunction(()=>document.querySelector('#timeline-scroll').scrollTop>50);
+ await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.locator('.desktop-editbar').isVisible(),false);
+ assert.equal(await page.locator('.timeline-tools #split').count(),1);
+ await page.setViewportSize({width:1260,height:630});
+ assert.equal(await page.locator('#desktop-editing-actions #split').count(),1);
+ assert.deepEqual(errors,[]);
+ console.log('Desktop regression passed: short/tall layouts, full timeline, wheel scrolling, real drag seek during playback, keyboard seek and mobile/desktop transitions.');
+}finally{await browser?.close();await new Promise(r=>server.close(r));await rm(folder,{recursive:true,force:true});}

@@ -27,7 +27,8 @@
     "test:updates": "node scripts/update-prompt-smoke.mjs",
     "test:speed": "node scripts/speed-smoke.mjs",
     "desktop:dev": "npm run build && electron .",
-    "desktop:package": "npm run build && electron-builder --win nsis --x64"
+    "desktop:package": "npm run build && electron-builder --win nsis --x64",
+    "test:desktop": "node scripts/desktop-smoke.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
