@@ -16,6 +16,7 @@ export function nativeExportReason(project:Project,format:Format,hasUri:(assetId
   if(Object.values(clip.adjustments??{}).some(v=>v!==0))return 'Colour adjustments use the compatible compositor.';
   if((clip.opacity??1)!==1)return 'Picture opacity uses the compatible compositor.';
   const asset=project.assets.find(a=>a.id===clip.assetId);
+  if(asset?.kind!=='video'&&asset?.kind!=='image')return 'Audio-only picture clips use the compatible compositor.';
   if(asset?.kind==='image'&&!/\.(jpe?g|png)$/i.test(asset.name))return 'This still-image format uses the compatible compositor.';
  }
  return null;

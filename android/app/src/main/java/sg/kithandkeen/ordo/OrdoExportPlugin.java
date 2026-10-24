@@ -68,6 +68,15 @@ public class OrdoExportPlugin extends Plugin {
         }
         void delete() { audio.delete(); video.delete(); directory.delete(); }
     }
+    @Override public void load() {
+        // A process killed during rendering cannot execute discard; clear its private cache on restart.
+        File[] stale = getContext().getCacheDir().listFiles((dir, name) -> name.startsWith("ordo-export-"));
+        if (stale != null) for (File directory : stale) {
+            File[] files = directory.listFiles();
+            if (files != null) for (File file : files) file.delete();
+            directory.delete();
+        }
+    }
     private Job require(PluginCall call) {
         if (job == null || job.cancelled || !job.token.equals(call.getString("token")))
             throw new IllegalStateException("Export session is no longer available.");
