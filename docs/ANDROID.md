@@ -1,16 +1,18 @@
-## Ordo for Android · v0.6.2
+## Ordo for Android · v0.7.0
 
-Current app release: v0.6.2, development build. Guide updated 24 October 2026.
+Current app release: v0.7.0, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
 
-### New in v0.6.2
+### New in v0.7.0
 
-- Export automatically switches to the preview playback decoder if the frame decoder returns no image, throws, or reports an unavailable video decoder.
-- The failed frame is retried at its source time, then the affected source stays on playback decoding for the remaining export. The status identifies recovery mode.
-- The normal compositor and encoder still apply effects, transitions, titles and the offline audio mix. This is frame rendering, not a real-time screen recording.
-- Preview players are released during export and restored afterwards to reduce competition for device decoders. Fallback players are muted and released when their clips finish or export is cancelled.
-- If both paths fail, the message includes the source filename, timeline time and source time.
+- Automatically choose Media3 native video export for eligible MP4 projects: cuts, trims, JPEG/PNG stills, crop, resize, scale and positioning.
+- Native video uses Android media codecs and OpenGL rather than WebView frame seeking. Device hardware support determines available acceleration. The FPS setting caps native video frame rate; lower-rate source video is not upsampled.
+- Keep all audio edits through the existing offline mixer and stage its stereo PCM output for native AAC encoding.
+- Retain the compatible exporter for transitions, titles/captions, colour adjustments, opacity, picture overlays, unsupported still formats and audio extending beyond the picture. The export dialog explains routing. Native codec failures retry compatible export.
+- Reduce compatible frame copying, prefer supported hardware encoding, submit audio in one-second chunks and decode audio in four-second windows.
+- Reduce 720p30 video bitrates to 1.2 / 2 / 4 Mbps for Compact / Standard / High. A four-minute Standard export targets approximately 64 MB including audio. Estimates vary with encoder behaviour.
+- Stream native output directly to your chosen file; temporary video/audio files are removed after saving, cancellation or failure.
 
 ### Requirements and distribution
 
@@ -31,9 +33,9 @@ Current app release: v0.6.2, development build. Guide updated 24 October 2026.
 3. Install and launch Ordo. Keep your original media and saved projects backed up while using this development build.
 4. For future updates, install the newer APK over the existing app rather than uninstalling first.
 
-Published APKs retain the same application ID, `sg.kithandkeen.ordo`, and development signing certificate. GitHub assigns an increasing versionCode so newer builds can update the installed app. The visible release version and the internal build number are separate; several builds can share the v0.6.2 label.
+Published APKs retain the same application ID, `sg.kithandkeen.ordo`, and development signing certificate. GitHub assigns an increasing versionCode so newer builds can update the installed app. The visible release version and the internal build number are separate; several builds can share the v0.7.0 label.
 
-### What is available in v0.6.2
+### What is available in v0.7.0
 
 | Area | Available tools |
 | --- | --- |
@@ -116,13 +118,13 @@ Crossfades can apply to all adjacent joins. Existing gaps are retained, and vide
 | Resolution | 480p, 720p, 1080p or 2160p; the selected short-edge size preserves canvas orientation |
 | Frame rate | 24, 25, 30, 50 or 60 FPS |
 | Quality | Compact, Standard or High |
-| Export duration | No fixed export duration cap; available device memory and the 256 MB Android save limit still apply |
+| Export duration | No fixed duration cap; compatible output has a 256 MB save limit, native output streams to the selected document; device memory/storage limits still apply |
 | Android save size | Up to 256 MB |
 | Timeline length | Up to 24 hours; actual export capacity depends on memory and output file size |
 
 The app checks encoder support for the chosen format, dimensions, frame rate and bitrate. H.265 and 4K are device-dependent options, not guaranteed capabilities of every phone. Unsupported combinations are blocked rather than silently replaced with another codec.
 
-Higher output FPS does not invent motion in lower-frame-rate source footage. Final encoded output and the final stereo audio mix are held in memory, so high-resolution/high-FPS jobs need more resources. Keep Ordo in the foreground during export; it keeps the screen awake while exporting.
+Higher output FPS does not invent motion in lower-frame-rate source footage. Compatible export retains encoded output and the final stereo audio mix in memory. Native export retains the audio mix in memory but writes encoded video to a cache file and streams it when saving. Temporary audio is stereo 48 kHz, 16-bit PCM, about 11.5 MB per minute; sufficient cache storage is required. Keep Ordo in the foreground during export; it keeps the screen awake while exporting.
 
 Android Save as writes in checked chunks and validates the size before reporting success. Cancelling project Save as keeps unsaved edits open. The earlier false “Invalid file name or file exceeds…” rejection was fixed; the actual save-size limit remains.
 
@@ -194,4 +196,4 @@ The repository's development signing certificate is intentionally public and int
 
 The browser-based engine is an internal development/test harness and the APK's editing engine. It is not a separately published web app. `dist` supplies the Android editor; `landing-dist` supplies only the public marketing website.
 
-Capacitor does not itself provide a native video rendering engine. No Media3 Transformer bridge is integrated in v0.6.2. Any future native-engine decision should follow phone benchmarks and retain the project model; see [Components](COMPONENTS.md) and the [Roadmap](ROADMAP.md).
+The OrdoExport Capacitor plugin integrates Media3 Transformer 1.10.1 for eligible timelines. Native video effects currently cover crop, fit, scale and positioning. The shared compositor handles other visual edits; see [Components](COMPONENTS.md) and the [Roadmap](ROADMAP.md).

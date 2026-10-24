@@ -12,8 +12,9 @@ export async function renderAudioMix(project:Project,sinks:Map<string,AudioBuffe
  const check=()=>{if(signal.aborted)throw new DOMException('Export cancelled','AbortError');};
  let rendering:Promise<AudioBuffer>|undefined;
  try{
-  for(let block=0;block<Math.ceil(seconds);block++){
-   check();const left=block,right=Math.min(seconds,block+1);
+  const windowSeconds=4;
+  for(let block=0;block<Math.ceil(seconds/windowSeconds);block++){
+   check();const left=block*windowSeconds,right=Math.min(seconds,left+windowSeconds);
    for(const entry of entries){
     const c=entry.clip,sink=sinks.get(c.assetId),a=Math.max(left,entry.start/30),b=Math.min(right,entry.end/30);
     if(!sink||!c.volume||b<=a)continue;
@@ -33,7 +34,7 @@ export async function renderAudioMix(project:Project,sinks:Map<string,AudioBuffe
     }
     if(b===entry.end/30)chain.level.gain.setValueAtTime(0,b);
    }
-   // Suspend at each one-second boundary before fetching the next source window.
+   // Suspend at each bounded decoding window before fetching the next source window.
    const next=right<seconds?context.suspend(right):null;
    if(!rendering){rendering=context.startRendering();void rendering.catch(()=>{});}else await context.resume();
    if(next)await next;

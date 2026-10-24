@@ -66,3 +66,11 @@ Official font references: https://developers.google.com/fonts/docs/css2 ; https:
 ### Audio and media identity (v0.5.0)
 
 Native Web Audio nodes power live/export audio gain, three-band EQ, panning, dynamics and fades. Android's Storage Access Framework provides per-document persistent read permission. IndexedDB stores permission references or local media copies. `@noble/hashes` 2.0.1 (MIT) computes SHA-256 incrementally without loading an entire file into a single JavaScript buffer; its license is bundled in public/THIRD-PARTY-LICENSES.txt.
+
+## Native video export (v0.7.0)
+
+`OrdoExportPlugin` integrates AndroidX Media3 Transformer/effect 1.10.1 (Apache 2.0, bundled notice: `public/MEDIA3-LICENSE.txt`). It uses Android media codecs and surface/OpenGL processing for eligible sequential video and JPEG/PNG stills. Supported native geometry effects are crop, fit, scale and positioning. Requested bitrate forces encoding rather than copying source packets.
+
+The existing Web Audio mixer processes all audio edits; its output is staged in bounded PCM chunks for native AAC encoding. Native video output stays in Android cache and streams to the chosen document. Capability gating and codec-failure recovery preserve the existing compositor for other visual edits. Four-second audio decode windows and one-second audio encode batches replace the previous one-second/per-frame work in compatible export.
+
+Primary references: https://developer.android.com/media/media3/transformer ; https://developer.android.com/media/media3/transformer/composition ; https://developer.android.com/reference/androidx/media3/effect/Presentation ; https://mediabunny.dev/api/VideoEncodingAdditionalOptions .

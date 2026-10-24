@@ -84,3 +84,7 @@ Remembered Android media permissions/local web cache, streaming content fingerpr
 - Start/End/Between transition categories and bulk application.
 - Per-clip audio fade in/out alongside crossfades and track-edge shortcuts.
 - 66 offline font families for titles and captions.
+
+## v0.7.0 native export scope
+
+Media3 native MP4 rendering supports sequential video and JPEG/PNG stills with clipping, crop, fit, scale and placement. The offline audio mixer preserves existing audio edits. Native visual parity for colour grading, animated transitions, titles/captions, opacity and V2 overlays remains future work; these use the compatible exporter. Benchmark on real phones before claiming a speed multiplier.

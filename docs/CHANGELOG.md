@@ -1,5 +1,15 @@
 # Ordo changelog
 
+## v0.7.0: optimised and native Android export
+
+- Prefer supported hardware encoding; render single-source frames directly; preserve copies only for shared simultaneous decoder sources.
+- Batch audio encoding into one-second chunks and expand bounded audio decoding windows to four seconds.
+- Add Media3 native MP4 video export, crop/resize/scale/position effects, JPEG/PNG stills, clipping, cancellation, progress and direct document saving.
+- Preserve the existing offline audio mix for native video and automatically route unsupported visual edits to compatible export.
+- Retry compatible export after native codec failure, but do not rerender after save failure or cancellation.
+- Halve Standard video bitrates, retain the former Standard bitrate as High, and show estimated file size before exporting.
+- Add native routing tests and Android emulator checks for image composition, crop/placement, mixed audio and video trimming. APK publication waits for native device checks.
+
 ## v0.6.2: preview decoder export recovery
 
 - Retry missing or failed video frames using the HTML video playback path used by preview, including when the frame decoder is unavailable.
