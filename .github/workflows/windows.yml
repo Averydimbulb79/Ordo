@@ -1,0 +1,31 @@
+name: Windows desktop
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'desktop/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/windows.yml'
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx --yes --package electron@38 --package electron-builder@26 electron-builder --win nsis --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ordo-Windows-Installer
+          path: release/*.exe
+          if-no-files-found: error
