@@ -11,6 +11,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(OrdoFilesPlugin.class);
         registerPlugin(OrdoExportPlugin.class);
         registerPlugin(OrdoFramesPlugin.class);
+        registerPlugin(OrdoUpdatesPlugin.class);
         super.onCreate(savedInstanceState);
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {

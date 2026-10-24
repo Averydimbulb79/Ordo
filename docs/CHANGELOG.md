@@ -2,6 +2,8 @@
 
 ## v0.8.0: text transforms, opacity, source sound and export recovery
 
+- Check for newer Android builds on every launch and offer Download update / Later; publish a versioned update manifest after the tested APK is uploaded. Offline failures do not block startup.
+
 - Add live title/caption positioning and rotation handles, preview selection and timeline dragging.
 - Add text opacity and independent Start/End transitions using the shared catalogue.
 - Add picture opacity to live Adjust and bulk application.

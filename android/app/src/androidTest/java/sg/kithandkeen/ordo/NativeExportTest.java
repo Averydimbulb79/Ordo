@@ -58,6 +58,11 @@ public class NativeExportTest {
         try{assertTrue("Native render timed out",done.await(90,TimeUnit.SECONDS));if(failure.get()!=null)throw failure.get();}
         finally{InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{if(transformer.get()!=null)transformer.get().cancel();});}
     }
+    @Test public void updateManifestAcceptsOnlyNewerTrustedRelease() throws Exception {
+        org.json.JSONObject release=new org.json.JSONObject().put("version","0.8.0").put("versionCode",12).put("apkUrl",OrdoUpdatesPlugin.APK).put("sha256",String.join("",java.util.Collections.nCopies(64,"a")));
+        assertTrue(OrdoUpdatesPlugin.validRelease(release,11));assertFalse(OrdoUpdatesPlugin.validRelease(release,12));assertFalse(OrdoUpdatesPlugin.validRelease(release,13));
+        release.put("apkUrl","https://example.com/update.apk");assertFalse(OrdoUpdatesPlugin.validRelease(release,11));
+    }
     @Test public void nativeImagesCropPlacementAndAudioThenVideoTrim() throws Exception {
         Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
         File red=picture(context,"native-red.png",Color.RED),blue=picture(context,"native-blue.png",Color.BLUE),audio=tone(context),first=new File(context.getCacheDir(),"native-first.mp4"),trimmed=new File(context.getCacheDir(),"native-trim.mp4");

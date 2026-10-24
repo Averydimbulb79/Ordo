@@ -1,3 +1,4 @@
+import { checkStartupUpdate } from './updates';
 import { setSourceVolume } from './source-volume';
 import { hitText } from './text-transform';
 import { protectTouchRange } from './touch-range';
@@ -357,3 +358,5 @@ window.addEventListener('ordo-back',()=>{
  if(busy){say('Please finish the current operation first.');return;}
  if(!dirty||confirm('Exit Ordo? Save your project first to keep a portable copy of your edits.'))void exitAndroid();
 });
+
+void checkStartupUpdate(()=>!busy);

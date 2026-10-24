@@ -6,6 +6,8 @@ Current app release: v0.8.0, development build. Guide updated 24 October 2026.
 
 ### New in v0.8.0
 
+- Check for a newer build each app launch, using the official public release manifest. Download update opens the official APK; Later dismisses the prompt for that launch. Offline checks are silent. Install v0.8.0 manually once to enable future prompts.
+
 - Tap a title/caption in Program or its timeline clip. Drag the text to reposition it, use the round handle to rotate, and press Apply. Cancel restores the original values. Preview remains accessible while editing.
 - Drag title/caption clips horizontally on the timeline to change their start time.
 - Text tools include opacity and independent Start/End transitions with durations. Preview/export share the same rendering.

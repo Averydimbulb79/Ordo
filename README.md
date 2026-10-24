@@ -143,3 +143,5 @@ Native codec failure retries the compatible exporter. Save failures do not reren
 | Source access | Sources lacking native URI access are staged in bounded chunks and cleaned up after recovery; cache storage is required |
 
 Native frame recovery prioritises completing the edit and may be slower than whole-video native export. The user's original video has not been reproduced locally; a phone trial remains necessary.
+
+On each Android app launch, Ordo checks the public release manifest for a newer build. The optional Download update prompt opens the official APK; Later dismisses it for that launch. Checks fail silently offline and never upload project/media data. Install this release once to receive future prompts; older APKs cannot gain the check without an update.
