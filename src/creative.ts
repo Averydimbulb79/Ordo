@@ -1,11 +1,12 @@
 import { AUDIO_CONTROLS, audioTrack, crossfadeAudio, edgeFades, copyAudio } from './audio-model';
 import type { AudioSettings } from './audio-model';
+import { loadFont } from './fonts';
 import { attachTextTransform } from './text-transform';
 import { protectTouchRange } from './touch-range';
 import { setTransitions, setEdgeTransitions, setAdjustments } from './bulk';
 import { clone, placements, trackOf } from './model';
 import type { Project, Clip } from './model';
-import { ADJUSTMENTS, TRANSITIONS, FONT_NAMES, newText, importCaptions, captionsToSrt } from './creative-model';
+import { ADJUSTMENTS, TRANSITIONS, FONT_NAMES, newText, importCaptions, captionsToSrt, parseTexts } from './creative-model';
 import type { TextItem, Transition } from './creative-model';
 import { CROP_RATIOS, cropPreset, validateCrop } from './crop';
 import type { Crop } from './crop';
@@ -127,7 +128,7 @@ export function setupCreative(hooks:Hooks){
   const alpha=document.createElement('label');alpha.className='adjust-row';alpha.innerHTML=`Opacity (%)<output id="value-opacity">${Math.round((clip.opacity??1)*100)}</output><input id="adjust-opacity" type="range" min="0" max="100" value="${Math.round((clip.opacity??1)*100)}">`;panel.body.append(alpha);protectTouchRange(panel.$<HTMLInputElement>('#adjust-opacity'));panel.$('#adjust-opacity').oninput=()=>{panel.$('#value-opacity').textContent=panel.$<HTMLInputElement>('#adjust-opacity').value;panel.preview(read);};
   for(const [key,name,min,max,neutral] of ADJUSTMENTS){const label=document.createElement('label');label.className='adjust-row';label.htmlFor=`adjust-${key}`;label.textContent=name;const value=document.createElement('output');value.id=`value-${key}`;const input=document.createElement('input');input.id=`adjust-${key}`;input.type='range';input.min=String(min);input.max=String(max);input.step=key==='exposure'?'.05':'1';input.value=String(clip.adjustments?.[key]??neutral);value.textContent=input.value;protectTouchRange(input);input.oninput=()=>{value.textContent=input.value;panel.preview(read);};label.append(value,input);panel.body.append(label);}
   const scope=document.createElement('label');scope.className='bulk-option';scope.innerHTML='<input id="adjust-all" type="checkbox"> Apply to all picture clips';panel.body.prepend(scope);
-  const note=document.createElement('p');note.className='note';note.textContent='When checked, replaces existing adjustments on V1 and V2. Crop and placement stay as set.';scope.after(note);
+  const note=document.createElement('p');note.className='note';note.textContent='When checked, replaces picture opacity and colour adjustments on V1 and V2. Crop and placement stay as set.';scope.after(note);
   const all=panel.$<HTMLInputElement>('#adjust-all');
   const read=()=>{const values:NonNullable<Clip['adjustments']>={};for(const [key] of ADJUSTMENTS)values[key]=Number(panel.$<HTMLInputElement>(`#adjust-${key}`).value);const ids=all.checked?base.clips.filter(c=>!trackOf(c).startsWith('a')&&base.assets.find(a=>a.id===c.assetId)?.kind!=='audio').map(c=>c.id):[clip.id],p=setAdjustments(base,ids,values);for(const c of p.clips)if(ids.includes(c.id))c.opacity=Number(panel.$<HTMLInputElement>('#adjust-opacity').value)/100;return p;};
   all.onchange=()=>{panel.$('.creative-apply').textContent=all.checked?'Apply to all clips':'Apply';panel.preview(read);};
@@ -160,13 +161,14 @@ export function setupCreative(hooks:Hooks){
    for(const side of ['start','end'] as const){const type=value(side+'-effect'),key=side==='start'?'startTransition':'endTransition';if(type==='none')delete updated[key];else updated[key]={type:type as Transition,frames:Math.round(number(side+'-effect-duration')*30)};}
    for(const key of ['bold','italic','underline','strike'] as const)updated[key]=panel.$(`[data-style="${key}"]`).getAttribute('aria-pressed')==='true';
    if(!Number.isFinite(updated.frames)||updated.frames<1||!Number.isFinite(updated.startFrame)||updated.startFrame<0)throw new Error('Set a valid start and duration.');
-   p.texts=[...(p.texts??[]).filter(t=>t.id!==item.id),updated];return p;
+   p.texts=[...(p.texts??[]).filter(t=>t.id!==item.id),parseTexts([updated],FONT_NAMES)[0]];return p;
   };
   let transforms:ReturnType<typeof attachTextTransform>|undefined;
-  const previewText=()=>{panel.$('#text-opacity-value').textContent=panel.$<HTMLInputElement>('#text-opacity').value;panel.preview(read);transforms?.update();};
+  let previewItem=item,fontSignature='';
+  const previewText=()=>{try{const p=read();previewItem=p.texts!.find(t=>t.id===item.id)!;panel.$('#text-opacity-value').textContent=panel.$<HTMLInputElement>('#text-opacity').value;panel.preview(()=>p);transforms?.update();const signature=JSON.stringify([previewItem.fontFamily,previewItem.bold,previewItem.italic]);if(signature!==fontSignature){fontSignature=signature;void loadFont(previewItem.fontFamily,previewItem.bold,previewItem.italic).then(()=>{if(panel.dialog.isConnected){panel.preview(read);transforms?.update();}}).catch(panel.fail);}}catch(error){panel.fail(error);}};
   pick.onchange=()=>{item=items.find(t=>t.id===pick.value)??newText(kind,hooks.frame());fill();previewText();};
   panel.body.addEventListener('input',e=>{if((e.target as HTMLElement).id!=='text-item')previewText();});
-  for(const button of panel.dialog.querySelectorAll<HTMLButtonElement>('[data-style]'))button.onclick=()=>{button.setAttribute('aria-pressed',String(button.getAttribute('aria-pressed')!=='true'));panel.preview(read);};
+  for(const button of panel.dialog.querySelectorAll<HTMLButtonElement>('[data-style]'))button.onclick=()=>{button.setAttribute('aria-pressed',String(button.getAttribute('aria-pressed')!=='true'));previewText();};
   panel.$('#delete-text').onclick=()=>{try{const p=clone(base);p.texts=(p.texts??[]).filter(t=>t.id!==item.id);hooks.commit(p);panel.dialog.close();}catch(error){panel.fail(error);}};
   if(kind==='caption'){
    const tools=document.createElement('div');tools.className='caption-file-tools';tools.innerHTML='<button id="import-captions">Import SRT / VTT</button><button id="export-captions">Export SRT</button><input id="caption-file" type="file" accept=".srt,.vtt,text/plain,text/vtt" hidden>';panel.body.prepend(tools);
@@ -175,8 +177,8 @@ export function setupCreative(hooks:Hooks){
    const exportButton=panel.$<HTMLButtonElement>('#export-captions');exportButton.disabled=!items.length;exportButton.onclick=async()=>{exportButton.disabled=true;try{await download(new Blob([captionsToSrt(items)],{type:'text/plain'}),'Ordo-captions.srt');}catch(error){panel.fail(error);}finally{exportButton.disabled=false;}};
   }
   fill();panel.apply(()=>{const p=read();if(!p.texts!.at(-1)!.text.trim())throw new Error('Enter some text first.');return p;});panel.open();panel.preview(read);
-  transforms=attachTextTransform(document.querySelector<HTMLCanvasElement>('#preview')!,()=>read().texts!.find(t=>t.id===item.id)!,values=>{for(const [key,value] of Object.entries(values))panel.$<HTMLInputElement>('#text-'+key).value=String(key==='x'||key==='y'?Number(value)*100:value);previewText();});
-  panel.dialog.addEventListener('close',()=>transforms?.dispose(),{once:true});
+  transforms=attachTextTransform(document.querySelector<HTMLCanvasElement>('#preview')!,()=>previewItem,values=>{for(const [key,value] of Object.entries(values))panel.$<HTMLInputElement>('#text-'+key).value=String(key==='x'||key==='y'?Number(value)*100:value);previewText();});
+  panel.dialog.addEventListener('close',()=>transforms?.dispose(),{once:true});previewText();
  }
  function crop(){
   const base=hooks.project(),clip=hooks.selected(),asset=base.assets.find(a=>a.id===clip?.assetId),panel=shell('Crop');
