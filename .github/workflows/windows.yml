@@ -12,7 +12,7 @@ jobs:
   windows:
     runs-on: windows-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,3 +29,17 @@ jobs:
           name: Ordo-Windows-Installer
           path: release/*.exe
           if-no-files-found: error
+
+      - name: Publish direct-download Windows installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $installer = Get-ChildItem release -Filter '*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'Windows installer missing' }
+          Copy-Item $installer.FullName 'release/Ordo-Windows-Setup.exe' -Force
+          gh release view windows-latest *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create windows-latest --title 'Ordo for Windows (preview)' --notes 'Unsigned Windows x64 preview installer. Built from the Android editor core; Windows export and full feature parity require device testing.' --prerelease --target ${{ github.sha }}
+          }
+          gh release upload windows-latest 'release/Ordo-Windows-Setup.exe' --clobber
