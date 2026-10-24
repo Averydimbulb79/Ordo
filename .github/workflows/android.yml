@@ -49,6 +49,10 @@ jobs:
           name: Ordo-Android
           path: apk/
   native-device-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [29, 35]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -76,14 +80,14 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: ${{ matrix.api }}
           arch: x86_64
           disable-animations: true
           script: cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: native-device-results
+          name: native-device-results-${{ matrix.api }}
           path: android/app/build/reports/androidTests/
   publish:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

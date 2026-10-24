@@ -80,7 +80,8 @@ public class NativeExportTest {
                 scenario.onActivity(activity->{android.content.Intent service=new android.content.Intent(activity,ExportService.class);if(android.os.Build.VERSION.SDK_INT>=26)activity.startForegroundService(service);else activity.startService(service);});
                 InstrumentationRegistry.getInstrumentation().waitForIdleSync();
                 assertTrue("foreground service started",ExportService.active);
-                try(android.os.ParcelFileDescriptor ignored=InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME")){}
+                try(android.os.ParcelFileDescriptor command=InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME");java.io.BufferedReader reader=new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(command.getFileDescriptor())))){while(reader.readLine()!=null){}}
+                android.os.SystemClock.sleep(300);
                 render(context,composition,output);assertTrue("service remains active while app is backgrounded",ExportService.active);
                 try(MediaMetadataRetriever reader=new MediaMetadataRetriever()){
                     reader.setDataSource(output.getAbsolutePath());Bitmap frame=reader.getFrameAtTime(1000000,MediaMetadataRetriever.OPTION_CLOSEST);assertTrue("native title is visible",Color.green(frame.getPixel(320,180))>180);frame.recycle();

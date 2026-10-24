@@ -8,7 +8,7 @@ export function nativeExportReason(project:Project,format:Format,hasUri:(assetId
  const entries=placements(project),pictures=entries.filter(e=>!e.track.startsWith('a'));
  if(!pictures.length)return 'Audio-only timelines use the compatible compositor.';
  if(pictures.some(e=>e.track!=='v1'))return 'Picture overlays use the compatible compositor.';
- if(Math.max(...pictures.map(e=>e.end))!==duration(project))return 'An audio tail beyond the picture uses the compatible compositor.';
+ if(Math.max(...pictures.map(e=>e.end))!==duration(project))return 'An audio tail or titles beyond the picture uses the compatible compositor.';
  for(const {clip} of pictures){
   if(!hasUri(clip.assetId))return 'Native export needs Android source access. Relink the picture media to enable it.';
   if(clip.transitionFrames||clip.startTransition?.frames||clip.endTransition?.frames)return 'Animated transitions use the compatible compositor.';

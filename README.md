@@ -8,7 +8,6 @@ Native Android MP4/HEVC export now includes titles and captions, preserving the 
 
 During native rendering, an Android foreground service shows progress and Cancel, holds a partial wake lock and continues when switching apps or turning off the screen. Allow notifications to see export progress. A completion notification returns to Ordo; choose the save location after returning. Keep Ordo open during audio/title preparation and compatible rendering. Force stopping Ordo, removing its task, or restarting the phone cancels the job; exports do not resume after process death. Picture transitions, grading, opacity and V2 overlays still use compatible rendering. No speed multiplier is claimed without testing the user's device and media.
 
-#
 A free, open-source video editor for Android. Edit video, images and sound on your device, with no account or media upload required. No AI features.
 
 [Download Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Visit the website](https://averydimbulb79.github.io/Ordo/) · [Android guide](docs/ANDROID.md) · [Release history](docs/CHANGELOG.md)
