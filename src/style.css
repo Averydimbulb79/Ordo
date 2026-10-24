@@ -55,3 +55,17 @@ body.preview-expanded .compare-bar{position:absolute;left:max(12px,env(safe-area
 
 .text-resize{position:absolute;width:24px;height:24px;min-height:24px!important;padding:0;border:5px solid transparent;border-radius:3px;background:#95dfc9;background-clip:padding-box;pointer-events:auto;touch-action:none;cursor:nwse-resize}.text-resize[data-corner=ne],.text-resize[data-corner=sw]{cursor:nesw-resize}
 .text-trim-handle,.clip.image .trim-handle,.mobile-ui .clip.image .trim-handle{display:block;position:absolute;top:0;bottom:0;width:14px;height:auto;max-width:none;background:#95dfc980;z-index:2;touch-action:none;cursor:ew-resize}.text-trim-handle[data-side=in],.clip.image .trim-handle[data-side=in]{left:0}.text-trim-handle[data-side=out],.clip.image .trim-handle[data-side=out]{right:0}.text-clip{padding-left:16px;padding-right:16px}
+
+/* Windows desktop: full-width, single-row editing controls */
+@media (min-width:1050px) and (min-height:650px) {
+ .workspace{grid-template-columns:minmax(215px,19%) minmax(390px,1fr) minmax(245px,23%);grid-template-rows:minmax(250px,1fr) 58px minmax(230px,36%);min-height:0}
+ .desktop-editbar{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 14px;background:#20252e}
+ .desktop-editbar-label{font-size:10px;letter-spacing:1.2px;color:#9be1cc;white-space:nowrap}
+ #desktop-editing-actions{display:flex;align-items:center;gap:7px;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
+ #desktop-editing-actions .creative-tools{display:flex;align-items:center;gap:7px}
+ #desktop-editing-actions button{flex-shrink:0;background:#292f3b;border-color:#ffffff16;font-size:11px}
+ #desktop-editing-actions button span{display:inline}
+ .timeline-panel{grid-row:3}
+ .desktop-project-toolbar .creative-tools{display:none}
+}
+@media(max-width:1049px){.desktop-editbar{display:none}}
