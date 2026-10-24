@@ -5,7 +5,6 @@ import type { Format } from './export-formats.ts';
 export function nativeExportReason(project:Project,format:Format,hasUri:(assetId:string)=>boolean):string|null{
  if(format==='webm')return 'WebM uses the compatible exporter.';
  if(!project.clips.length)return 'Add a clip before exporting.';
- if(project.texts?.length)return 'Titles and captions use the compatible compositor.';
  const entries=placements(project),pictures=entries.filter(e=>!e.track.startsWith('a'));
  if(!pictures.length)return 'Audio-only timelines use the compatible compositor.';
  if(pictures.some(e=>e.track!=='v1'))return 'Picture overlays use the compatible compositor.';

@@ -1,12 +1,21 @@
-## Ordo for Android
+# Ordo for Android
 
+## v0.9.0
+
+Titles and captions now have four corner handles to resize text, including after rotation. Drag either timeline edge to change their duration. Images show duration handles on both desktop and Android, without needing to select the image first. Changes remain undoable.
+
+Native Android MP4/HEVC export now includes titles and captions, preserving the app fonts, placement, opacity and all title edge effects. Title images are prepared once; Android decodes and encodes the video without WebView frame seeking. A single combined GPU overlay supports sequential captions without consuming one texture unit per caption. The Media3 encoder already prefers hardware codecs when available; changing codecs alone does not remove the WebView bottleneck. H.264 is the default for compatibility; HEVC remains available for supported devices.
+
+During native rendering, an Android foreground service shows progress and Cancel, holds a partial wake lock and continues when switching apps or turning off the screen. Allow notifications to see export progress. A completion notification returns to Ordo; choose the save location after returning. Keep Ordo open during audio/title preparation and compatible rendering. Force stopping Ordo, removing its task, or restarting the phone cancels the job; exports do not resume after process death. Picture transitions, grading, opacity and V2 overlays still use compatible rendering. No speed multiplier is claimed without testing the user's device and media.
+
+#
 A free, open-source video editor for Android. Edit video, images and sound on your device, with no account or media upload required. No AI features.
 
 [Download Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Visit the website](https://averydimbulb79.github.io/Ordo/) · [Android guide](docs/ANDROID.md) · [Release history](docs/CHANGELOG.md)
 
 | At a glance | Details |
 | --- | --- |
-| Current app | v0.8.0, development build |
+| Current app | v0.9.0, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
 | Website | Product information, Android screenshot with a release-synchronised version label and two-row toolbar, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |
@@ -107,7 +116,7 @@ GitHub Actions builds the APK, checks the editor and deploys the landing page se
 | --- | --- |
 | [Roadmap](docs/ROADMAP.md) | Planned features; development targets are not current capabilities |
 | [Changelog](docs/CHANGELOG.md) | Release history |
-| [Android guide](docs/ANDROID.md) | Current v0.8.0 usage, limits, native setup and phone checks |
+| [Android guide](docs/ANDROID.md) | Current v0.9.0 usage, limits, native setup and phone checks |
 | [Components](docs/COMPONENTS.md) | Editing engine and dependencies |
 | [Validation](docs/VALIDATION.md) | Test coverage and limitations |
 | [Fonts](docs/FONTS.md) | Font catalogue and style support |

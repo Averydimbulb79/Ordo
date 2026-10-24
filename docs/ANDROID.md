@@ -1,8 +1,15 @@
-## Ordo for Android · v0.8.0
+## Ordo for Android · v0.9.0
 
-Current app release: v0.8.0, development build. Guide updated 24 October 2026.
+Current app release: v0.9.0, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
+
+### New in v0.9.0
+
+- Resize titles and captions using any corner handle. Drag their timeline edges to extend or shorten them.
+- Image duration handles are visible without selecting first; support mouse and touch.
+- Native MP4/HEVC now includes titles, captions, opacity and title transitions. Fonts are rasterized once, then Android handles video decoding and encoding.
+- Native rendering continues when switching apps or turning off the screen, with progress, Cancel and completion notifications. Keep Ordo open for preparation and compatible rendering; return to save the completed file. Force stop, removing the task and phone restart cancel the job.
 
 ### New in v0.8.0
 

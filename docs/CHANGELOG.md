@@ -1,5 +1,12 @@
 # Ordo changelog
 
+## v0.9.0: title resizing, duration handles and native background export
+
+- Four title/caption corner handles resize text after dragging or rotation.
+- Drag either title/caption timeline edge; extend images using visible mouse/touch duration handles.
+- Native video export supports titles and captions with exact app fonts, styling and all title transitions. Reuse static rasters and one combined overlay texture.
+- Foreground export service provides progress, cancellation, partial wake lock and completion notification during native rendering. Defer the save picker until Ordo is visible. Preparation and compatible rendering still require Ordo open.
+
 ## v0.8.0: text transforms, opacity, source sound and export recovery
 
 - Check for newer Android builds on every launch and offer Download update / Later; publish a versioned update manifest after the tested APK is uploaded. Offline failures do not block startup.

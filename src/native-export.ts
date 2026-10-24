@@ -9,11 +9,14 @@ import { nativeExportReason } from './native-plan';
 import { exportDimensions } from './export-settings';
 import type { ExportSettings } from './export-settings';
 import type { Format } from './export-formats';
+import { loadFont } from './fonts';
+import { paintText } from './text-renderer';
 import { renderAudioMix } from './audio-export';
 interface NativeExporter {
  prepare():Promise<{token:string}>;
+ appendOverlay(options:{token:string;index:number;data:string;offset:number}):Promise<void>;
  appendAudio(options:{token:string;data:string;offset:number}):Promise<void>;
- render(options:{token:string;clips:unknown[];width:number;height:number;fps:number;bitrate:number;hevc:boolean}):Promise<void>;
+ render(options:{token:string;clips:unknown[];width:number;height:number;fps:number;bitrate:number;hevc:boolean;texts:unknown[]}):Promise<void>;
  save(options:{token:string;name:string}):Promise<{cancelled:boolean}>;
  discard(options:{token:string}):Promise<void>;
  addListener(event:'progress',listener:(event:{token:string;progress:number})=>void):Promise<PluginListenerHandle>;
@@ -56,10 +59,20 @@ export async function exportNative(project:Project,files:Map<string,LocalMedia>,
     await append(bytes);progress(.15+.05*(start+count)/audio.length,'Preparing native audio');
    }
   }
-  check();listener=await engine.addListener('progress',event=>{if(event.token===token)progress(.2+.8*event.progress,'Native Android rendering');});
+  const texts=[];
+  for(const [index,item] of (project.texts??[]).entries()){
+   check();progress(.19,'Preparing native titles');await loadFont(item.fontFamily,item.bold,item.italic);
+   const canvas=document.createElement('canvas');canvas.width=options.width;canvas.height=options.height;paintText(canvas.getContext('2d')!,item,options.width/project.width);
+   const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Could not prepare title.')),'image/png'));
+   const bytes=new Uint8Array(await blob.arrayBuffer());
+   for(let offset=0;offset<bytes.length;offset+=192000){check();let binary='';const chunk=bytes.subarray(offset,offset+192000);for(let p=0;p<chunk.length;p+=8192)binary+=String.fromCharCode(...chunk.subarray(p,p+8192));await engine.appendOverlay({token,index,offset,data:btoa(binary)});}
+   texts.push({startFrame:item.startFrame,frames:item.frames,startTransition:item.startTransition,endTransition:item.endTransition});canvas.width=canvas.height=1;
+  }
+  check();listener=await engine.addListener('progress',event=>{if(event.token===token)progress(.2+.8*event.progress,'Native Android rendering · you can switch apps');});
   const clips=placements(project).filter(e=>e.track==='v1').map(({clip})=>({...clip,uri:nativeUriFor(files.get(clip.assetId)!.file),kind:project.assets.find(a=>a.id===clip.assetId)!.kind}));
-  progress(.2,'Native Android rendering');await engine.render({token,clips,...options,hevc:format==='mp4-hevc'});check();
-  progress(1,'Render complete. Choose where to save your video…');
+  progress(.2,'Native Android rendering · you can switch apps');try{await engine.render({token,clips,...options,hevc:format==='mp4-hevc',texts});}catch(error){if((error as {code?:string})?.code==='EXPORT_CANCELLED')throw new NativeSaveError('Export cancelled.');throw error;}check();
+  progress(1,'Render complete. Return to Ordo to save your video.');
+  if(document.hidden)await new Promise<void>((resolve,reject)=>{const clean=()=>{document.removeEventListener('visibilitychange',visible);signal.removeEventListener('abort',cancel);};const visible=()=>{if(!document.hidden){clean();resolve();}};const cancel=()=>{clean();reject(new DOMException('Export cancelled','AbortError'));};document.addEventListener('visibilitychange',visible);signal.addEventListener('abort',cancel,{once:true});visible();});check();
   try{const result=await engine.save({token,name});return result.cancelled?'cancelled':'saved';}
   catch(e){throw new NativeSaveError(`Native video rendered, but saving failed: ${e instanceof Error?e.message:String(e)}`);}
  }finally{
