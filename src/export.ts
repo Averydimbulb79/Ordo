@@ -56,7 +56,9 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
   output = new Output({ format: EXPORT_FORMATS[format].container === 'mp4' ? new Mp4OutputFormat({ fastStart: 'in-memory' }) : new WebMOutputFormat(), target });
   const canvas = document.createElement('canvas'); canvas.width = options.width; canvas.height = options.height;
   const ctx = canvas.getContext('2d')!;
-  const videoSource = new CanvasSource(canvas, { codec: EXPORT_FORMATS[format].video, bitrate: options.bitrate });
+  // Hardware is a preference, not a requirement: unsupported devices retain software export.
+  const hardwareAcceleration=await canEncodeVideo(EXPORT_FORMATS[format].video,{width:options.width,height:options.height,frameRate:fps,bitrate:options.bitrate,hardwareAcceleration:'prefer-hardware'})?'prefer-hardware':'no-preference';
+  const videoSource = new CanvasSource(canvas, { codec: EXPORT_FORMATS[format].video, bitrate: options.bitrate, hardwareAcceleration });
   output.addVideoTrack(videoSource, { frameRate: fps });
   const audioSource = includeAudio ? new AudioBufferSource({ codec: EXPORT_FORMATS[format].audio, bitrate: 128000 }) : null;
   if (audioSource) output.addAudioTrack(audioSource);
@@ -98,6 +100,9 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
       check();throw new Error(`Cannot export "${files.get(layer.clip.assetId)!.file.name}" at timeline ${(frame/fps).toFixed(3)}s (source ${sourceTime.toFixed(3)}s). Preview decoder: ${error instanceof Error?error.message:String(error)}`);
      }
     }
+    // A single layer can be painted directly before advancing its decoder.
+    // Preserve only sources whose CanvasSink pool is shared by simultaneous layers.
+    if(source instanceof HTMLVideoElement||activeLayers.filter(e=>e.clip.assetId===layer.clip.assetId&&!e.track.startsWith('a')).length===1){images.set(layer.clip.id,source);continue;}
     // Copy before advancing a decoder shared by another layer of the same source.
     let copy=copies.get(layer.clip.id);
     if(!copy){
@@ -112,9 +117,9 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
    paintComposition(ctx,project,frame*30/fps,images);
    for(const layer of activeLayers)if(frame+1>=Math.ceil(layer.end/30*fps-1e-8)){const iterator=videoIterators.get(layer.clip.id);if(iterator){await iterator.return(undefined);videoIterators.delete(layer.clip.id);}playbackReaders.get(layer.clip.id)?.dispose();playbackReaders.delete(layer.clip.id);}
    await videoSource.add(frame/fps,1/fps);
-   if(audioSource&&renderedAudio){
-    const offset=frame*samplesPerFrame,buffer=new AudioBuffer({length:samplesPerFrame,numberOfChannels:2,sampleRate:48000});
-    for(let channel=0;channel<2;channel++)buffer.copyToChannel(renderedAudio.getChannelData(channel).subarray(offset,offset+samplesPerFrame),channel);
+   if(audioSource&&renderedAudio&&frame%fps===0){
+    const offset=frame*samplesPerFrame,length=Math.min(48000,renderedAudio.length-offset),buffer=new AudioBuffer({length,numberOfChannels:2,sampleRate:48000});
+    for(let channel=0;channel<2;channel++)buffer.copyToChannel(renderedAudio.getChannelData(channel).subarray(offset,offset+length),channel);
     await audioSource.add(buffer);
    }
    progress((audioSource ? .2 : 0)+(audioSource ? .8 : 1)*(frame+1)/frames,playbackAssets.size?'Rendering with preview decoder':'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));

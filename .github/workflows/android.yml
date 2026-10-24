@@ -2,11 +2,12 @@ name: Android APK
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: write
 concurrency:
-  group: android-build
+  group: android-build-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   apk:
@@ -46,9 +47,56 @@ jobs:
         with:
           name: Ordo-Android
           path: apk/
-      - name: Publish test download
+  native-device-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-36 build-tools;36.0.0
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci && npm run android:sync
+      - name: Prepare signing and emulator access
+        run: |
+          base64 --decode .github/development-signing.p12.base64 > .github/development-signing.p12
+          chmod +x android/gradlew
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          disable-animations: true
+          script: cd android && ./gradlew connectedDebugAndroidTest --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-device-results
+          path: android/app/build/reports/androidTests/
+  publish:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [apk, native-device-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Ordo-Android
+          path: apk
+      - name: Publish tested APK
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release view android-latest >/dev/null 2>&1 || gh release create android-latest --title "Ordo for Android" --prerelease --notes "Android development build. See README for capabilities, limitations and device testing steps."
           gh release upload android-latest apk/Ordo-Android.apk apk/SHA256SUMS.txt --clobber

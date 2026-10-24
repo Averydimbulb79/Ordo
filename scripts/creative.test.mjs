@@ -28,7 +28,7 @@ test('crop presets preserve source-space aspect ratio and free boxes stay bounde
 });
 test('export sizes preserve canvas orientation and frame-rate choices',()=>{
  for(const fps of [24,25,30,50,60])assert.equal(exportDimensions({width:1280,height:720},{resolution:1080,fps,quality:'standard'}).fps,fps);
- assert.deepEqual(exportDimensions({width:720,height:1280},{resolution:1080,fps:30,quality:'standard'}),{width:1080,height:1920,fps:30,bitrate:8000000});
+ assert.deepEqual(exportDimensions({width:720,height:1280},{resolution:1080,fps:30,quality:'standard'}),{width:1080,height:1920,fps:30,bitrate:4000000});
  assert.equal(exportDimensions({width:1280,height:720},{resolution:2160,fps:60,quality:'high'}).width,3840);
  assert.throws(()=>exportDimensions(fresh(),{resolution:123,fps:30,quality:'standard'}));
 });

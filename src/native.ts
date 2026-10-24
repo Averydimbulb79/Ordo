@@ -34,3 +34,8 @@ export async function saveAndroid(blob: Blob, name: string): Promise<'saved' | '
   await NativeFiles.finish({ token }); return 'saved';
  } catch (error) { await NativeFiles.abort({ token }).catch(() => {}); throw error; }
 }
+
+// Keep native handles with the actual File, including session-only imports and restored media.
+const sourceUris=new WeakMap<File,string>();
+export function rememberNativeUri(file:File,uri:string){sourceUris.set(file,uri);return file;}
+export function nativeUriFor(file:File){return sourceUris.get(file);}

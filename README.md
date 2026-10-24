@@ -6,7 +6,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 
 | At a glance | Details |
 | --- | --- |
-| Current app | v0.6.2, development build |
+| Current app | v0.7.0, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
 | Website | Product information, updated Android screenshot with the two-row toolbar, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |
@@ -107,7 +107,7 @@ GitHub Actions builds the APK, checks the editor and deploys the landing page se
 | --- | --- |
 | [Roadmap](docs/ROADMAP.md) | Planned features; development targets are not current capabilities |
 | [Changelog](docs/CHANGELOG.md) | Release history |
-| [Android guide](docs/ANDROID.md) | Current v0.6.2 usage, limits, native setup and phone checks |
+| [Android guide](docs/ANDROID.md) | Current v0.7.0 usage, limits, native setup and phone checks |
 | [Components](docs/COMPONENTS.md) | Editing engine and dependencies |
 | [Validation](docs/VALIDATION.md) | Test coverage and limitations |
 | [Fonts](docs/FONTS.md) | Font catalogue and style support |
@@ -115,3 +115,16 @@ GitHub Actions builds the APK, checks the editor and deploys the landing page se
 | [Third-party licences](public/THIRD-PARTY-LICENSES.txt) | Additional dependency terms |
 
 Keep rollback checkpoints before substantial changes and update this README with each release.
+
+### v0.7.0 export improvements
+
+| Change | Behaviour |
+| --- | --- |
+| Faster compatible export | Hardware encoding preference with software fallback; direct frame rendering when safe; one-second audio encoding batches; four-second audio decode windows |
+| Native Android video | Media3 surface-based decode, crop, resize, scale, positioning and encoding for eligible MP4 timelines; JPEG/PNG stills and trimmed video |
+| Audio parity | The existing offline mix preserves all audio tracks, fades, EQ and dynamics; native video uses a temporary stereo PCM WAV |
+| Automatic routing | Animated transitions, titles, picture overlays, non-default opacity, colour adjustments and unsupported still formats retain the compatible compositor |
+| Smaller files | At 720p30: Compact 1.2 Mbps, Standard 2 Mbps, High 4 Mbps; estimates appear before rendering |
+| Native saving | Completed native output streams to the chosen Android document without a full video Blob or base64 transfer |
+
+Native codec failure retries the compatible exporter. Save failures do not rerender automatically. Native video is not full compositor parity yet, and speed on a particular phone remains to be measured. Both paths keep processing local.
