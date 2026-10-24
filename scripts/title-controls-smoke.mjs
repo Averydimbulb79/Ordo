@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
 import {createServer} from 'vite';
+const {version}=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
 const folder=await mkdtemp(join(tmpdir(),'ordo-title-'));let server,browser;
 try{
  const video=join(folder,'video.webm'),audio=join(folder,'audio.wav'),image=join(folder,'still.png');
@@ -14,7 +15,7 @@ try{
  server=await createServer({server:{host:'127.0.0.1',port:0}});await server.listen();
  browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox','--disable-gpu']});
  for(const width of [1440,390]){
-  const page=await browser.newPage({viewport:{width,height:1000},acceptDownloads:true,hasTouch:width<500});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(server.resolvedUrls.local[0]);
+  const page=await browser.newPage({viewport:{width,height:1000},acceptDownloads:true,hasTouch:width<500});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(server.resolvedUrls.local[0]);assert.equal(await page.locator('.topbar .version').innerText(),'v'+version,'app label matches release version');
   await page.locator('#media-file').setInputFiles([video,audio,image]);await page.waitForFunction(()=>document.querySelectorAll('.media-card').length===3);await page.locator('#add-all-media').click();if(width<500)await page.locator('.sheet-close').filter({visible:true}).first().click();
   const cdp=width<500?await page.context().newCDPSession(page):null;
   const drag=async(x,y,toX,toY)=>{if(!cdp){await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(toX,toY,{steps:8});await page.mouse.up();return;}const point=(a,b)=>[{x:a,y:b,id:1,radiusX:4,radiusY:4,force:1}];await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:point(x,y)});for(let i=1;i<=8;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:point(x+(toX-x)*i/8,y+(toY-y)*i/8)});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});};

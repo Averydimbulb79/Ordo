@@ -1,6 +1,8 @@
 # Ordo for Android
 
-## v0.9.0
+## v0.9.1
+
+App and Android version names now read from package.json automatically. The landing page includes current title controls, duration handles, native export and background-rendering details, with versioned stylesheet and APK links.
 
 Titles and captions now have four corner handles to resize text, including after rotation. Drag either timeline edge to change their duration. Images show duration handles on both desktop and Android, without needing to select the image first. Changes remain undoable.
 
@@ -14,7 +16,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 
 | At a glance | Details |
 | --- | --- |
-| Current app | v0.9.0, development build |
+| Current app | v0.9.1, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
 | Website | Product information, Android screenshot with a release-synchronised version label and two-row toolbar, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |

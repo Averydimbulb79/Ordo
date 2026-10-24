@@ -1,6 +1,6 @@
-## Ordo for Android · v0.9.0
+## Ordo for Android · v0.9.1
 
-Current app release: v0.9.0, development build. Guide updated 24 October 2026.
+Current app release: v0.9.1, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
 

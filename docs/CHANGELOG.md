@@ -1,5 +1,11 @@
 # Ordo changelog
 
+## v0.9.1: synchronised release labels and landing page
+
+- Fix the stale v0.8.0 in-app header by reading the package version. Android versionName uses the same source.
+- Update landing feature copy for title resizing, duration handles and native background rendering, including current limits. Version stylesheet and APK links at build time.
+- Browser title checks assert the visible app version matches the package release.
+
 ## v0.9.0: title resizing, duration handles and native background export
 
 - Four title/caption corner handles resize text after dragging or rotation.
