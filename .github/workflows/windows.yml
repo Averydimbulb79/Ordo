@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/**'
       - 'desktop/**'
+      - 'scripts/electron-smoke.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/windows.yml'
