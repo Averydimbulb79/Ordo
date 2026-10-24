@@ -37,3 +37,7 @@
 .hero-atmosphere:after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#111318,transparent 12%,transparent 88%,#111318);pointer-events:none}
 @media(max-width:360px){.hero h1{font-size:50px;letter-spacing:-2.4px;line-height:1.06}.hero .lead{font-size:13px;margin-block:20px}.hero{padding-top:30px}.hero-actions{gap:16px}}
 @media(max-width:760px){.header .button.small{min-height:44px}}
+
+/* Keep the release label current while preserving the supplied Android screenshot. */
+.phone-screen{container-type:inline-size}
+.screenshot-version{position:absolute;left:18.3%;top:2.25%;width:8.5%;height:2%;display:flex;align-items:center;padding-left:.6cqw;background:#161920;color:#8d96a2;font-family:Roboto,Arial,sans-serif;font-size:2.32cqw;font-weight:400;line-height:1;letter-spacing:0;white-space:nowrap;pointer-events:none}
