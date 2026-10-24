@@ -7,6 +7,7 @@ export function nativeExportReason(project:Project,format:Format,hasUri:(assetId
  if(!project.clips.length)return 'Add a clip before exporting.';
  const entries=placements(project),pictures=entries.filter(e=>!e.track.startsWith('a'));
  if(!pictures.length)return 'Audio-only timelines use the compatible compositor.';
+ if(pictures.some((e,i)=>e.start!==(i?pictures[i-1].end:0)))return 'Timeline gaps use the compatible compositor.';
  if(pictures.some(e=>e.track!=='v1'))return 'Picture overlays use the compatible compositor.';
  if(Math.max(...pictures.map(e=>e.end))!==duration(project))return 'An audio tail or titles beyond the picture uses the compatible compositor.';
  for(const {clip} of pictures){

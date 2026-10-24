@@ -2,7 +2,7 @@ import { Capacitor,registerPlugin } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { ALL_FORMATS,AudioBufferSink,BlobSource,Input } from 'mediabunny';
 import type { Project } from './model';
-import { placements,duration } from './model';
+import { placements,duration,playbackSpeed } from './model';
 import type { LocalMedia } from './media';
 import { isAndroid,nativeUriFor } from './native';
 import { nativeExportReason } from './native-plan';
@@ -69,7 +69,7 @@ export async function exportNative(project:Project,files:Map<string,LocalMedia>,
    texts.push({startFrame:item.startFrame,frames:item.frames,startTransition:item.startTransition,endTransition:item.endTransition});canvas.width=canvas.height=1;
   }
   check();listener=await engine.addListener('progress',event=>{if(event.token===token)progress(.2+.8*event.progress,'Native Android rendering · you can switch apps');});
-  const clips=placements(project).filter(e=>e.track==='v1').map(({clip})=>({...clip,uri:nativeUriFor(files.get(clip.assetId)!.file),kind:project.assets.find(a=>a.id===clip.assetId)!.kind}));
+  const clips=placements(project).filter(e=>e.track==='v1').map(({clip})=>({...clip,renderSpeed:playbackSpeed(clip),uri:nativeUriFor(files.get(clip.assetId)!.file),kind:project.assets.find(a=>a.id===clip.assetId)!.kind}));
   progress(.2,'Native Android rendering · you can switch apps');try{await engine.render({token,clips,...options,hevc:format==='mp4-hevc',texts});}catch(error){if((error as {code?:string})?.code==='EXPORT_CANCELLED')throw new NativeSaveError('Export cancelled.');throw error;}check();
   progress(1,'Render complete. Return to Ordo to save your video.');
   if(document.hidden)await new Promise<void>((resolve,reject)=>{const clean=()=>{document.removeEventListener('visibilitychange',visible);signal.removeEventListener('abort',cancel);};const visible=()=>{if(!document.hidden){clean();resolve();}};const cancel=()=>{clean();reject(new DOMException('Export cancelled','AbortError'));};document.addEventListener('visibilitychange',visible);signal.addEventListener('abort',cancel,{once:true});visible();});check();

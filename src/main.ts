@@ -1,3 +1,4 @@
+import { setClipSpeed } from './clip-speed';
 import { version as appVersion } from '../package.json';
 import { checkStartupUpdate } from './updates';
 import { setSourceVolume } from './source-volume';
@@ -18,7 +19,7 @@ import { TRANSITIONS } from './creative-model';
 import { isAndroid, keepAwake, exitAndroid } from './native';
 import { setupMobile } from './mobile';
 import { openDB } from 'idb';
-import { clone, duration, fresh, History, placements, layersAt, trackOf, TRACKS, transitionLength, validateTracks, parseProject, sourceFrames, defaultFrames, split, timecode, trim } from './model';
+import { clone, duration, fresh, History, placements, layersAt, trackOf, TRACKS, transitionLength, validateTracks, parseProject, sourceFrames, sourceSpan, sourceAt, clipSpeed, playbackSpeed, defaultFrames, split, timecode, trim } from './model';
 import type { Asset, Project, Track } from './model';
 import { download, inspect } from './media';
 import type { LocalMedia } from './media';
@@ -129,7 +130,7 @@ function render() {
  for(const entry of placements(project)){
   const {clip,start,track}=entry;
   const asset=assetFor(clip.assetId),node=document.createElement('button');node.className=`clip ${asset.kind} ${selected===clip.id?'selected':''} ${files.has(asset.id)?'':'missing'}`;node.draggable=!busy;node.disabled=busy;node.dataset.id=clip.id;node.dataset.track=track;node.style.top=`${4+TRACKS.indexOf(track)*52}px`;
-  node.style.left=`${56+start/30*scale}px`;node.style.width=`${Math.max(2,clip.frames/30*scale)}px`;node.title=`${asset.name} · ${timecode(clip.frames)}`;
+  node.style.left=`${56+start/30*scale}px`;node.style.width=`${Math.max(2,clip.frames/30*scale)}px`;node.title=`${asset.name} · ${timecode(clip.frames)}${clipSpeed(clip)!==1?' · '+clipSpeed(clip)+'×':''}`;
   const name=document.createElement('span');name.textContent=asset.name;const length=document.createElement('small');length.textContent=timecode(clip.frames);node.append(name,length);if(clip.audio?.fadeIn||clip.audio?.fadeOut){const fade=document.createElement('small');fade.className='audio-fade-label';fade.textContent=[clip.audio.fadeIn?'↗ '+clip.audio.fadeIn+'s':'',clip.audio.fadeOut?'↘ '+clip.audio.fadeOut+'s':''].filter(Boolean).join(' · ');length.append(document.createTextNode(' · '+fade.textContent));}
   for(const side of ['in','out']){const handle=document.createElement('span');handle.className='trim-handle';handle.dataset.side=side;handle.setAttribute('aria-hidden','true');node.append(handle);}
   if(asset.kind==='image')for(const handle of node.querySelectorAll<HTMLElement>('.trim-handle')){
@@ -167,15 +168,22 @@ function renderSelection(){
  const c=current();const box=$('inspector');box.replaceChildren();
  if(!c){box.innerHTML='<div class="inspector-empty">Select a timeline clip to adjust its source range and volume.</div>';updateButtons();return;}
  const a=assetFor(c.assetId),heading=document.createElement('h3');heading.textContent=a.name;box.append(heading);
- const fields=document.createElement('div');fields.innerHTML=`<div class="property-caption">SOURCE RANGE · FRAMES AT 30 FPS</div><label>In frame<input id="trim-in" type="number" min="0" step="1" value="${c.inFrame}"></label><label>Out frame (exclusive)<input id="trim-out" type="number" min="1" step="1" value="${c.inFrame+c.frames}"></label><div class="range-actions"><button id="mark-in">In at playhead</button><button id="mark-out">Out at playhead</button></div><button id="apply-trim" class="wide">Apply trim</button><p class="note">${a.kind==='image'?'Still image · Extend or shorten using In/Out or the trim handles.':`Source length: ${sourceFrames(a)} frames.`} V1 trims close the gap. Other tracks keep their start time.</p><label class="volume-label">Original source volume <span id="volume-value">${Math.round(c.volume*100)}%</span><input id="volume" type="range" min="0" max="100" value="${Math.round(c.volume*100)}"></label><div class="range-actions"><button id="move-left">Move earlier</button><button id="move-right">Move later</button></div><button id="remove-clip" class="wide danger">Remove clip</button>`;box.append(fields);
+ const fields=document.createElement('div');fields.innerHTML=`<div class="property-caption">SOURCE RANGE · FRAMES AT 30 FPS</div><label>In frame<input id="trim-in" type="number" min="0" step="1" value="${c.inFrame}"></label><label>Out frame (exclusive)<input id="trim-out" type="number" min="1" step="1" value="${c.inFrame+sourceSpan(c)}"></label><div class="range-actions"><button id="mark-in">In at playhead</button><button id="mark-out">Out at playhead</button></div><button id="apply-trim" class="wide">Apply trim</button><p class="note">${a.kind==='image'?'Still image · Extend or shorten using In/Out or the trim handles.':`Source length: ${sourceFrames(a)} frames.`} V1 trims close the gap. Other tracks keep their start time.</p><label class="volume-label">Original source volume <span id="volume-value">${Math.round(c.volume*100)}%</span><input id="volume" type="range" min="0" max="100" value="${Math.round(c.volume*100)}"></label><div class="range-actions"><button id="move-left">Move earlier</button><button id="move-right">Move later</button></div><button id="remove-clip" class="wide danger">Remove clip</button>`;box.append(fields);
  $('apply-trim').onclick=()=>{try{apply(trim(project,c.id,Number($<HTMLInputElement>('trim-in').value),Number($<HTMLInputElement>('trim-out').value)));}catch(e){error(e);}};
- const sourcePlayhead=()=>{const position=layersAt(project,preview.frame).find(e=>e.clip.id===c.id);if(!position)throw new Error('Move the playhead into the selected clip first.');return c.inFrame+position.offset;};
+ const sourcePlayhead=()=>{const position=layersAt(project,preview.frame).find(e=>e.clip.id===c.id);if(!position)throw new Error('Move the playhead into the selected clip first.');return sourceAt(c,position.offset);};
  $('mark-in').onclick=()=>{try{$<HTMLInputElement>('trim-in').value=String(sourcePlayhead());}catch(e){error(e);}};
- $('mark-out').onclick=()=>{try{$<HTMLInputElement>('trim-out').value=String(sourcePlayhead()+1);}catch(e){error(e);}};
+ $('mark-out').onclick=()=>{try{$<HTMLInputElement>('trim-out').value=String(Math.min(c.inFrame+sourceSpan(c),sourcePlayhead()+playbackSpeed(c)));}catch(e){error(e);}};
  $('volume').oninput=()=>{$('volume-value').textContent=$<HTMLInputElement>('volume').value+'%';if(a.kind!=='image')preview.setDraft(setSourceVolume(project,c.id,Number($<HTMLInputElement>('volume').value)/100),true);};
  $('volume').onchange=()=>{if(a.kind!=='image')apply(setSourceVolume(project,c.id,Number($<HTMLInputElement>('volume').value)/100));};
  const volumeLabel=$('volume').closest<HTMLElement>('label')!;volumeLabel.hidden=a.kind==='image';
  if(a.kind!=='image'){protectTouchRange($<HTMLInputElement>('volume'));const bulk=document.createElement('button');bulk.id='apply-source-volume-all';bulk.className='wide';bulk.textContent=`Apply volume to all ${a.kind} clips`;bulk.onclick=()=>apply(setSourceVolume(project,c.id,Number($<HTMLInputElement>('volume').value)/100,true));volumeLabel.after(bulk);const sound=document.createElement('button');sound.id='clip-audio-settings';sound.className='wide';sound.textContent='Source audio adjustments…';sound.onclick=()=>creative.open('audio');bulk.after(sound);}
+ if(a.kind!=='image'){
+  const speedBox=document.createElement('div');speedBox.className='track-settings';speedBox.innerHTML=`<div class="property-caption">CLIP SPEED</div><label>Speed preset<select id="speed-preset">${[.25,.5,1,1.5,2,4].map(v=>`<option value="${v}">${v}×${v===1?' · Normal':''}</option>`).join('')}<option value="custom">Custom</option></select></label><label>Playback speed (×)<input id="clip-speed" type="number" min="0.25" max="4" step="0.01" value="${clipSpeed(c)}"></label><label><input id="speed-preserve-pitch" type="checkbox" ${c.preservePitch!==false?'checked':''}> Preserve original pitch</label><label><input id="speed-ripple" type="checkbox" checked> Ripple following clips on this track</label><p id="speed-duration" class="note"></p><button id="apply-speed" class="wide">Apply speed</button><button id="apply-speed-all" class="wide">Apply speed to all ${a.kind} clips</button>`;fields.append(speedBox);
+  const speedInput=$<HTMLInputElement>('clip-speed'),preset=$<HTMLSelectElement>('speed-preset');
+  const describe=()=>{const speed=Number(speedInput.value);preset.value=[.25,.5,1,1.5,2,4].includes(speed)?String(speed):'custom';$('speed-duration').textContent=Number.isFinite(speed)&&speed>=.25&&speed<=4?`Duration: ${(c.frames/30).toFixed(2)}s → ${(Math.max(1,Math.ceil(sourceSpan(c)/speed-1e-8))/30).toFixed(2)}s. Source In/Out stays the same.`:'Choose a speed between 0.25× and 4×.';};speedInput.oninput=describe;preset.onchange=()=>{if(preset.value==='custom'){speedInput.focus();speedInput.select();return;}speedInput.value=preset.value;describe();};describe();
+  const changeSpeed=(all=false)=>{try{apply(setClipSpeed(project,c.id,Number(speedInput.value),$<HTMLInputElement>('speed-preserve-pitch').checked,$<HTMLInputElement>('speed-ripple').checked,all),c.id);}catch(e){error(e);}};
+  $('apply-speed').onclick=()=>changeSpeed();$('apply-speed-all').onclick=()=>changeSpeed(true);
+ }
  $('move-left').onclick=()=>move(-1);$('move-right').onclick=()=>move(1);$('remove-clip').onclick=remove;
  renderTrackSettings(box,c.id);box.append(fields);
  if(busy)for(const el of box.querySelectorAll<HTMLInputElement|HTMLButtonElement>('input,button,select'))el.disabled=true;
@@ -352,7 +360,7 @@ const mobile = setupMobile({
  seek:frame=>{if(!busy)void preview.seek(frame);},
  getScale:()=>scale,
  setScale:value=>{scale=value;$<HTMLInputElement>('zoom').value=String(value);render();},
- trimRange:id=>{const c=project.clips.find(c=>c.id===id);return c?{inFrame:c.inFrame,outFrame:c.inFrame+c.frames,sourceFrames:sourceFrames(assetFor(c.assetId))}:null;},
+ trimRange:id=>{const c=project.clips.find(c=>c.id===id);return c?{inFrame:c.inFrame,outFrame:c.inFrame+sourceSpan(c),sourceFrames:sourceFrames(assetFor(c.assetId)),speed:playbackSpeed(c)}:null;},
  commitTrim:(id,inFrame,outFrame)=>{if(busy)return;try{apply(trim(project,id,inFrame,outFrame),id);}catch(e){error(e);}}
 });
 const fullscreenPreview=setupPreviewFullscreen({beforeEnter:()=>mobile.closeSheet(),report:say});

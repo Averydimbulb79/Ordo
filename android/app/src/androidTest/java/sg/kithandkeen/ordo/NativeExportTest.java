@@ -113,6 +113,15 @@ public class NativeExportTest {
                 assertTrue("native recovery returns the requested picture",Color.blue(recovered.getPixel(recovered.getWidth()*3/4,recovered.getHeight()/2))>180);
                 assertTrue(recovered.getWidth()<=160&&recovered.getHeight()<=90);recovered.recycle();
             }
+            File fast=new File(context.getCacheDir(),"native-speed.mp4");fast.delete();
+            try{
+                JSObject speedClip=clip(context,first).put("kind","video").put("frames",30).put("sourceFrames",60).put("speed",2).put("renderSpeed",2);
+                render(context,OrdoExportPlugin.buildComposition(new JSArray(java.util.Collections.singletonList(speedClip)),320,180,30,null),fast);
+                try(MediaMetadataRetriever reader=new MediaMetadataRetriever()){
+                    reader.setDataSource(fast.getAbsolutePath());long ms=Long.parseLong(reader.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));assertTrue("2x native duration "+ms,ms>=950&&ms<=1100);
+                    Bitmap frame=reader.getFrameAtTime(750000,MediaMetadataRetriever.OPTION_CLOSEST);assertTrue("2x reaches the blue source frame",Color.blue(frame.getPixel(240,90))>180);frame.recycle();
+                }
+            }finally{fast.delete();}
             JSObject video=clip(context,first).put("kind","video").put("inFrame",30).put("frames",30);
             render(context,OrdoExportPlugin.buildComposition(new JSArray(java.util.Collections.singletonList(video)),320,180,24,null),trimmed);
             try(MediaMetadataRetriever reader=new MediaMetadataRetriever()){

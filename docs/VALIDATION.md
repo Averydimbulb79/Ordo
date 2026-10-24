@@ -1,3 +1,7 @@
+# v0.10.0 speed validation
+
+38 component tests cover source ranges, rounded timeline mapping, split/trim, ripple gaps and collision rejection, scoped bulk changes, invalid data and format-6 saves. Desktop and touch browser checks verify controls, preview playback rate and project persistence. Encoded 2× video crosses the expected red/blue source boundary in three seconds; its test tone remains 440 Hz with pitch preservation and becomes 880 Hz without it. Offline audio checks cover 0.5×, 1.5× and 4×, including uninterrupted sound across four-second processing windows. Android instrumentation checks native 2× duration and source picture timing on the existing emulator matrix. Pitch is processed locally in WebAssembly; its file and MIT notices are bundled for offline use.
+
 # v0.9.0 validation
 
 Local checks: TypeScript build, 33 component tests, desktop 1440px and real touch 390px title control tests. Browser tests verify rotated corner resizing, both title duration edges, image extension and saved project values. Android CI additionally exercises native title transition pixels and encoded title output while the app is backgrounded with the export service active. Physical-device export speed and the user's original source video are not benchmarked here.

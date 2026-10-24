@@ -12,6 +12,7 @@ import android.os.Looper;
 import android.util.Base64;
 import androidx.activity.result.ActivityResult;
 import androidx.media3.common.C;
+import androidx.media3.common.audio.SpeedProvider;
 import androidx.media3.common.Effect;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
@@ -190,11 +191,14 @@ public class OrdoExportPlugin extends Plugin {
             Uri uri = Uri.parse(c.getString("uri"));
             if (!"content".equals(uri.getScheme())) throw new IllegalArgumentException("Native export requires an Android document URI.");
             long inUs = Math.round(c.getDouble("inFrame") * 1000000 / 30), durationUs = Math.round(c.getDouble("frames") * 1000000 / 30);
+            final float speed=(float)c.optDouble("renderSpeed",c.optDouble("speed",1));
+            long sourceUs=Math.round(c.optDouble("sourceFrames",c.getDouble("frames")*speed)*1000000/30);
+            if(!Float.isFinite(speed)||speed<=0||speed>4f||sourceUs<=0)throw new IllegalArgumentException("Invalid clip speed.");
             if (inUs < 0 || durationUs <= 0) throw new IllegalArgumentException("Invalid native clip range.");
             boolean image = "image".equals(c.getString("kind"));
             MediaItem.Builder media = new MediaItem.Builder().setUri(uri);
             if (image) media.setImageDurationMs((durationUs + 999) / 1000);
-            else media.setClippingConfiguration(new MediaItem.ClippingConfiguration.Builder().setStartPositionUs(inUs).setEndPositionUs(inUs + durationUs).build());
+            else media.setClippingConfiguration(new MediaItem.ClippingConfiguration.Builder().setStartPositionUs(inUs).setEndPositionUs(inUs + sourceUs).build());
             List<Effect> effects = new ArrayList<>();
             JSONObject crop = c.optJSONObject("crop");
             if (crop != null) {
@@ -208,6 +212,10 @@ public class OrdoExportPlugin extends Plugin {
                 effects.add((MatrixTransformation) timeUs -> transform);
             }
             EditedMediaItem.Builder item = new EditedMediaItem.Builder(media.build()).setRemoveAudio(true).setFrameRate(fps).setEffects(new Effects(Collections.emptyList(), effects));
+            if(!image&&speed!=1)item.setSpeed(new SpeedProvider(){
+                @Override public float getSpeed(long timeUs){return speed;}
+                @Override public long getNextSpeedChangeTimeUs(long timeUs){return C.TIME_UNSET;}
+            });
             if (image) item.setDurationUs(durationUs);
             pictures.addItem(item.build());
         }

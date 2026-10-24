@@ -1,5 +1,12 @@
 # Ordo changelog
 
+## v0.10.0: clip speed
+
+- Video/audio speed presets from 0.25× to 4× and custom values, with pitch preservation, same-track ripple and scoped Apply to all.
+- Exact source ranges survive duration rounding, preview, saving, split and trim. Speed saves use project format 6; older projects remain supported.
+- Native video uses Media3 speed adjustment. Compatible export maps source timestamps at the new rate. Both exports use a bounded, latency-compensated Signalsmith Stretch PCM stream for pitch preservation.
+- New tests cover project semantics, gaps/collisions, bulk scope, desktop/mobile controls, 2× picture timing, pitch preserved/shifted output, long decoding windows and native retimed video.
+
 ## v0.9.1: synchronised release labels and landing page
 
 - Fix the stale v0.8.0 in-app header by reading the package version. Android versionName uses the same source.

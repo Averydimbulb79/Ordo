@@ -5,7 +5,7 @@ type Hooks = {
  seek: (frame: number) => void;
  getScale: () => number;
  setScale: (scale: number) => void;
- trimRange: (id: string) => { inFrame: number; outFrame: number; sourceFrames: number } | null;
+ trimRange: (id: string) => { inFrame: number; outFrame: number; sourceFrames: number; speed?:number } | null;
  commitTrim: (id: string, inFrame: number, outFrame: number) => void;
 };
 export function setupMobile(hooks: Hooks) {
@@ -89,7 +89,7 @@ export function setupMobile(hooks: Hooks) {
  let startX=0,startY=0,startScrollTop=0,startScroll=0,pinchDistance=0,pinchScale=0,pinchFrame=0,mode:'pan'|'seek'|'trim'|'pinch'|''='';
  let suppressUntil=0;
  scroll.addEventListener('click',event=>{if(performance.now()<suppressUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
- let drag: { id:string;side:string;inFrame:number;outFrame:number;sourceFrames:number;nextIn:number;nextOut:number;scale:number;node:HTMLElement;left:number;width:number } | null=null;
+ let drag: { id:string;side:string;inFrame:number;outFrame:number;sourceFrames:number;speed?:number;nextIn:number;nextOut:number;scale:number;node:HTMLElement;left:number;width:number } | null=null;
  const pointDistance=()=>{const [a,b]=Array.from(pointers.values());return Math.hypot(a.x-b.x,a.y-b.y);};
  scroll.addEventListener('pointerdown',event=>{
   if(!document.body.classList.contains('mobile-ui')||hooks.isBusy()||event.pointerType==='mouse')return;
@@ -113,9 +113,9 @@ export function setupMobile(hooks: Hooks) {
    const center=Array.from(pointers.values()).reduce((n,p)=>n+p.x,0)/pointers.size;scroll.scrollLeft=56+pinchFrame*scale-(center-scroll.getBoundingClientRect().left);return;
   }
   if(mode==='trim'&&drag){
-   event.preventDefault();const delta=Math.round((event.clientX-startX)/drag.scale*30);
-   if(drag.side==='in')drag.nextIn=Math.max(0,Math.min(drag.outFrame-1,drag.inFrame+delta));else drag.nextOut=Math.min(drag.sourceFrames,Math.max(drag.inFrame+1,drag.outFrame+delta));
-   drag.node.style.width=`${Math.max(2,(drag.nextOut-drag.nextIn)/30*drag.scale)}px`;return;
+   event.preventDefault();const delta=Math.round((event.clientX-startX)/drag.scale*30)*(drag.speed??1);
+   if(drag.side==='in')drag.nextIn=Math.max(0,Math.min(drag.outFrame-Math.min(drag.speed??1,drag.outFrame-drag.inFrame),drag.inFrame+delta));else drag.nextOut=Math.min(drag.sourceFrames,Math.max(drag.inFrame+Math.min(drag.speed??1,drag.outFrame-drag.inFrame),drag.outFrame+delta));
+   drag.node.style.width=`${Math.max(2,(drag.nextOut-drag.nextIn)/(drag.speed??1)/30*drag.scale)}px`;return;
   }
   if(mode==='seek'){event.preventDefault();hooks.seek((event.clientX-content.getBoundingClientRect().left-56)/hooks.getScale()*30);}
   else if(mode==='pan'){event.preventDefault();scroll.scrollLeft=startScroll-(event.clientX-startX);scroll.scrollTop=startScrollTop-(event.clientY-startY);}

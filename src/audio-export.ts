@@ -1,4 +1,6 @@
-import {layersAt,placements} from './model';
+import {pitchPreservedAudio} from './speed-audio';
+import type {RetimedPacket} from './speed-audio';
+import {layersAt,placements,playbackSpeed,sourceSpan} from './model';
 import type {Project} from './model';
 import type {AudioBufferSink} from 'mediabunny';
 import {createAudioChain} from './audio-engine';
@@ -8,6 +10,7 @@ import {createAudioChain} from './audio-engine';
 export async function renderAudioMix(project:Project,sinks:Map<string,AudioBufferSink>,frames:number,fps:number,signal:AbortSignal,progress:(n:number)=>void){
  const rate=48000,seconds=frames/fps,context=new OfflineAudioContext(2,frames*(rate/fps),rate),entries=placements(project);
  const chains=new Map<string,ReturnType<typeof createAudioChain>>();
+ const stretches=new Map<string,{iterator:AsyncGenerator<RetimedPacket>;pending?:RetimedPacket;done?:boolean}>();
  const inputs=new Map<string,GainNode>();
  const check=()=>{if(signal.aborted)throw new DOMException('Export cancelled','AbortError');};
  let rendering:Promise<AudioBuffer>|undefined;
@@ -20,10 +23,23 @@ export async function renderAudioMix(project:Project,sinks:Map<string,AudioBuffe
     if(!sink||!c.volume||b<=a)continue;
     let chain=chains.get(c.id),input=inputs.get(c.id);
     if(!chain){input=context.createGain();inputs.set(c.id,input);chain=createAudioChain(context,input,context.destination);chain.update(c.audio);chains.set(c.id,chain);}
-    const sourceIn=c.inFrame/30+a-entry.start/30,sourceOut=c.inFrame/30+b-entry.start/30;
-    for await(const packet of sink.buffers(sourceIn,sourceOut)){
-     check();const from=Math.max(sourceIn,packet.timestamp),to=Math.min(sourceOut,packet.timestamp+packet.buffer.duration);
-     if(to>from){const node=context.createBufferSource();node.buffer=packet.buffer;node.connect(input!);node.onended=()=>node.disconnect();node.start(a+from-sourceIn,from-packet.timestamp,to-from);}
+    const speed=playbackSpeed(c);
+    if(speed!==1&&c.preservePitch!==false){
+     let state=stretches.get(c.id);if(!state){state={iterator:pitchPreservedAudio(c,sink,signal)};stretches.set(c.id,state);}
+     while(!state.done){
+      check();if(!state.pending){const next=await state.iterator.next();if(next.done){state.done=true;break;}state.pending=next.value;}
+      const packet=state.pending,stamp=entry.start/30+packet.timestamp,packetEnd=stamp+packet.buffer.duration;
+      if(stamp>=b)break;
+      const from=Math.max(a,stamp),to=Math.min(b,packetEnd);
+      if(to>from){const node=context.createBufferSource();node.buffer=packet.buffer;node.connect(input!);node.onended=()=>node.disconnect();node.start(from,from-stamp,to-from);}
+      if(packetEnd>b+1e-9)break;state.pending=undefined;
+     }
+    }else{
+     const sourceIn=c.inFrame/30+(a-entry.start/30)*speed,sourceOut=Math.min((c.inFrame+sourceSpan(c))/30,c.inFrame/30+(b-entry.start/30)*speed);
+     for await(const packet of sink.buffers(sourceIn,sourceOut)){
+      check();const from=Math.max(sourceIn,packet.timestamp),to=Math.min(sourceOut,packet.timestamp+packet.buffer.duration);
+      if(to>from){const node=context.createBufferSource();node.buffer=packet.buffer;node.playbackRate.value=speed;node.connect(input!);node.onended=()=>node.disconnect();node.start(a+(from-sourceIn)/speed,from-packet.timestamp,to-from);}
+     }
     }
     const start=Math.ceil(a*fps-1e-8),end=Math.ceil(b*fps-1e-8);
     for(let f=start;f<=end;f++){
@@ -42,5 +58,5 @@ export async function renderAudioMix(project:Project,sinks:Map<string,AudioBuffe
   }
   const result=await rendering!;check();return result;
  }catch(error){if(context.state==='suspended')void context.resume().catch(()=>{});throw error;}
- finally{if(context.state==='closed')for(const chain of chains.values())chain.dispose();}
+ finally{for(const state of stretches.values())await state.iterator.return(undefined).catch(()=>{});if(context.state==='closed')for(const chain of chains.values())chain.dispose();}
 }
