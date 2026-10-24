@@ -2,7 +2,7 @@ import { layersAt } from './model';
 import type { Project, Clip } from './model';
 import { ColorProcessor } from './adjustments';
 import { paintTransition, paintEdge } from './transitions';
-import { paintText } from './text-renderer';
+import { paintAnimatedText } from './text-renderer';
 
 type Buffers={a:HTMLCanvasElement;b:HTMLCanvasElement;source:HTMLCanvasElement;raw:HTMLCanvasElement;edge:HTMLCanvasElement;color?:ColorProcessor};
 const cache=new WeakMap<CanvasRenderingContext2D,Buffers>();
@@ -47,5 +47,5 @@ export function paintComposition(ctx:CanvasRenderingContext2D,project:Project,fr
   }
  }
  for(const layer of layers.filter(e=>e.track==='v2'))draw(ctx,layer.clip);
- for(const text of project.texts??[])if(frame>=text.startFrame&&frame<text.startFrame+text.frames)paintText(ctx,text,width/project.width);
+ for(const text of project.texts??[])if(frame>=text.startFrame&&frame<text.startFrame+text.frames)paintAnimatedText(ctx,text,width/project.width,frame-text.startFrame);
 }

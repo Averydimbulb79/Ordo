@@ -1,8 +1,17 @@
-## Ordo for Android · v0.7.0
+## Ordo for Android · v0.8.0
 
-Current app release: v0.7.0, development build. Guide updated 24 October 2026.
+Current app release: v0.8.0, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
+
+### New in v0.8.0
+
+- Tap a title/caption in Program or its timeline clip. Drag the text to reposition it, use the round handle to rotate, and press Apply. Cancel restores the original values. Preview remains accessible while editing.
+- Drag title/caption clips horizontally on the timeline to change their start time.
+- Text tools include opacity and independent Start/End transitions with durations. Preview/export share the same rendering.
+- Picture Adjust includes opacity and bulk application. Original source volume in Clip properties has separate bulk scopes for video and imported audio. Source audio adjustments also works with video soundtracks.
+- If the preview decoder times out, native Android frame extraction supplies the requested picture to the shared compositor. This works for projects with text/effects that cannot use whole-video native export.
+- Recovery stages sources into temporary cache if native URI access is unavailable. Staging is chunked and cleaned up after completion/cancellation. This can be slower and requires cache storage; effects and sound are retained.
 
 ### New in v0.7.0
 
@@ -35,7 +44,7 @@ Current app release: v0.7.0, development build. Guide updated 24 October 2026.
 
 Published APKs retain the same application ID, `sg.kithandkeen.ordo`, and development signing certificate. GitHub assigns an increasing versionCode so newer builds can update the installed app. The visible release version and the internal build number are separate; several builds can share the v0.7.0 label.
 
-### What is available in v0.7.0
+### What is available in v0.8.0
 
 | Area | Available tools |
 | --- | --- |

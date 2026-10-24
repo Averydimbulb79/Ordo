@@ -1,0 +1,25 @@
+import type { TextItem } from './creative-model';
+import { textBounds } from './text-renderer';
+export function previewPoint(canvas:HTMLCanvasElement,x:number,y:number){
+ const r=canvas.getBoundingClientRect(),scale=Math.min(r.width/canvas.width,r.height/canvas.height);
+ return{x:(x-r.left-(r.width-canvas.width*scale)/2)/scale,y:(y-r.top-(r.height-canvas.height*scale)/2)/scale,scale,left:r.left+(r.width-canvas.width*scale)/2,top:r.top+(r.height-canvas.height*scale)/2};
+}
+export function hitText(canvas:HTMLCanvasElement,item:TextItem,x:number,y:number){
+ const p=previewPoint(canvas,x,y),angle=-item.rotation*Math.PI/180,dx=p.x-item.x*canvas.width,dy=p.y-item.y*canvas.height;
+ const px=dx*Math.cos(angle)-dy*Math.sin(angle),py=dx*Math.sin(angle)+dy*Math.cos(angle),b=textBounds(canvas.getContext('2d')!,item);
+ const pad=12/p.scale;return px>=b.x-pad&&px<=b.x+b.width+pad&&py>=b.y-pad&&py<=b.y+b.height+pad;
+}
+/** Editing handles are HTML overlays and never enter the canvas/exported pixels. */
+export function attachTextTransform(canvas:HTMLCanvasElement,get:()=>TextItem,change:(values:Partial<TextItem>)=>void){
+ const host=canvas.parentElement!,selection=document.createElement('div');selection.className='text-selection';selection.innerHTML='<div class="text-selection-box"></div><button type="button" class="text-rotate" aria-label="Rotate text" title="Drag to rotate">↻</button>';host.append(selection);
+ const handle=selection.querySelector<HTMLButtonElement>('button')!,box=selection.querySelector<HTMLElement>('.text-selection-box')!;
+ let drag:{mode:'move'|'rotate';pointer:number;item:TextItem;x:number;y:number;angle:number;target:HTMLElement}|undefined;
+ const update=()=>{const item=get(),p=previewPoint(canvas,0,0),r=host.getBoundingClientRect(),b=textBounds(canvas.getContext('2d')!,item);selection.style.left=`${p.left-r.left+item.x*canvas.width*p.scale}px`;selection.style.top=`${p.top-r.top+item.y*canvas.height*p.scale}px`;selection.style.transform=`rotate(${item.rotation}deg)`;Object.assign(box.style,{left:`${b.x*p.scale}px`,top:`${b.y*p.scale}px`,width:`${b.width*p.scale}px`,height:`${b.height*p.scale}px`});handle.style.left=`${(b.x+b.width/2)*p.scale-20}px`;handle.style.top=`${b.y*p.scale-44}px`;};
+ const down=(event:PointerEvent)=>{if(event.button!==0||drag)return;const item=get(),rotate=event.currentTarget===handle;if(!rotate&&!hitText(canvas,item,event.clientX,event.clientY))return;event.preventDefault();event.stopPropagation();const p=previewPoint(canvas,event.clientX,event.clientY);drag={mode:rotate?'rotate':'move',pointer:event.pointerId,item:{...item},x:p.x,y:p.y,angle:Math.atan2(p.y-item.y*canvas.height,p.x-item.x*canvas.width),target:event.currentTarget as HTMLElement};drag.target.setPointerCapture(event.pointerId);};
+ const move=(event:PointerEvent)=>{if(!drag||drag.pointer!==event.pointerId)return;event.preventDefault();const p=previewPoint(canvas,event.clientX,event.clientY),d=drag;if(d.mode==='move')change({x:Math.max(0,Math.min(1,d.item.x+(p.x-d.x)/canvas.width)),y:Math.max(0,Math.min(1,d.item.y+(p.y-d.y)/canvas.height))});else{const angle=Math.atan2(p.y-d.item.y*canvas.height,p.x-d.item.x*canvas.width);let degrees=d.item.rotation+(angle-d.angle)*180/Math.PI;degrees=((degrees+180)%360+360)%360-180;change({rotation:Math.round(degrees)});}update();};
+ const up=(event:PointerEvent)=>{if(!drag||drag.pointer!==event.pointerId)return;if(event.type==='pointercancel')change({x:drag.item.x,y:drag.item.y,rotation:drag.item.rotation});if(drag.target.hasPointerCapture(event.pointerId))drag.target.releasePointerCapture(event.pointerId);drag=undefined;update();};
+ const oldTouch=canvas.style.touchAction;canvas.style.touchAction='none';
+ for(const target of [canvas as HTMLElement,handle as HTMLElement]){target.addEventListener('pointerdown',down);target.addEventListener('pointermove',move);target.addEventListener('pointerup',up);target.addEventListener('pointercancel',up);}
+ const resize=new ResizeObserver(update);resize.observe(canvas);update();
+ return{update,dispose(){resize.disconnect();selection.remove();canvas.style.touchAction=oldTouch;for(const target of [canvas as HTMLElement,handle as HTMLElement]){target.removeEventListener('pointerdown',down);target.removeEventListener('pointermove',move);target.removeEventListener('pointerup',up);target.removeEventListener('pointercancel',up);}drag=undefined;}};
+}

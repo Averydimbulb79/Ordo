@@ -6,7 +6,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 
 | At a glance | Details |
 | --- | --- |
-| Current app | v0.7.0, development build |
+| Current app | v0.8.0, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
 | Website | Product information, Android screenshot with a release-synchronised version label and two-row toolbar, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |
@@ -107,7 +107,7 @@ GitHub Actions builds the APK, checks the editor and deploys the landing page se
 | --- | --- |
 | [Roadmap](docs/ROADMAP.md) | Planned features; development targets are not current capabilities |
 | [Changelog](docs/CHANGELOG.md) | Release history |
-| [Android guide](docs/ANDROID.md) | Current v0.7.0 usage, limits, native setup and phone checks |
+| [Android guide](docs/ANDROID.md) | Current v0.8.0 usage, limits, native setup and phone checks |
 | [Components](docs/COMPONENTS.md) | Editing engine and dependencies |
 | [Validation](docs/VALIDATION.md) | Test coverage and limitations |
 | [Fonts](docs/FONTS.md) | Font catalogue and style support |
@@ -128,3 +128,18 @@ Keep rollback checkpoints before substantial changes and update this README with
 | Native saving | Completed native output streams to the chosen Android document without a full video Blob or base64 transfer |
 
 Native codec failure retries the compatible exporter. Save failures do not rerender automatically. Native video is not full compositor parity yet, and speed on a particular phone remains to be measured. Both paths keep processing local.
+
+### v0.8.0 text controls and export recovery
+
+| Feature | Behaviour |
+| --- | --- |
+| Titles/captions | Tap in Program or on the timeline to edit; drag text to move it, use the round handle to rotate, then Apply; Cancel restores |
+| Text timing | Drag title/caption timeline clips sideways to change start time |
+| Text animation | Independent Start/End transitions from the 13-effect catalogue, with durations |
+| Opacity | 0–100% for text, video and images; picture Adjust also supports bulk opacity |
+| Source volume | Clip properties supports live volume and Apply to all video/audio clips separately; existing EQ/fades remain intact |
+| Video soundtrack | Source audio adjustments exposes gain, EQ, pan, dynamics and fades for original video sound |
+| Frame recovery | Android native frame extraction retries preview-decoder stalls inside the shared compositor, retaining titles, transitions, opacity, grading and sound |
+| Source access | Sources lacking native URI access are staged in bounded chunks and cleaned up after recovery; cache storage is required |
+
+Native frame recovery prioritises completing the edit and may be slower than whole-video native export. The user's original video has not been reproduced locally; a phone trial remains necessary.

@@ -75,6 +75,12 @@ public class NativeExportTest {
                 Bitmap f=reader.getFrameAtTime(250000,MediaMetadataRetriever.OPTION_CLOSEST);assertTrue(Color.red(f.getPixel(160,90))>180);assertTrue(Color.red(f.getPixel(20,90))<30);f.recycle();
                 f=reader.getFrameAtTime(1250000,MediaMetadataRetriever.OPTION_CLOSEST);assertTrue(Color.blue(f.getPixel(240,90))>180);assertTrue(Color.blue(f.getPixel(80,90))<30);f.recycle();
             }
+            try(MediaMetadataRetriever nativeReader=new MediaMetadataRetriever()){
+                nativeReader.setDataSource(context,FileProvider.getUriForFile(context,context.getPackageName()+".fileprovider",first));
+                Bitmap recovered=OrdoFramesPlugin.decodeFrame(nativeReader,1250000,160,90);
+                assertTrue("native recovery returns the requested picture",Color.blue(recovered.getPixel(recovered.getWidth()*3/4,recovered.getHeight()/2))>180);
+                assertTrue(recovered.getWidth()<=160&&recovered.getHeight()<=90);recovered.recycle();
+            }
             JSObject video=clip(context,first).put("kind","video").put("inFrame",30).put("frames",30);
             render(context,OrdoExportPlugin.buildComposition(new JSArray(java.util.Collections.singletonList(video)),320,180,24,null),trimmed);
             try(MediaMetadataRetriever reader=new MediaMetadataRetriever()){

@@ -1,6 +1,6 @@
 {
   "name": "ordo",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "description": "Video editor for Android",
@@ -22,7 +22,8 @@
     "test:export-fallback": "node scripts/export-fallback-smoke.mjs",
     "test:export-duration": "node scripts/export-duration-smoke.mjs",
     "build:landing": "node scripts/build-landing.mjs",
-    "dev:landing": "vite website --host 127.0.0.1"
+    "dev:landing": "vite website --host 127.0.0.1",
+    "test:titles": "node scripts/title-controls-smoke.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
