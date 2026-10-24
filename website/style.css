@@ -5,8 +5,8 @@
 /* The original screenshot remains intact. The viewport excludes only Android's OS bars. */
 .phone-visual{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 12px 0;isolation:isolate;background:radial-gradient(ellipse at 50% 45%,#95dfc911,transparent 66%)}
 .phone-frame{position:relative;width:min(100%,338px);padding:8px;border:1px solid #75828770;border-radius:35px;background:linear-gradient(135deg,#50585f,#171d22 18%,#090b0f 70%,#40494e);box-shadow:0 28px 70px #0007,inset 0 0 0 2px #151a1e;transform:rotate(2deg)}
-.phone-screen{position:relative;width:100%;aspect-ratio:920 / 1835;overflow:hidden;border-radius:26px;background:#111318;border:1px solid #0b0f13}
-.phone-screen>.android-screenshot{position:absolute;inset:0 auto auto 0;display:block;width:100%;max-width:none;height:auto;transform:translateY(-5.224609375%)}
+.phone-screen{position:relative;width:100%;aspect-ratio:690 / 1377;overflow:hidden;border-radius:26px;background:#111318;border:1px solid #0b0f13}
+.phone-screen>.android-screenshot{position:absolute;inset:0 auto auto 0;display:block;width:100%;max-width:none;height:auto;transform:translateY(-5.208333333%)}
 .phone-button{position:absolute;width:3px;border-radius:2px;background:linear-gradient(90deg,#687178,#242c32);z-index:-1;right:-3px}
 .phone-button-volume{top:17%;height:11%}.phone-button-power{top:34%;height:7%}
 .screenshot-cleanup{position:absolute;left:96.8%;top:79.02%;width:2.3%;height:1.14%;background:linear-gradient(#181d24,#1a1e25)}

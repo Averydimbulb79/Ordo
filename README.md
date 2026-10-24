@@ -8,7 +8,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 | --- | --- |
 | Current app | v0.6.2, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
-| Website | Product information, real Android app preview, responsive layout and APK downloads |
+| Website | Product information, updated Android screenshot with the two-row toolbar, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |
 | Licence | MIT; dependency and font licences also apply |
 
