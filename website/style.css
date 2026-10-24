@@ -41,3 +41,17 @@
 /* Keep the release label current while preserving the supplied Android screenshot. */
 .phone-screen{container-type:inline-size}
 .screenshot-version{position:absolute;left:18.3%;top:2.25%;width:8.5%;height:2%;display:flex;align-items:center;padding-left:.6cqw;background:#161920;color:#8d96a2;font-family:Roboto,Arial,sans-serif;font-size:2.32cqw;font-weight:400;line-height:1;letter-spacing:0;white-space:nowrap;pointer-events:none}
+
+/* Separate platform pages and correctly spaced download buttons */
+.platform-download-actions{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-top:22px;margin-bottom:16px}
+.platform-download-actions .button{margin:0;white-space:nowrap}
+.platform-page{min-height:70vh;padding-block:90px 110px}
+.platform-page .eyebrow{margin-bottom:18px}
+.platform-page h1{font-size:clamp(46px,7vw,90px);font-weight:500;letter-spacing:-.06em;line-height:1.06;margin:0 0 25px}
+.platform-page .platform-intro{font-size:clamp(15px,2vw,20px);line-height:1.7;color:#b5c2ca;max-width:750px;margin-bottom:32px}
+.platform-page .platform-actions{display:flex;flex-wrap:wrap;gap:16px;margin:24px 0 34px}
+.platform-page .platform-detail{max-width:780px;background:#1c2429;border:1px solid #ffffff18;border-radius:14px;padding:28px;line-height:1.85;color:#b8c6cd}
+.platform-page .platform-detail h2{color:#e7f5ee;font-size:20px;margin:0 0 10px}
+.platform-page .platform-detail p{margin:0 0 14px}
+.platform-page .platform-detail ul{padding-left:22px;margin:0}
+@media(max-width:650px){.platform-download-actions{flex-direction:column;align-items:stretch;gap:12px}.platform-download-actions .button{width:100%;justify-content:center}.platform-page{padding-block:55px 70px}.platform-page .platform-detail{padding:20px}}
