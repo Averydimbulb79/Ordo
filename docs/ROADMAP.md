@@ -1,8 +1,8 @@
 # Ordo roadmap: Android first
 
-Updated 23 October 2026. Product target: a capable Android editor comparable to the traditional, non-AI editing workflows of Filmora Mobile and CapCut. This is the development goal, not a claim about current parity.
+Updated 24 October 2026. Product target: a capable Android editor comparable to the traditional, non-AI editing workflows of Filmora Mobile and CapCut. This is the development goal, not a claim about current parity.
 
-The Android app and web test build share the interface, editing model and project format. GitHub hosts source, rollback checkpoints, build checks, web deployment and APK builds. Windows work is deferred. No AI features, accounts or cloud processing are planned for the initial product.
+The Android app uses a browser-based engine internally through Capacitor. The browser editor is a development harness, not a separately distributed product. GitHub hosts source, rollback checkpoints, build checks, the Android landing page and APK builds. Windows work is deferred. No AI features, accounts or cloud processing are planned for the initial product.
 
 ## Feature targets
 

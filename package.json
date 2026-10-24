@@ -3,7 +3,7 @@
   "version": "0.6.0",
   "private": true,
   "type": "module",
-  "description": "Android-first video editor with a shared web build",
+  "description": "Video editor for Android",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
@@ -18,7 +18,9 @@
     "test:bulk": "node scripts/bulk-smoke.mjs",
     "test:touch-preview": "node scripts/touch-preview-smoke.mjs",
     "test:audio": "node scripts/audio-relink-smoke.mjs",
-    "test:images": "node scripts/images-smoke.mjs"
+    "test:images": "node scripts/images-smoke.mjs",
+    "build:landing": "node scripts/build-landing.mjs",
+    "dev:landing": "vite website --host 127.0.0.1"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",

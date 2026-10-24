@@ -7,3 +7,5 @@ android/app/src/main/assets/public/
 android/app/src/main/assets/capacitor*.json
 android/app/src/main/res/xml/config.xml
 .github/development-signing.p12
+
+landing-dist/

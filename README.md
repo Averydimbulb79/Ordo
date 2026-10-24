@@ -1,92 +1,113 @@
-## Ordo
+## Ordo for Android
 
-An Android-first video editor, with a shared web build. Local editing, no account or media upload required, and no AI features.
+A free, open-source video editor for Android. Edit video, images and sound on your device, with no account or media upload required. No AI features.
 
-[Open web editor](https://averydimbulb79.github.io/Ordo/) · [Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Roadmap](docs/ROADMAP.md) · [Android guide](docs/ANDROID.md)
+[Download Android APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Visit the website](https://averydimbulb79.github.io/Ordo/) · [Android guide](docs/ANDROID.md) · [Release history](docs/CHANGELOG.md)
 
-### v0.6.0: still images, clip-edge transitions and 66 fonts
+| At a glance | Details |
+| --- | --- |
+| Current app | v0.6.0, development build |
+| Platform | Android 7.0 or later; codec support varies by device |
+| Website | Product information and APK downloads |
+| Privacy | Local editing and rendering; bundled offline fonts |
+| Licence | MIT; dependency and font licences also apply |
 
-- Import JPEG, PNG, WebP, AVIF, BMP and GIF images supported by the device. Animated formats are imported as a single still frame. Each image starts at 6 seconds, with a thumbnail and filename in Project media. Add all media includes images on the chosen picture track.
-- Extend or shorten images with the same trim handles and In/Out controls as video. Split, duplicate, placement, V1/V2 layering, crop, picture adjustments and exports support image clips. The 24-hour timeline guard and initial 2-minute export limit remain.
-- Transitions have Start, End and Between categories with 13 effects plus None. Start/End animate the picture on V1 or V2 without changing timing or sound; duration is 0.1–10 seconds, clamped to the clip length. Between overlaps adjacent V1 clips for 0.1–2 seconds. Apply to all works in each category.
-- Audio transitions offer Fade in, Fade out and Crossfade with durations in seconds. Fade in/out can target any selected audio clip or all audio clips. First/last fades and applying crossfades to all adjacent joins remain available. Zero removes a fade.
-- Titles and captions share 66 locally bundled Google Fonts. All work offline, including export. Where a family has no native bold or italic face, that style is synthesised. See [font catalogue](docs/FONTS.md) and bundled font licences.
-- Project format v5 saves images and edge transitions, and opens v1–v4 projects. Save with the new version after opening an older project; older Ordo versions cannot open v5 saves.
+### What you can do
 
-### v0.5.0: remembered media and audio editing
+| Tool | Available features |
+| --- | --- |
+| Media | Import video, audio and images; thumbnails, filenames and durations; Add all media |
+| Timeline | V1/V2 picture tracks, A1/A2 audio tracks and T/C text lanes; trim, split, duplicate and reorder |
+| Images | Six-second default; shorten or extend with normal trim controls; crop, grade, layer and export |
+| Picture | Brightness, contrast, saturation, exposure, highlights, shadows, temperature, tint, sharpen, vignette and fade |
+| Crop | Common aspect ratios, free sizing and an option to match the project canvas |
+| Transitions | 13 effects plus None; Start/End clip animations and Between transitions on adjacent V1 clips; Apply to all |
+| Titles and captions | 66 offline Google Fonts; size, colour, rotation, bold, italic, underline, strikethrough, positioning, outline and background |
+| Subtitle files | Import SRT/VTT; export SRT |
+| Audio | Volume, gain, pan, three-band EQ, compressor, limiter, fade in/out and A1/A2 crossfades; durations in seconds |
+| Preview | Live adjustment panel, Adjusted comparison checkbox and fullscreen with sensor rotation on Android |
+| Projects | Save .ordo files, Undo/Redo, recovery snapshots, remembered media and batch relinking |
 
-- Remember media on this device reconnects assets when opening a project or restoring recovery. Android uses persistent read access granted through the system document picker; web imports and providers without persistent grants use local IndexedDB copies when storage permits. Forget remembered media clears those records/copies and Android read grants while leaving the current edit open.
-- Locate missing media accepts multiple files together. Full streaming SHA-256 fingerprints recognise renamed sources and reject different content with the same name and size. Re-importing missing assets also relinks them. Older projects need an initial relink/import before their media can be remembered; ambiguous legacy matches require the individual Relink button. Moved/deleted files, revoked permissions, cleared app/browser data or storage limits can require locating files again.
-- Selecting an MP3/audio clip or a clip on A1/A2 switches Adjust to audio controls: volume, gain, pan, three-band EQ, compressor, compressor-based limiter and per-clip fade in/out. Touch sliders keep their scroll protection. Reset, Apply to all audio clips, Cancel and one-step Undo remain available.
-- The Adjusted checkbox bypasses picture grading and audio processing during playback. Clip volume, audio fades, crossfades and timeline timing stay active. Preview and export use the same Web Audio processing chain; export preserves continuous filter and compressor state across decoding windows.
-- With an audio clip selected, Transitions opens audio crossfades on A1/A2, plus Fade in first audio clip and Fade out last audio clip. Crossfades use equal-power blending, clamp to half of either clip, overlap touching audio clips and shorten that track's assembly. Gaps and video timing remain intact. First/last fades also work on gapped tracks with crossfade switched off. Apply to all adjacent joins and Undo are supported. Timeline markers expose joins and clip fade durations.
-- Touch menu openings no longer trigger an unintended control beneath the same tap.
-- Project format v4 stores audio settings, crossfades and source fingerprints and reads v1/v2/v3 projects. Older Ordo versions cannot open v4 saves. Projects contain neither media bytes nor Android content URIs.
+### Install and start editing
 
-### v0.4.2: touch precision, compact tracks and fullscreen preview
+1. Download the [latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) on your Android phone.
+2. Open the downloaded file. If prompted, allow installation from the source you used to download it.
+3. Import media, choose a destination track and tap Add to sequence, or use Add all media.
+4. Select a clip to edit. Use the dedicated Transitions, Title, Captions, Adjust and Crop tools.
+5. Save your .ordo project and retain the original media. Export when ready.
 
-- Touch adjustment sliders no longer jump on a tap. Vertical swipes scroll the panel without changing grades; deliberate horizontal drags adjust relative to the starting value at finer sensitivity. Mouse and keyboard controls remain available.
-- All six timeline lanes (V1, V2, A1, A2, T and C) use 52 px rows instead of 88 px. Clips keep 44 px touch targets and visible trim handles.
-- A fullscreen icon sits at the bottom right of the preview picture. Fullscreen keeps playback, scrubbing and the Adjusted checkbox available. Exit with the icon, Escape or Android Back without losing your edit.
-- Android fullscreen hides system bars and enables full sensor rotation, then restores the previous orientation and system-bar settings on exit. Web fullscreen follows browser/device rotation support and falls back to a window-filling preview when the Fullscreen API is unavailable.
-- Preview comparison is simply an Adjusted checkbox: checked shows grading, unchecked bypasses it. This affects preview only; exports retain adjustments.
-- MP4 export now offers H.265 (HEVC) / AAC alongside H.264 / AAC and WebM VP8 / Opus. Encoder checks use the chosen resolution, FPS and bitrate; unsupported combinations are blocked with an explanation. H.265 remains device-dependent, and files retain the standard .mp4 extension. There is no silent codec substitution.
+Updates use the same application ID and development signing certificate, with an increasing versionCode, so the APK can install over the existing app.
 
-### v0.4.1: bulk editing and preview comparison
+### Export options
 
-- Project media has Add all media, with separate video (V1/V2) and audio (A1/A2) destinations. Available files append in bin order; missing files are skipped with feedback. One Undo removes the whole insertion.
-- Transitions has Apply to all joins for adjacent V1 clips. It replaces the join settings and clamps overlaps for short clips. Cut removes transitions at all joins.
-- Adjust has Apply to all video clips. It replaces grades on V1/V2, preserving crop, placement, audio, text and transitions. Each bulk action is one undoable edit.
-- Adjust is a compact scrolling panel below the preview in portrait and beside it in landscape/desktop. Playback and sliders remain available together. Apply commits the draft; Cancel restores the saved grade.
-- The preview's Adjusted checkbox toggles between adjusted and original picture during playback or while paused. This bypasses picture adjustments only; crop, placement, text and transitions remain visible. It never changes saved projects or exported grades.
-- Edit now uses an information icon, distinct from Adjust's sliders. Branding and Android application identity are unchanged.
+| Setting | Choices |
+| --- | --- |
+| Format | MP4 H.264/AAC, MP4 H.265/AAC, WebM VP8/Opus |
+| Resolution | 480p, 720p, 1080p, 2160p; preserves canvas orientation |
+| Frame rate | 24, 25, 30, 50 or 60 FPS |
+| Quality | Compact, Standard or High |
 
-### v0.4.0: creative tools, crop and export settings
+Available combinations depend on the device's encoders. The timeline runs at 30 FPS; higher export FPS does not create new motion in lower-frame-rate footage.
 
-- Dedicated Transitions, Title, Captions, Adjust and Crop buttons on desktop and in the Android dock.
-- 13 transitions between adjacent V1 clips: dissolve, black/white fades, four wipes, left/right slides, left/right pushes and zoom in/out. Duration controls and sound crossfades are included; zoom out shrinks the outgoing picture.
-- Timed titles and manual captions with 10 bundled Google Fonts, size, colour, rotation, bold, italic, underline, strikethrough, alignment, position, outline and background. Captions import SRT/VTT and export SRT.
-- 11 picture controls: brightness, contrast, saturation, exposure, highlights, shadows, temperature, tint, sharpen, vignette and fade. Drafts preview live, including titles on a blank project; Apply makes one undoable edit and Cancel restores the original.
-- Crop presets for original, 16:9, 9:16, 1:1, 4:3, 3:4, 4:5 and 21:9; Free size supports corner resizing, moving and numeric coordinates. Optionally match the project canvas to the crop.
-- Export at 480p, 720p, 1080p or 2160p, with 24/25/30/50/60 FPS and compact/standard/high quality, when supported by the device's encoder. The output preserves the canvas orientation.
-- V1/V2 video, A1/A2 sound and T/C title/caption lanes; thumbnails, touch trimming/zoom/panning, project saving/relinking and recovery remain available.
+### Current limits
 
-### Use on your phone
+| Area | Current behaviour |
+| --- | --- |
+| Export duration | Up to 2 minutes |
+| Android save size | Up to 256 MB; final encoded output is assembled in memory |
+| Exporting | Keep the app in the foreground; large resolutions and frame rates need more memory |
+| Transitions | Start/End leave timing unchanged; Between overlaps V1 clips and shortens the sequence |
+| Independent tracks | V2/A1/A2 keep explicit timing and gaps; A1/A2 allow controlled crossfade overlaps |
+| Image formats | JPEG, PNG, WebP, AVIF, BMP and GIF where supported; animated images import as one still frame |
+| Fonts | 66 bundled Latin families; other scripts use device fallback; missing bold/italic faces use synthesised styles |
+| Project compatibility | Saves v5; opens v1–v4; older Ordo versions cannot open v5 files |
+| Media relinking | Project files do not embed media. Moved files, revoked access or cleared app storage may require relinking |
 
-1. Import footage, choose V1/V2/A1/A2 on its media card and Add to sequence.
-2. Select a video clip, then use Adjust or Crop. Use Transitions to pick a join between two V1 clips.
-3. Title and Captions create timed text. Tap an existing T/C timeline item to edit it. Swipe vertically in the timeline to reach lower lanes.
-4. Apply commits panel changes; Cancel discards the draft. Save your .ordo project through Project and keep the original footage for relinking.
-5. Export, choose format/resolution/FPS/quality, then save the finished video. Compatibility is checked for the selected settings.
+### Save and reopen projects
 
-Transitions overlap V1 clips and shorten the sequence accordingly; very short clips use a shorter overlap. V2/A1/A2 have independent timing and allow gaps; clips on the same independent track cannot overlap. New clips append to that track's end or the playhead, whichever is later.
-
-The timeline still edits at 30 FPS; output sampling uses the chosen FPS. A higher output FPS does not invent additional motion in a lower-frame-rate source. Two-minute export and 256 MB Android saving limits remain while final encoded output is held in memory. Higher resolution/FPS costs more memory and processing. Keep the app in the foreground during export and test the result on your phone.
-
-Project format v4 stores text, picture/audio processing, transitions, crop, canvas size and source fingerprints, and reads older v1/v2/v3 projects. Older Ordo versions cannot open v4 files. Media and thumbnail images are not embedded. The APK uses the same application ID/development signing certificate and an increasing versionCode for install-over updates.
-
-### Fonts and next features
-
-Roboto, Open Sans, Lato, Montserrat, Poppins, Nunito, Merriweather, Playfair Display, Source Sans 3 and Roboto Mono are bundled with regular/bold/italic variants for offline use. These are a curated Google Fonts selection, not the complete online catalogue. The bundled files cover Latin text; other scripts use device fallback fonts. Font licences ship in FONT-LICENSES.txt.
-
-Keyframes, retiming, additional tracks, masks, chroma key and advanced audio tools remain roadmap targets. Windows work is deferred. No AI functions are included.
+- Save .ordo files separately from the original media. Both are needed to keep an editable project.
+- Remember media on this device retains permitted Android file access, or local copies when a provider cannot retain access and storage allows.
+- Locate missing media reconnects multiple files. Content fingerprints recognise renamed files and reject different files with matching names and sizes.
+- Older projects may need one initial relink and a new save before automatic reconnection works.
+- Forget remembered media removes stored references/copies and permissions while leaving the current edit open.
 
 ### Development
 
-Node.js 22.12+:
+The product is Android-only. The browser-based editing engine remains in the repository for the Capacitor APK and automated development checks. GitHub Pages publishes only the separate landing page.
 
-```sh
-npm ci
-npm run dev
-npm test
-npm run build
-npx playwright install chromium
-npm run test:browser
-npm run test:mobile
-npm run test:composition
-npm run test:creative
-```
+| Requirement | Version |
+| --- | --- |
+| Node.js | 22.12 or later |
+| Java | JDK 21 for Android builds |
+| Android SDK | 36 |
+| Browser checks | Playwright Chromium and FFmpeg |
 
-Browser tests require ffmpeg. Android builds require JDK 21 and Android SDK 36. GitHub Actions tests main, publishes the web build and builds an installable APK. Consult [Actions](https://github.com/Averydimbulb79/Ordo/actions) for current results.
+| Command | Purpose |
+| --- | --- |
+| `npm ci` | Install pinned dependencies |
+| `npm run dev` | Run the internal editor development harness |
+| `npm test` | Run component checks |
+| `npm run build` | Build the Android editor assets into dist |
+| `npm run android:sync` | Build the editor and sync Capacitor's Android project |
+| `npm run android:open` | Open the native project in Android Studio |
+| `npm run build:landing` | Build the public Android website into landing-dist |
+| `npm run dev:landing` | Preview the landing page locally |
 
-Preserve rollback checkpoints before substantial changes and update this README each release. Ordo retains its MIT licence; dependency licences also apply. [Components](docs/COMPONENTS.md) · [Validation](docs/VALIDATION.md)
+Browser suites: `test:browser`, `test:mobile`, `test:composition`, `test:creative`, `test:bulk`, `test:touch-preview`, `test:audio` and `test:images`. Install Chromium with `npx playwright install chromium` before running them.
+
+GitHub Actions builds the APK, checks the editor and deploys the landing page separately. [View build results](https://github.com/Averydimbulb79/Ordo/actions).
+
+### Project links
+
+| Reference | Contents |
+| --- | --- |
+| [Roadmap](docs/ROADMAP.md) | Planned features; development targets are not current capabilities |
+| [Changelog](docs/CHANGELOG.md) | Release history |
+| [Android guide](docs/ANDROID.md) | Native setup and phone checks |
+| [Components](docs/COMPONENTS.md) | Editing engine and dependencies |
+| [Validation](docs/VALIDATION.md) | Test coverage and limitations |
+| [Fonts](docs/FONTS.md) | Font catalogue and style support |
+| [Font licences](public/FONT-LICENSES.txt) | Bundled font terms |
+| [Third-party licences](public/THIRD-PARTY-LICENSES.txt) | Additional dependency terms |
+
+Keep rollback checkpoints before substantial changes and update this README with each release.

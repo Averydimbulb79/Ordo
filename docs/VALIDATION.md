@@ -86,3 +86,9 @@ Browser regression jobs allow 15 minutes for slow dependency setup and reuse an 
 `npm run test:audio` also exercises per-clip Fade in/out and Apply to all. Existing creative, mobile, composition, bulk and touch/preview smoke suites remain regression checks.
 
 Android's native picker now accepts image MIME types. Real-device image-provider compatibility and memory use for very large photos still require phone testing.
+
+## Android landing page and documentation
+
+The GitHub Pages workflow runs `npm run build:landing` and publishes `landing-dist`. The build copies only the product HTML, stylesheet and landing-page assets. Editor JavaScript, media files, fonts and the editor entry point are not copied to that output. Android's `webDir: dist` and engine build remain separate.
+
+Page checks include local asset loading, anchor destinations, APK links, native FAQ disclosure behaviour, desktop rendering and phone/tablet viewport layouts. The marketing preview is labelled illustrative. Feature and export-limit statements reflect the current app; the README moves historical release notes to the changelog.

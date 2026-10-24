@@ -1,5 +1,13 @@
 # Ordo for Android
 
+## Distribution
+
+| Destination | Purpose |
+| --- | --- |
+| [Ordo website](https://averydimbulb79.github.io/Ordo/) | Android product information and download links |
+| [Latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) | Installable development build |
+| Internal browser harness | Capacitor engine development and automated checks; no public web editor |
+
 ## v0.4.0: creative panels, crop and output settings
 
 Android has a second dock row for Transitions, Title, Captions, Crop and Adjust; landscape places all ten dock actions in one row. Creative panels open as bottom sheets in portrait, with live drafts, explicit Apply/Cancel and native Back cancellation. The original application identity, icon and signing certificate are retained.

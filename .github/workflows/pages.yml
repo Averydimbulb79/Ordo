@@ -1,4 +1,4 @@
-name: Deploy web build
+name: Deploy Android landing page
 on:
   push:
     branches: [main]
@@ -21,14 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - run: npm run build:landing
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: landing-dist
       - name: Publish
         id: deployment
         uses: actions/deploy-pages@v4
