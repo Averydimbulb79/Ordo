@@ -1,8 +1,15 @@
-## Ordo for Android · v0.8.0
+## Ordo for Android · v0.9.0
 
-Current app release: v0.8.0, development build. Guide updated 24 October 2026.
+Current app release: v0.9.0, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
+
+### New in v0.9.0
+
+- Resize titles and captions using any corner handle. Drag their timeline edges to extend or shorten them.
+- Image duration handles are visible without selecting first; support mouse and touch.
+- Native MP4/HEVC now includes titles, captions, opacity and title transitions. Fonts are rasterized once, then Android handles video decoding and encoding.
+- Native rendering continues when switching apps or turning off the screen, with progress, Cancel and completion notifications. Keep Ordo open for preparation and compatible rendering; return to save the completed file. Force stop, removing the task and phone restart cancel the job.
 
 ### New in v0.8.0
 
@@ -20,7 +27,7 @@ Current app release: v0.8.0, development build. Guide updated 24 October 2026.
 - Automatically choose Media3 native video export for eligible MP4 projects: cuts, trims, JPEG/PNG stills, crop, resize, scale and positioning.
 - Native video uses Android media codecs and OpenGL rather than WebView frame seeking. Device hardware support determines available acceleration. The FPS setting caps native video frame rate; lower-rate source video is not upsampled.
 - Keep all audio edits through the existing offline mixer and stage its stereo PCM output for native AAC encoding.
-- Retain the compatible exporter for transitions, titles/captions, colour adjustments, opacity, picture overlays, unsupported still formats and audio extending beyond the picture. The export dialog explains routing. Native codec failures retry compatible export.
+- Retain the compatible exporter for picture transitions, colour adjustments, picture opacity, picture overlays, unsupported still formats and audio or titles extending beyond the picture. Titles/captions within the picture timeline now use native overlays, including their transitions and opacity. The export dialog explains routing. Native codec failures retry compatible export.
 - Reduce compatible frame copying, prefer supported hardware encoding, submit audio in one-second chunks and decode audio in four-second windows.
 - Reduce 720p30 video bitrates to 1.2 / 2 / 4 Mbps for Compact / Standard / High. A four-minute Standard export targets approximately 64 MB including audio. Estimates vary with encoder behaviour.
 - Stream native output directly to your chosen file; temporary video/audio files are removed after saving, cancellation or failure.

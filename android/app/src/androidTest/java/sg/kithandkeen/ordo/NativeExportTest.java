@@ -63,6 +63,33 @@ public class NativeExportTest {
         assertTrue(OrdoUpdatesPlugin.validRelease(release,11));assertFalse(OrdoUpdatesPlugin.validRelease(release,12));assertFalse(OrdoUpdatesPlugin.validRelease(release,13));
         release.put("apkUrl","https://example.com/update.apk");assertFalse(OrdoUpdatesPlugin.validRelease(release,11));
     }
+    @Test public void titleEdgesAndNativeBackgroundRendering() throws Exception {
+        Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File titleFile=picture(context,"native-title.png",Color.GREEN),red=picture(context,"native-background.png",Color.RED),output=new File(context.getCacheDir(),"native-title.mp4");output.delete();
+        try {
+            org.json.JSONObject timing=new org.json.JSONObject().put("startFrame",0).put("frames",60).put("startTransition",new org.json.JSONObject().put("type","dissolve").put("frames",15)).put("endTransition",new org.json.JSONObject().put("type","wipe-left").put("frames",15));
+            TitleOverlay title=new TitleOverlay(titleFile,timing);
+            assertEquals(0,Color.alpha(title.getBitmap(0).getPixel(320,180)));
+            assertEquals(255,Color.alpha(title.getBitmap(1000000).getPixel(320,180)));
+            Bitmap end=title.getBitmap(1900000);assertEquals(0,Color.alpha(end.getPixel(500,180)));assertTrue(Color.alpha(end.getPixel(20,180))>0);
+            JSObject clip=clip(context,red).put("frames",60);
+            Composition base=OrdoExportPlugin.buildComposition(new JSArray(java.util.Collections.singletonList(clip)),640,360,30,null);
+            TitleCompositionOverlay overlay=new TitleCompositionOverlay(java.util.Collections.singletonList(new TitleOverlay(titleFile,timing)),640,360);
+            Composition composition=new Composition.Builder(base.sequences).setEffects(new Effects(java.util.Collections.emptyList(),java.util.Collections.singletonList(new androidx.media3.effect.OverlayEffect(java.util.Collections.singletonList(overlay))))).build();
+            try(androidx.test.core.app.ActivityScenario<MainActivity> scenario=androidx.test.core.app.ActivityScenario.launch(MainActivity.class)){
+                scenario.onActivity(activity->{android.content.Intent service=new android.content.Intent(activity,ExportService.class);if(android.os.Build.VERSION.SDK_INT>=26)activity.startForegroundService(service);else activity.startService(service);});
+                InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+                long serviceDeadline=android.os.SystemClock.elapsedRealtime()+5000;while(!ExportService.active&&android.os.SystemClock.elapsedRealtime()<serviceDeadline)android.os.SystemClock.sleep(50);
+                assertTrue("foreground service started",ExportService.active);
+                try(android.os.ParcelFileDescriptor command=InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME");java.io.BufferedReader reader=new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(command.getFileDescriptor())))){while(reader.readLine()!=null){}}
+                android.os.SystemClock.sleep(300);
+                render(context,composition,output);assertTrue("service remains active while app is backgrounded",ExportService.active);
+                try(MediaMetadataRetriever reader=new MediaMetadataRetriever()){
+                    reader.setDataSource(output.getAbsolutePath());Bitmap frame=reader.getFrameAtTime(1000000,MediaMetadataRetriever.OPTION_CLOSEST);assertTrue("native title is visible",Color.green(frame.getPixel(320,180))>180);frame.recycle();
+                }
+            }finally{ExportService.finish(context,false);}
+        }finally{titleFile.delete();red.delete();output.delete();}
+    }
     @Test public void nativeImagesCropPlacementAndAudioThenVideoTrim() throws Exception {
         Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
         File red=picture(context,"native-red.png",Color.RED),blue=picture(context,"native-blue.png",Color.BLUE),audio=tone(context),first=new File(context.getCacheDir(),"native-first.mp4"),trimmed=new File(context.getCacheDir(),"native-trim.mp4");

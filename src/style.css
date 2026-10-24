@@ -52,3 +52,6 @@ body.preview-expanded .compare-bar{position:absolute;left:max(12px,env(safe-area
 .volume-label .touch-range{position:relative;display:block;grid-column:1/-1}.volume-label .touch-range input{width:100%;pointer-events:none}
 
 .text-clip{touch-action:pan-y;cursor:grab}.text-clip:active{cursor:grabbing}
+
+.text-resize{position:absolute;width:24px;height:24px;min-height:24px!important;padding:0;border:5px solid transparent;border-radius:3px;background:#95dfc9;background-clip:padding-box;pointer-events:auto;touch-action:none;cursor:nwse-resize}.text-resize[data-corner=ne],.text-resize[data-corner=sw]{cursor:nesw-resize}
+.text-trim-handle,.clip.image .trim-handle,.mobile-ui .clip.image .trim-handle{display:block;position:absolute;top:0;bottom:0;width:14px;height:auto;max-width:none;background:#95dfc980;z-index:2;touch-action:none;cursor:ew-resize}.text-trim-handle[data-side=in],.clip.image .trim-handle[data-side=in]{left:0}.text-trim-handle[data-side=out],.clip.image .trim-handle[data-side=out]{right:0}.text-clip{padding-left:16px;padding-right:16px}

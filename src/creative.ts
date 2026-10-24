@@ -177,7 +177,7 @@ export function setupCreative(hooks:Hooks){
    const exportButton=panel.$<HTMLButtonElement>('#export-captions');exportButton.disabled=!items.length;exportButton.onclick=async()=>{exportButton.disabled=true;try{await download(new Blob([captionsToSrt(items)],{type:'text/plain'}),'Ordo-captions.srt');}catch(error){panel.fail(error);}finally{exportButton.disabled=false;}};
   }
   fill();panel.apply(()=>{const p=read();if(!p.texts!.at(-1)!.text.trim())throw new Error('Enter some text first.');return p;});panel.open();panel.preview(read);
-  transforms=attachTextTransform(document.querySelector<HTMLCanvasElement>('#preview')!,()=>previewItem,values=>{for(const [key,value] of Object.entries(values))panel.$<HTMLInputElement>('#text-'+key).value=String(key==='x'||key==='y'?Number(value)*100:value);previewText();});
+  transforms=attachTextTransform(document.querySelector<HTMLCanvasElement>('#preview')!,()=>previewItem,values=>{for(const [key,value] of Object.entries(values))panel.$<HTMLInputElement>('#text-'+(key==='fontSize'?'size':key)).value=String(key==='x'||key==='y'?Number(value)*100:value);previewText();});
   panel.dialog.addEventListener('close',()=>transforms?.dispose(),{once:true});previewText();
  }
  function crop(){

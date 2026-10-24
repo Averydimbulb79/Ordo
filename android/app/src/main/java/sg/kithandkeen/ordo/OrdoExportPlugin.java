@@ -3,6 +3,9 @@ package sg.kithandkeen.ordo;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Matrix;
+import android.graphics.BitmapFactory;
+import androidx.media3.effect.OverlayEffect;
+import androidx.media3.effect.TextureOverlay;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -34,6 +37,9 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
+import com.getcapacitor.PermissionState;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -49,7 +55,7 @@ import org.json.JSONObject;
  * Rendered video is copied directly to the user's chosen document, never through a WebView Blob.
  */
 @UnstableApi
-@CapacitorPlugin(name = "OrdoExport")
+@CapacitorPlugin(name = "OrdoExport", permissions={@Permission(alias="notifications",strings={"android.permission.POST_NOTIFICATIONS"})})
 public class OrdoExportPlugin extends Plugin {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Job job;
@@ -66,7 +72,7 @@ public class OrdoExportPlugin extends Plugin {
             if (!directory.mkdirs()) throw new Exception("Could not create export workspace.");
             audio = new File(directory, "mix.wav"); video = new File(directory, "video.mp4");
         }
-        void delete() { audio.delete(); video.delete(); directory.delete(); }
+        void delete() { File[] files=directory.listFiles(); if(files!=null)for(File file:files)file.delete(); directory.delete(); }
     }
     @Override public void load() {
         // A process killed during rendering cannot execute discard; clear its private cache on restart.
@@ -83,6 +89,11 @@ public class OrdoExportPlugin extends Plugin {
         return job;
     }
     @PluginMethod public void prepare(PluginCall call) {
+        if(android.os.Build.VERSION.SDK_INT>=33&&getPermissionState("notifications")==PermissionState.PROMPT){requestPermissionForAlias("notifications",call,"notificationReady");return;}
+        prepareJob(call);
+    }
+    @PermissionCallback private void notificationReady(PluginCall call){prepareJob(call);}
+    private void prepareJob(PluginCall call){
         handler.post(() -> {
             try {
                 if (job != null) throw new IllegalStateException("Another native export is active.");
@@ -106,6 +117,14 @@ public class OrdoExportPlugin extends Plugin {
             } catch (Exception e) { call.reject(e.getMessage(), e); }
         });
     }
+    @PluginMethod public void appendOverlay(PluginCall call) {
+        try {
+            Job j=require(call);int index=call.getInt("index",-1);if(index<0||index>1000||j.transformer!=null||j.rendered)throw new IllegalArgumentException("Invalid title workspace.");
+            File file=new File(j.directory,"title-"+index+".png");long offset=call.getLong("offset",-1L);String data=call.getString("data","");
+            if(offset!=file.length()||data.length()>350000||offset>64000000)throw new IllegalArgumentException("Invalid title chunk.");
+            try(FileOutputStream out=new FileOutputStream(file,true)){out.write(Base64.decode(data,Base64.NO_WRAP));}call.resolve();
+        }catch(Exception e){call.reject(e.getMessage(),e);}
+    }
     @PluginMethod public void render(PluginCall call) {
         handler.post(() -> {
             Job j = null;
@@ -117,7 +136,15 @@ public class OrdoExportPlugin extends Plugin {
                     throw new IllegalArgumentException("Invalid native export settings.");
                 JSArray clips = call.getArray("clips", new JSArray());
                 if (clips.length() == 0) throw new IllegalArgumentException("Add a picture clip before exporting.");
-                Composition composition = buildComposition(clips, width, height, fps, j.audio);
+                Composition base = buildComposition(clips, width, height, fps, j.audio);
+                JSArray texts=call.getArray("texts",new JSArray());List<TitleOverlay> titles=new ArrayList<>();
+                for(int i=0;i<texts.length();i++){
+                    BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;File file=new File(j.directory,"title-"+i+".png");BitmapFactory.decodeFile(file.getAbsolutePath(),bounds);
+                    if(bounds.outWidth!=width||bounds.outHeight!=height)throw new IllegalArgumentException("Could not read native title.");
+                    titles.add(new TitleOverlay(file,texts.getJSONObject(i)));
+                }
+                List<TextureOverlay> overlays=titles.isEmpty()?Collections.emptyList():Collections.singletonList(new TitleCompositionOverlay(titles,width,height));
+                Composition composition=overlays.isEmpty()?base:new Composition.Builder(base.sequences).setHdrMode(base.hdrMode).setEffects(new Effects(Collections.emptyList(),Collections.singletonList(new OverlayEffect(overlays)))).build();
                 DefaultEncoderFactory factory = new DefaultEncoderFactory.Builder(getContext())
                     .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(bitrate).build())
                     .setRequestedAudioEncoderSettings(new AudioEncoderSettings.Builder().setBitrate(128000).build())
@@ -130,21 +157,28 @@ public class OrdoExportPlugin extends Plugin {
                     .addListener(new Transformer.Listener() {
                         @Override public void onCompleted(Composition c, ExportResult result) {
                             if (active.cancelled) return;
-                            active.rendered = true; active.transformer = null;
+                            ExportService.finish(getContext(),true);
+                            active.rendered = true;
+                            active.transformer = null;
                             PluginCall pending = active.renderCall; active.renderCall = null;
                             if (pending != null) pending.resolve();
                         }
                         @Override public void onError(Composition c, ExportResult result, ExportException error) {
                             if (active.cancelled) return;
+                            ExportService.finish(getContext(),false);
                             active.transformer = null;
                             PluginCall pending = active.renderCall; active.renderCall = null;
                             if (pending != null) pending.reject("Native codec export failed: " + error.getMessage(), error);
                         }
                     }).build();
+                ExportService.cancel=()->handler.post(()->{if(job==active){dispose(active);job=null;}});
+                Intent service=new Intent(getContext(),ExportService.class);
+                if(android.os.Build.VERSION.SDK_INT>=26)getContext().startForegroundService(service);else getContext().startService(service);
                 j.transformer.start(composition, j.video.getAbsolutePath());
                 poll(j);
             } catch (Exception e) {
                 if (j != null) { if (j.transformer != null) j.transformer.cancel(); j.transformer = null; j.renderCall = null; }
+                ExportService.finish(getContext(),false);
                 call.reject("Native export could not start: " + e.getMessage(), e);
             }
         });
@@ -190,7 +224,8 @@ public class OrdoExportPlugin extends Plugin {
         ProgressHolder holder = new ProgressHolder();
         if (j.transformer.getProgress(holder) == Transformer.PROGRESS_STATE_AVAILABLE)
             notifyListeners("progress", new JSObject().put("token", j.token).put("progress", holder.progress / 100.0));
-        handler.postDelayed(() -> poll(j), 250);
+        if(holder.progress>=0)ExportService.update(getContext(),holder.progress);
+        handler.postDelayed(() -> poll(j), 1000);
     }
     @PluginMethod public void save(PluginCall call) {
         handler.post(() -> {
@@ -230,10 +265,11 @@ public class OrdoExportPlugin extends Plugin {
         });
     }
     private void dispose(Job j) {
+        ExportService.finish(getContext(),false);
         j.cancelled = true;
         if (j.transformer != null) j.transformer.cancel();
         j.transformer = null;
-        if (j.renderCall != null) j.renderCall.reject("Export cancelled.");
+        if (j.renderCall != null) j.renderCall.reject("Export cancelled.","EXPORT_CANCELLED");
         j.renderCall = null; j.delete();
     }
     @Override protected void handleOnDestroy() {

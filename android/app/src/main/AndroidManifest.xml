@@ -24,6 +24,8 @@
 
         </activity>
 
+        <service android:name=".ExportService" android:exported="false" android:foregroundServiceType="dataSync|mediaProcessing" android:stopWithTask="true" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -35,6 +37,11 @@
         </provider>
     </application>
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

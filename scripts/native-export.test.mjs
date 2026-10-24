@@ -13,7 +13,7 @@ test('native rejects features requiring the shared compositor rather than droppi
  for(const edit of [{transitionFrames:30},{startTransition:{type:'dissolve',frames:30}},{endTransition:{type:'wipe-left',frames:30}},{adjustments:{brightness:10}},{opacity:.5},{track:'v2'}]){
   const p=fixture();Object.assign(p.clips[0],edit);assert.ok(nativeExportReason(p,'mp4',()=>true),JSON.stringify(edit));
  }
- const p=fixture();p.texts=[{text:'A title'}];assert.match(nativeExportReason(p,'mp4',()=>true),/Titles/);
+ const p=fixture();p.texts=[{text:'A title',startFrame:0,frames:90,startTransition:{type:'dissolve',frames:15},endTransition:{type:'wipe-left',frames:15}}];assert.equal(nativeExportReason(p,'mp4',()=>true),null);
  assert.match(nativeExportReason(fixture(),'webm',()=>true),/WebM/);
  assert.match(nativeExportReason(fixture(),'mp4',()=>false),/source access/);
  const gif=fixture();gif.assets[0].name='animated.gif';assert.match(nativeExportReason(gif,'mp4',()=>true),/still-image/);

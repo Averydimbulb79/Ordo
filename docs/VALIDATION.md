@@ -1,3 +1,7 @@
+# v0.9.0 validation
+
+Local checks: TypeScript build, 33 component tests, desktop 1440px and real touch 390px title control tests. Browser tests verify rotated corner resizing, both title duration edges, image extension and saved project values. Android CI additionally exercises native title transition pixels and encoded title output while the app is backgrounded with the export service active. Physical-device export speed and the user's original source video are not benchmarked here.
+
 # v0.8.0 validation
 
 - All 33 component tests pass, including text opacity/transition round trips and separate source-volume scopes.
