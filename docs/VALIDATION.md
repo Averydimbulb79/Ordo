@@ -92,3 +92,7 @@ Android's native picker now accepts image MIME types. Real-device image-provider
 The GitHub Pages workflow runs `npm run build:landing` and publishes `landing-dist`. The build copies only the product HTML, stylesheet and landing-page assets. Editor JavaScript, source footage, bundled editor fonts and the editor entry point are not copied to that output. Android's `webDir: dist` and engine build remain separate.
 
 Page checks include local asset loading, anchor destinations, APK links, native FAQ disclosure behaviour, desktop rendering and phone/tablet viewport layouts. The hero now uses a supplied real Android screenshot, labelled Actual app screenshot. A CSS viewport crops the OS status/navigation bars while preserving the source image. Feature and export-limit statements reflect the current app; the README moves historical release notes to the changelog.
+
+### Light-wave hero checks
+
+Responsive preview checks cover 320, 390, 768 and 1024 px frames plus the desktop browser viewport. The entire document fits horizontally at each size; headings, links, feature cards and download controls stay within the viewport. Light trails are decorative, hidden from accessibility navigation and use `pointer-events: none`. The screenshot remains unchanged. The glow animation is disabled by `prefers-reduced-motion: reduce`.

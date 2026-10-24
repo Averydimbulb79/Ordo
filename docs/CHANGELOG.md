@@ -1,5 +1,11 @@
 # Ordo changelog
 
+## 24 October 2026: light-wave hero polish
+
+- Added soft mint/cyan light waves, glow and small light accents around the real Android phone preview.
+- Tightened hero spacing and adjusted the decorative composition for phone, tablet and desktop widths. Decorative layers do not block links or overlap the screenshot.
+- Ambient glow respects reduced-motion preferences.
+
 ## 24 October 2026: real Android hero preview
 
 - Replaced the illustrative desktop editor in the website hero with a screenshot supplied from an actual Android phone.

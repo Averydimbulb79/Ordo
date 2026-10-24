@@ -17,3 +17,23 @@
 @media(max-width:440px){.phone-frame{width:min(100%,292px);border-radius:32px}.phone-screen{border-radius:23px}.phone-visual{padding-inline:10px}}
 @media(prefers-reduced-motion:reduce){.phone-frame{transform:none}}
 @media(min-width:761px) and (max-width:1000px){.hero{grid-template-columns:1.05fr .95fr;gap:28px}.hero h1{font-size:58px;letter-spacing:-2.7px}.phone-frame{width:min(100%,286px)}}
+
+/* Light trails belong to the backdrop, never over the real screenshot or controls. */
+.hero{position:relative;isolation:isolate;padding-block:62px 48px;gap:38px}
+.hero-copy{position:relative;z-index:1;min-width:0}
+.hero-atmosphere{position:absolute;inset:0;overflow:hidden;z-index:-1;pointer-events:none;border-radius:22px}
+.hero-atmosphere:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 79% 43%,#4fcfac29,transparent 42%),radial-gradient(ellipse at 62% 83%,#4c8eaa18,transparent 40%);animation:aura-breathe 12s ease-in-out infinite alternate}
+.light-waves{position:absolute;left:3%;top:-8%;width:110%;height:118%;overflow:visible}
+.phone-visual{background:none}
+.phone-visual:before{content:'';position:absolute;bottom:42px;left:50%;width:min(78%,310px);height:65px;transform:translateX(-50%);background:radial-gradient(ellipse,#7bd8b938,transparent 68%);filter:blur(13px);z-index:-1}
+.phone-frame{box-shadow:0 28px 70px #0008,0 0 48px #80e5c518,0 0 0 1px #9ce5cf20,inset 0 0 0 2px #151a1e}
+@keyframes aura-breathe{from{opacity:.65}to{opacity:1}}
+@media(min-width:1600px){.hero{padding-block:72px 54px}}
+@media(min-width:761px) and (max-width:1000px){.hero{gap:28px;padding-block:48px 40px}.light-waves{left:-8%;width:125%}}
+@media(max-width:760px){.hero{gap:18px;padding-block:36px 30px}.hero-atmosphere:before{background:radial-gradient(ellipse at 50% 68%,#4fcfac29,transparent 39%),radial-gradient(ellipse at 82% 34%,#4c8eaa12,transparent 26%)}.light-waves{left:-68%;top:34%;width:235%;height:67%;opacity:.85}.phone-visual{margin-top:0;padding-top:8px}.phone-visual:before{width:76%;bottom:34px}}
+@media(max-width:440px){.hero-atmosphere{border-radius:0}.light-waves{left:-76%;width:250%;top:35%;height:65%}.phone-visual{padding-inline:12px}}
+@media(prefers-reduced-motion:reduce){.hero-atmosphere:before{animation:none;opacity:.9}}
+.hero-atmosphere{mask-image:linear-gradient(90deg,transparent 0%,#000 26%,#000 88%,transparent 100%)}
+.hero-atmosphere:after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#111318,transparent 12%,transparent 88%,#111318);pointer-events:none}
+@media(max-width:360px){.hero h1{font-size:50px;letter-spacing:-2.4px;line-height:1.06}.hero .lead{font-size:13px;margin-block:20px}.hero{padding-top:30px}.hero-actions{gap:16px}}
+@media(max-width:760px){.header .button.small{min-height:44px}}
