@@ -1,8 +1,16 @@
-## Ordo for Android · v0.6.1
+## Ordo for Android · v0.6.2
 
-Current app release: v0.6.1, development build. Guide updated 24 October 2026.
+Current app release: v0.6.2, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
+
+### New in v0.6.2
+
+- Export automatically switches to the preview playback decoder if the frame decoder returns no image, throws, or reports an unavailable video decoder.
+- The failed frame is retried at its source time, then the affected source stays on playback decoding for the remaining export. The status identifies recovery mode.
+- The normal compositor and encoder still apply effects, transitions, titles and the offline audio mix. This is frame rendering, not a real-time screen recording.
+- Preview players are released during export and restored afterwards to reduce competition for device decoders. Fallback players are muted and released when their clips finish or export is cancelled.
+- If both paths fail, the message includes the source filename, timeline time and source time.
 
 ### Requirements and distribution
 
@@ -23,9 +31,9 @@ Current app release: v0.6.1, development build. Guide updated 24 October 2026.
 3. Install and launch Ordo. Keep your original media and saved projects backed up while using this development build.
 4. For future updates, install the newer APK over the existing app rather than uninstalling first.
 
-Published APKs retain the same application ID, `sg.kithandkeen.ordo`, and development signing certificate. GitHub assigns an increasing versionCode so newer builds can update the installed app. The visible release version and the internal build number are separate; several builds can share the v0.6.1 label.
+Published APKs retain the same application ID, `sg.kithandkeen.ordo`, and development signing certificate. GitHub assigns an increasing versionCode so newer builds can update the installed app. The visible release version and the internal build number are separate; several builds can share the v0.6.2 label.
 
-### What is available in v0.6.1
+### What is available in v0.6.2
 
 | Area | Available tools |
 | --- | --- |
@@ -186,4 +194,4 @@ The repository's development signing certificate is intentionally public and int
 
 The browser-based engine is an internal development/test harness and the APK's editing engine. It is not a separately published web app. `dist` supplies the Android editor; `landing-dist` supplies only the public marketing website.
 
-Capacitor does not itself provide a native video rendering engine. No Media3 Transformer bridge is integrated in v0.6.1. Any future native-engine decision should follow phone benchmarks and retain the project model; see [Components](COMPONENTS.md) and the [Roadmap](ROADMAP.md).
+Capacitor does not itself provide a native video rendering engine. No Media3 Transformer bridge is integrated in v0.6.2. Any future native-engine decision should follow phone benchmarks and retain the project model; see [Components](COMPONENTS.md) and the [Roadmap](ROADMAP.md).

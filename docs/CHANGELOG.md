@@ -1,5 +1,13 @@
 # Ordo changelog
 
+## v0.6.2: preview decoder export recovery
+
+- Retry missing or failed video frames using the HTML video playback path used by preview, including when the frame decoder is unavailable.
+- Keep normal export timing, composition, effects and mixed audio; show recovery mode in export progress.
+- Release preview decoders while exporting; dispose fallback players at clip boundaries, cancellation and failure.
+- Identify filename, source time and timeline time if recovery fails.
+- Add browser regression coverage for missing frames, decoder exceptions, unavailable decoders, repeated sources, overlapping clips, audio and cancellation.
+
 ## v0.6.1: longer exports, quick delete and undo
 
 - Added Delete and Undo beside Split in the mobile toolbar, with selection/history/busy states matching the existing commands. All 12 controls use two rows of six in portrait and landscape.

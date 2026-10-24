@@ -1,3 +1,14 @@
+# v0.6.2 export recovery validation
+
+24 October 2026.
+
+- TypeScript/production build and all 27 component tests pass.
+- `npm run test:export-fallback` exports real VP8/Opus fixtures under four conditions: normal decoding, a missing sixth frame, a thrown decoder exception, and an unavailable frame decoder.
+- Each output has 39 decodable video frames, expected red/blue pictures at early/middle/final sample times, and audible audio. Fixtures include a dissolve, trimmed/repeated sources and an overlapping picture layer.
+- Playback decoder cancellation interrupts pending loading. Unrecoverable playback errors include filename, source time and timeline time.
+- Existing composition regression passes: 150 output frames, picture-in-picture, preview/export dissolve pixels, independent 440 Hz and 880 Hz soundtracks and project persistence.
+- These are Chromium checks with forced failures, not a reproduction using the user's original video or an Android handset. The trial export on the phone remains the device validation.
+
 # Validation: v0.1.0
 
 22 October 2026.
