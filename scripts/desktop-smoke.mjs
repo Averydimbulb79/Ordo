@@ -43,8 +43,10 @@ try{
  await page.waitForFunction(()=>document.querySelector('#timeline-scroll').scrollTop>50);
  await page.setViewportSize({width:390,height:844});
  assert.equal(await page.locator('.desktop-editbar').isVisible(),false);
+ await page.waitForFunction(()=>!!document.querySelector('.timeline-tools #split'));
  assert.equal(await page.locator('.timeline-tools #split').count(),1);
  await page.setViewportSize({width:1260,height:630});
+ await page.waitForFunction(()=>!!document.querySelector('#desktop-editing-actions #split'));
  assert.equal(await page.locator('#desktop-editing-actions #split').count(),1);
  assert.deepEqual(errors,[]);
  console.log('Desktop regression passed: short/tall layouts, full timeline, wheel scrolling, real drag seek during playback, keyboard seek and mobile/desktop transitions.');
