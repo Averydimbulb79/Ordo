@@ -1,3 +1,4 @@
+import { PlaybackFrameReader } from './playback-frame';
 import { renderAudioMix } from './audio-export';
 import { EXPORT_FORMATS } from './export-formats';
 import type { Format } from './export-formats';
@@ -26,6 +27,10 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
  const inputs = new Map<string, Input>();
  const videos = new Map<string, CanvasSink>();
  const audios = new Map<string, AudioBufferSink>();
+ const videoAssets=new Set<string>(),playbackAssets=new Set<string>();
+ const videoIterators=new Map<string,ReturnType<CanvasSink["canvasesAtTimestamps"]>>();
+ const playbackReaders=new Map<string,PlaybackFrameReader>();
+ const copies=new Map<string,HTMLCanvasElement>();
  let output: Output | undefined;
  try {
   for (const clip of project.clips) {
@@ -35,8 +40,9 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
    const input = new Input({ source: new BlobSource(local.file), formats: ALL_FORMATS }); inputs.set(clip.assetId, input);
    const video = await input.getPrimaryVideoTrack(), audio = await input.getPrimaryAudioTrack();
    if (video) {
-    if (!await video.canDecode()) throw new Error(`Video decoder unavailable for ${local.file.name}.`);
-    videos.set(clip.assetId, new CanvasSink(video, { width: Math.max(1,Math.round(video.displayWidth*Math.min(1,options.width/video.displayWidth,options.height/video.displayHeight))), poolSize: 2 }));
+    videoAssets.add(clip.assetId);
+    if (!await video.canDecode()) playbackAssets.add(clip.assetId);
+    else videos.set(clip.assetId, new CanvasSink(video, { width: Math.max(1,Math.round(video.displayWidth*Math.min(1,options.width/video.displayWidth,options.height/video.displayHeight))), poolSize: 2 }));
    }
    if (audio) {
     if (!await audio.canDecode()) throw new Error(`Audio decoder unavailable for ${local.file.name}. Audio will not be silently omitted.`);
@@ -55,8 +61,6 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
   const audioSource = includeAudio ? new AudioBufferSource({ codec: EXPORT_FORMATS[format].audio, bitrate: 128000 }) : null;
   if (audioSource) output.addAudioTrack(audioSource);
   await output.start();
-  const videoIterators=new Map<string,ReturnType<CanvasSink["canvasesAtTimestamps"]>>();
-  const copies=new Map<string,HTMLCanvasElement>();
   for(const entry of placements(project)){
    if(entry.track==='a1'||entry.track==='a2')continue;
    const sink=videos.get(entry.clip.assetId);if(!sink)continue;
@@ -70,31 +74,62 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
    const activeAssets=new Set(activeLayers.map(e=>e.clip.assetId));for(const [id,image] of pictures)if(!activeAssets.has(id)){image.close();pictures.delete(id);}
    for(const [id,copy] of copies)if(!activeIds.has(id)){copy.width=0;copy.height=0;copies.delete(id);}
    for(const layer of activeLayers){
+    if(layer.track==='a1'||layer.track==='a2')continue;
     if(imageAssets.has(layer.clip.assetId)&&!pictures.has(layer.clip.assetId)){pictures.set(layer.clip.assetId,await decodeImage(files.get(layer.clip.assetId)!.file));check();}
     const still=pictures.get(layer.clip.assetId);if(still){images.set(layer.clip.id,still);continue;}
-    const iterator=videoIterators.get(layer.clip.id);if(!iterator)continue;
-    const next=await iterator.next(),image=next.done?null:next.value;
-    if(!image)throw new Error('A source video frame could not be decoded. Export stopped.');
-    // The same source can appear on several tracks. Copy before advancing its shared decoder pool.
-    let copy=copies.get(layer.clip.id);if(!copy){copy=document.createElement('canvas');copy.width=image.canvas.width;copy.height=image.canvas.height;copies.set(layer.clip.id,copy);}
-    copy.getContext('2d')!.drawImage(image.canvas,0,0,copy.width,copy.height);images.set(layer.clip.id,copy);
+    if(!videoAssets.has(layer.clip.assetId))continue;
+    const sourceTime=(layer.clip.inFrame+layer.offset)/30;
+    let source:HTMLVideoElement|HTMLCanvasElement|OffscreenCanvas|undefined;
+    if(!playbackAssets.has(layer.clip.assetId)){
+     try{
+      const next=await videoIterators.get(layer.clip.id)?.next();check();
+      if(next&&!next.done&&next.value)source=next.value.canvas;
+     }catch(error){check();/* Retry this exact frame with the preview decoder below. */}
+     if(!source)playbackAssets.add(layer.clip.assetId);
+    }
+    if(!source){
+     const iterator=videoIterators.get(layer.clip.id);
+     if(iterator){await iterator.return(undefined).catch(()=>{});videoIterators.delete(layer.clip.id);}
+     try{
+      let reader=playbackReaders.get(layer.clip.id);
+      if(!reader){reader=new PlaybackFrameReader(files.get(layer.clip.assetId)!.url,signal);playbackReaders.set(layer.clip.id,reader);}
+      source=await reader.frame(sourceTime);check();
+     }catch(error){
+      check();throw new Error(`Cannot export "${files.get(layer.clip.assetId)!.file.name}" at timeline ${(frame/fps).toFixed(3)}s (source ${sourceTime.toFixed(3)}s). Preview decoder: ${error instanceof Error?error.message:String(error)}`);
+     }
+    }
+    // Copy before advancing a decoder shared by another layer of the same source.
+    let copy=copies.get(layer.clip.id);
+    if(!copy){
+     copy=document.createElement('canvas');
+     const width=source instanceof HTMLVideoElement?source.videoWidth:source.width;
+     const height=source instanceof HTMLVideoElement?source.videoHeight:source.height;
+     const scale=Math.min(1,options.width/width,options.height/height);
+     copy.width=Math.max(1,Math.round(width*scale));copy.height=Math.max(1,Math.round(height*scale));copies.set(layer.clip.id,copy);
+    }
+    copy.getContext('2d')!.drawImage(source,0,0,copy.width,copy.height);images.set(layer.clip.id,copy);
    }
    paintComposition(ctx,project,frame*30/fps,images);
-   for(const layer of activeLayers)if(frame+1>=Math.ceil(layer.end/30*fps-1e-8)){const iterator=videoIterators.get(layer.clip.id);if(iterator){await iterator.return(undefined);videoIterators.delete(layer.clip.id);}}
+   for(const layer of activeLayers)if(frame+1>=Math.ceil(layer.end/30*fps-1e-8)){const iterator=videoIterators.get(layer.clip.id);if(iterator){await iterator.return(undefined);videoIterators.delete(layer.clip.id);}playbackReaders.get(layer.clip.id)?.dispose();playbackReaders.delete(layer.clip.id);}
    await videoSource.add(frame/fps,1/fps);
    if(audioSource&&renderedAudio){
     const offset=frame*samplesPerFrame,buffer=new AudioBuffer({length:samplesPerFrame,numberOfChannels:2,sampleRate:48000});
     for(let channel=0;channel<2;channel++)buffer.copyToChannel(renderedAudio.getChannelData(channel).subarray(offset,offset+samplesPerFrame),channel);
     await audioSource.add(buffer);
    }
-   progress((audioSource ? .2 : 0)+(audioSource ? .8 : 1)*(frame+1)/frames,'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));
+   progress((audioSource ? .2 : 0)+(audioSource ? .8 : 1)*(frame+1)/frames,playbackAssets.size?'Rendering with preview decoder':'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));
   }
-  for(const iterator of videoIterators.values())await iterator.return(undefined);
+  for(const iterator of videoIterators.values())await iterator.return(undefined);videoIterators.clear();
   check(); progress(1, 'Finalising'); await output.finalize(); check();
   if (!target.buffer) throw new Error('No output was produced.');
   return new Blob([target.buffer], { type: EXPORT_FORMATS[format].mime });
  } catch (error) {
   if (output && output.state !== 'finalized' && output.state !== 'canceled') await output.cancel().catch(() => {});
   throw error;
- } finally { for(const image of pictures.values())image.close();for (const input of inputs.values()) input.dispose(); }
+ } finally {
+  for(const reader of playbackReaders.values())reader.dispose();
+  for(const iterator of videoIterators.values())await iterator.return(undefined).catch(()=>{});
+  for(const copy of copies.values()){copy.width=0;copy.height=0;}
+  for(const image of pictures.values())image.close();for (const input of inputs.values()) input.dispose();
+ }
 }

@@ -42,6 +42,7 @@ jobs:
       - run: npm run test:browser
       - run: npm run test:mobile
       - run: npm run test:composition
+      - run: npm run test:export-fallback
   creative:
     runs-on: ubuntu-latest
     timeout-minutes: 15

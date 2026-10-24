@@ -13,7 +13,8 @@ export class Preview {
  private clock=0;private origin=0;private active='';
  frame=0;playing=false;
  constructor(private canvas:HTMLCanvasElement,private onTime:(f:number)=>void,private onState:()=>void,private onError:(s:string)=>void){}
- setProject(project:Project,files:Map<string,LocalMedia>){this.pause();this.project=project;this.files=files;for(const media of this.players.values()){media.removeAttribute('src');media.load();}this.players.clear();for(const image of this.pictures.values())image.close();this.pictures.clear();for(const graph of this.graphs.values())graph.dispose();this.graphs.clear();}
+ setProject(project:Project,files:Map<string,LocalMedia>){this.project=project;this.files=files;this.releaseMedia();}
+ releaseMedia(){this.pause();for(const media of this.players.values()){media.removeAttribute('src');media.load();}this.players.clear();for(const image of this.pictures.values())image.close();this.pictures.clear();for(const graph of this.graphs.values())graph.dispose();this.graphs.clear();}
  pause(){this.token++;this.playing=false;for(const media of this.players.values())media.pause();cancelAnimationFrame(this.request);this.onState();}
  private bypassAdjustments=false;
  setBypassAdjustments(value:boolean){this.bypassAdjustments=value;this.paint();}

@@ -6,7 +6,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 
 | At a glance | Details |
 | --- | --- |
-| Current app | v0.6.1, development build |
+| Current app | v0.6.2, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
 | Website | Product information, real Android app preview, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |
@@ -46,6 +46,8 @@ Updates use the same application ID and development signing certificate, with an
 | Resolution | 480p, 720p, 1080p, 2160p; preserves canvas orientation |
 | Frame rate | 24, 25, 30, 50 or 60 FPS |
 | Quality | Compact, Standard or High |
+
+If frame decoding fails, export automatically retries through the same video playback decoder used by preview. Effects, transitions and mixed audio remain in the export. The status shows “Rendering with preview decoder” when recovery is active; unrecoverable errors identify the filename, timeline time and source time.
 
 Available combinations depend on the device's encoders. The timeline runs at 30 FPS; higher export FPS does not create new motion in lower-frame-rate footage.
 
@@ -105,7 +107,7 @@ GitHub Actions builds the APK, checks the editor and deploys the landing page se
 | --- | --- |
 | [Roadmap](docs/ROADMAP.md) | Planned features; development targets are not current capabilities |
 | [Changelog](docs/CHANGELOG.md) | Release history |
-| [Android guide](docs/ANDROID.md) | Current v0.6.1 usage, limits, native setup and phone checks |
+| [Android guide](docs/ANDROID.md) | Current v0.6.2 usage, limits, native setup and phone checks |
 | [Components](docs/COMPONENTS.md) | Editing engine and dependencies |
 | [Validation](docs/VALIDATION.md) | Test coverage and limitations |
 | [Fonts](docs/FONTS.md) | Font catalogue and style support |
