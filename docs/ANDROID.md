@@ -1,8 +1,15 @@
-## Ordo for Android · v0.9.1
+## Ordo for Android · v0.10.0
 
-Current app release: v0.9.1, development build. Guide updated 24 October 2026.
+Current app release: v0.10.0, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
+
+### New in v0.10.0
+
+- Clip settings now has speed presets and custom 0.25×–4× speed for video and imported audio, with Preserve pitch and Ripple following clips on this track. Apply to all is scoped to video or audio separately.
+- Speed preserves the source range and changes timeline duration. Without ripple, following clips keep their positions; changes that would overlap are rejected. Other tracks and titles keep their timing.
+- Native Android video and compatible exports support speed, with shared local pitch-preserving audio. Slow motion repeats frames. Split, trim, undo/redo and source volume continue to work.
+- Projects containing speed edits save as format 6 and require this release or later; existing project formats still open.
 
 ### New in v0.9.0
 

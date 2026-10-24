@@ -1,3 +1,4 @@
+import { sourceAt } from './model';
 import { NativeFrameReader,canReadNativeFrames } from './native-frames';
 import { PlaybackFrameReader } from './playback-frame';
 import { renderAudioMix } from './audio-export';
@@ -68,7 +69,7 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
   for(const entry of placements(project)){
    if(entry.track==='a1'||entry.track==='a2')continue;
    const sink=videos.get(entry.clip.assetId);if(!sink)continue;
-   const stamps=function*(){for(let f=Math.ceil(entry.start/30*fps-1e-8);f<Math.ceil(entry.end/30*fps-1e-8);f++)yield entry.clip.inFrame/30+f/fps-entry.start/30;};
+   const stamps=function*(){for(let f=Math.ceil(entry.start/30*fps-1e-8);f<Math.ceil(entry.end/30*fps-1e-8);f++)yield sourceAt(entry.clip,(f/fps-entry.start/30)*30)/30;};
    videoIterators.set(entry.clip.id,sink.canvasesAtTimestamps(stamps()));
   }
   const renderedAudio=audioSource?await renderAudioMix(project,audios,frames,fps,signal,n=>progress(n*.2,'Mixing audio')):null;
@@ -82,7 +83,7 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
     if(imageAssets.has(layer.clip.assetId)&&!pictures.has(layer.clip.assetId)){pictures.set(layer.clip.assetId,await decodeImage(files.get(layer.clip.assetId)!.file));check();}
     const still=pictures.get(layer.clip.assetId);if(still){images.set(layer.clip.id,still);continue;}
     if(!videoAssets.has(layer.clip.assetId))continue;
-    const sourceTime=(layer.clip.inFrame+layer.offset)/30;
+    const sourceTime=sourceAt(layer.clip,layer.offset)/30;
     let source:HTMLVideoElement|HTMLCanvasElement|OffscreenCanvas|ImageBitmap|undefined;
     const native=nativeReaders.get(layer.clip.id);if(native)source=await native.frame(sourceTime);
     if(!source&&!playbackAssets.has(layer.clip.assetId)){

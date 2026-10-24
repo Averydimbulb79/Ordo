@@ -7,11 +7,15 @@ import type { Transition, Adjustments, TextItem } from './creative-model.ts';
 export type Asset = { id: string; name: string; size: number; modified: number; duration: number; kind: 'video' | 'audio' | 'image'; width: number; height: number; sha256?:string };
 export const TRACKS = ['v1','v2','a1','a2'] as const;
 export type Track = typeof TRACKS[number];
-export type Clip = { id: string; assetId: string; inFrame: number; frames: number; volume: number; track?: Track; startFrame?: number; transitionFrames?: number; scale?: number; x?: number; y?: number; opacity?: number; transition?: Transition; adjustments?: Adjustments; crop?: Crop; audio?:AudioSettings; audioCrossfadeFrames?:number; startTransition?:EdgeTransition; endTransition?:EdgeTransition };
+export type Clip = { speed?:number; preservePitch?:boolean; sourceFrames?:number; id: string; assetId: string; inFrame: number; frames: number; volume: number; track?: Track; startFrame?: number; transitionFrames?: number; scale?: number; x?: number; y?: number; opacity?: number; transition?: Transition; adjustments?: Adjustments; crop?: Crop; audio?:AudioSettings; audioCrossfadeFrames?:number; startTransition?:EdgeTransition; endTransition?:EdgeTransition };
 export type EdgeTransition={type:Transition;frames:number};
-export type Project = { format: 'ordo-project'; version: 5; name: string; fps: 30; width: number; height: number; assets: Asset[]; clips: Clip[]; texts?: TextItem[] };
+export type Project = { format: 'ordo-project'; version: 5|6; name: string; fps: 30; width: number; height: number; assets: Asset[]; clips: Clip[]; texts?: TextItem[] };
 export const clone = <T>(value: T): T => structuredClone(value);
 export const fresh = (): Project => ({ format: 'ordo-project', version: 5, name: 'Untitled sequence', fps: 30, width: 1280, height: 720, assets: [], clips: [] });
+export const clipSpeed=(c:Clip)=>c.speed??1;
+export const sourceSpan=(c:Clip)=>c.sourceFrames??c.frames*clipSpeed(c);
+export const playbackSpeed=(c:Clip)=>sourceSpan(c)/c.frames;
+export const sourceAt=(c:Clip,offset:number)=>c.inFrame+Math.min(Math.max(0,offset)*playbackSpeed(c),Math.max(0,sourceSpan(c)-1e-6));
 export const trackOf = (c: Clip): Track => c.track ?? 'v1';
 export type Placement = { clip: Clip; start: number; end: number; index: number; track: Track };
 export function transitionLength(p: Project, clip: Clip): number {
@@ -21,8 +25,8 @@ export function transitionLength(p: Project, clip: Clip): number {
 export function placements(p: Project): Placement[] {
  let mainStart=0;
  const main=p.clips.filter(c=>trackOf(c)==='v1'),nextById=new Map(main.map((c,i)=>[c.id,main[i+1]]));
- return p.clips.map((clip,index)=>{const track=trackOf(clip),start=track==='v1'?mainStart:clip.startFrame??0,next=nextById.get(clip.id);
-  if(track==='v1')mainStart+=clip.frames-(next?Math.min(clip.transitionFrames??0,Math.floor(clip.frames/2),Math.floor(next.frames/2)):0);
+ return p.clips.map((clip,index)=>{const track=trackOf(clip),start=track==='v1'?Math.max(mainStart,clip.startFrame??0):clip.startFrame??0,next=nextById.get(clip.id);
+  if(track==='v1')mainStart=start+clip.frames-(next?Math.min(clip.transitionFrames??0,Math.floor(clip.frames/2),Math.floor(next.frames/2)):0);
   return {clip,start,end:start+clip.frames,index,track};
  });
 }
@@ -70,9 +74,9 @@ export function split(p: Project, clipId: string, frame: number, newId: string):
  const start = placements(p).find(e=>e.clip.id===clipId)!.start;
  const left = frame - start; const clip = result.clips[index];
  if (left <= 0 || left >= clip.frames) throw new Error('Move the playhead inside the selected clip to split it.');
- const right={ ...clip, ...(clip.audio?{audio:{...clip.audio,fadeIn:0}}:{}), id: newId, startTransition:undefined, inFrame: clip.inFrame + left, frames: clip.frames - left };
+ const right={ ...clip, ...(clip.audio?{audio:{...clip.audio,fadeIn:0}}:{}), id: newId, startTransition:undefined, inFrame: clip.inFrame + left*playbackSpeed(clip), frames: clip.frames - left, ...(clip.speed!==undefined||clip.sourceFrames!==undefined?{sourceFrames:sourceSpan(clip)-left*playbackSpeed(clip)}:{}) };
  if(trackOf(clip)!=='v1')right.startFrame=start+left;
- result.clips.splice(index, 1, { ...clip, endTransition:undefined, frames: left, ...(clip.audio?{audio:{...clip.audio,fadeOut:0}}:{}), ...(clip.audioCrossfadeFrames!==undefined?{audioCrossfadeFrames:0}:{}), ...(clip.transitionFrames!==undefined?{transitionFrames:0}:{}) }, right);
+ result.clips.splice(index, 1, { ...clip, endTransition:undefined, frames: left, ...(clip.speed!==undefined||clip.sourceFrames!==undefined?{sourceFrames:left*playbackSpeed(clip)}:{}), ...(clip.audio?{audio:{...clip.audio,fadeOut:0}}:{}), ...(clip.audioCrossfadeFrames!==undefined?{audioCrossfadeFrames:0}:{}), ...(clip.transitionFrames!==undefined?{transitionFrames:0}:{}) }, right);
  validateTracks(result);
  return result;
 }
@@ -80,9 +84,10 @@ export function trim(p: Project, id: string, inFrame: number, outFrame: number):
  const result = clone(p), clip = result.clips.find(c => c.id === id);
  if (!clip) throw new Error('Select a clip first.');
  const asset = result.assets.find(a => a.id === clip.assetId)!;
- if (![inFrame, outFrame].every(Number.isSafeInteger) || inFrame < 0 || outFrame <= inFrame || outFrame > sourceFrames(asset)) throw new Error('Set a valid source range of at least one frame.');
- if(clip.audioCrossfadeFrames){const delta=outFrame-inFrame-clip.frames;for(const tail of result.clips)if(tail.id!==clip.id&&trackOf(tail)===trackOf(clip)&&(tail.startFrame??0)>(clip.startFrame??0))tail.startFrame=(tail.startFrame??0)+delta;}
- Object.assign(clip, { inFrame, frames: outFrame - inFrame }); validateTracks(result);return result;
+ if(clip.speed===undefined&&![inFrame,outFrame].every(Number.isSafeInteger))throw new Error('Use whole source frames for a normal clip.');
+ if (![inFrame, outFrame].every(Number.isFinite) || inFrame < 0 || outFrame <= inFrame || outFrame > sourceFrames(asset)) throw new Error('Set a valid source range of at least one frame.');
+ if(clip.audioCrossfadeFrames){const delta=Math.max(1,Math.ceil((outFrame-inFrame)/clipSpeed(clip)-1e-8))-clip.frames;for(const tail of result.clips)if(tail.id!==clip.id&&trackOf(tail)===trackOf(clip)&&(tail.startFrame??0)>(clip.startFrame??0))tail.startFrame=(tail.startFrame??0)+delta;}
+ Object.assign(clip, { inFrame, frames: Math.max(1,Math.ceil((outFrame-inFrame)/clipSpeed(clip)-1e-8)), ...(clip.speed!==undefined||clip.sourceFrames!==undefined?{sourceFrames:outFrame-inFrame}:{}) }); validateTracks(result);return result;
 }
 export class History {
  private past: Project[] = []; private future: Project[] = [];
@@ -95,7 +100,7 @@ export class History {
 export function parseProject(text: string): Project {
  if (text.length > 5_000_000) throw new Error('Project files must be smaller than 5 MB.');
  const p = JSON.parse(text);
- if (!p || p.format !== 'ordo-project' || ![1,2,3,4,5].includes(p.version)) throw new Error('Unsupported Ordo project format or version.');
+ if (!p || p.format !== 'ordo-project' || ![1,2,3,4,5,6].includes(p.version)) throw new Error('Unsupported Ordo project format or version.');
  if(p.fps!==30||![p.width,p.height].every(n=>Number.isSafeInteger(n)&&n>=64&&n<=4096&&n%2===0))throw new Error('Invalid canvas dimensions or timeline frame rate.');
  if (typeof p.name !== 'string' || p.name.length > 200 || !Array.isArray(p.assets) || !Array.isArray(p.clips) || p.assets.length > 1000 || p.clips.length > 1000) throw new Error('Invalid project structure.');
  const ids = new Set<string>();
@@ -107,7 +112,12 @@ export function parseProject(text: string): Project {
  ids.clear(); const assetMap = new Map(assets.map(a => [a.id, a]));
  const clips: Clip[] = p.clips.map((c: Clip) => {
   const asset = c && assetMap.get(c.assetId);
-  if (!asset || typeof c.id !== 'string' || !c.id || ids.has(c.id) || !Number.isSafeInteger(c.inFrame) || c.inFrame < 0 || !Number.isSafeInteger(c.frames) || c.frames < 1 || c.inFrame + c.frames > sourceFrames(asset) || !Number.isFinite(c.volume) || c.volume < 0 || c.volume > 1) throw new Error('Invalid clip or source range.');
+  if (!asset || typeof c.id !== 'string' || !c.id || ids.has(c.id) || (!Number.isFinite(c.inFrame)||(!Number.isSafeInteger(c.inFrame)&&c.speed===undefined)) || c.inFrame < 0 || !Number.isSafeInteger(c.frames) || c.frames < 1 || c.inFrame + sourceSpan(c) > sourceFrames(asset)+1e-6 || !Number.isFinite(c.volume) || c.volume < 0 || c.volume > 1) throw new Error('Invalid clip or source range.');
+  if(p.version<6&&(c.speed!==undefined||c.sourceFrames!==undefined||c.preservePitch!==undefined))throw new Error('Speed edits require project format 6.');
+  if(c.speed!==undefined&&(!Number.isFinite(c.speed)||c.speed<.25||c.speed>4))throw new Error('Set clip speed between 0.25 and 4.');
+  if(c.preservePitch!==undefined&&typeof c.preservePitch!=='boolean')throw new Error('Invalid pitch setting.');
+  if(c.sourceFrames!==undefined&&(!Number.isFinite(c.sourceFrames)||c.sourceFrames<=0||c.frames!==Math.max(1,Math.ceil(c.sourceFrames/clipSpeed(c)-1e-8))))throw new Error('Invalid speed source range.');
+  if(asset.kind==='image'&&(c.speed!==undefined||c.preservePitch!==undefined||c.sourceFrames!==undefined))throw new Error('Use image duration instead of speed.');
   if(asset.kind==='image'&&(asset.width<1||asset.height<1||trackOf(c).startsWith('a')))throw new Error('Image clips need a picture track and valid dimensions.');
   if(c.track!==undefined&&!TRACKS.includes(c.track))throw new Error('Invalid timeline track.');
   if(c.startFrame!==undefined&&(!Number.isSafeInteger(c.startFrame)||c.startFrame<0||c.startFrame>86400*30))throw new Error('Invalid clip start time.');
@@ -116,13 +126,13 @@ export function parseProject(text: string): Project {
   for(const [key,min,max] of [['scale',.1,2],['x',0,1],['y',0,1],['opacity',0,1]] as const)if(c[key]!==undefined&&(!Number.isFinite(c[key])||c[key]!<min||c[key]!>max))throw new Error('Invalid clip transform.');
   if(c.audioCrossfadeFrames!==undefined&&(!Number.isSafeInteger(c.audioCrossfadeFrames)||c.audioCrossfadeFrames<0||c.audioCrossfadeFrames>300||!trackOf(c).startsWith('a')))throw new Error('Invalid audio crossfade.');
   ids.add(c.id); const clip:Clip={ id: c.id, assetId: c.assetId, inFrame: c.inFrame, frames: c.frames, volume: c.volume };
-  for(const key of ['track','startFrame','transitionFrames','scale','x','y','opacity','transition','audioCrossfadeFrames'] as const)if(c[key]!==undefined)Object.assign(clip,{[key]:c[key]});
+  for(const key of ['speed','preservePitch','sourceFrames','track','startFrame','transitionFrames','scale','x','y','opacity','transition','audioCrossfadeFrames'] as const)if(c[key]!==undefined)Object.assign(clip,{[key]:c[key]});
   for(const key of ['startTransition','endTransition'] as const)if(c[key]!==undefined){const edge=c[key];if(!edge||!TRANSITIONS.some(t=>t[0]===edge.type)||!Number.isSafeInteger(edge.frames)||edge.frames<1||edge.frames>300||trackOf(c).startsWith('a')||asset.kind==='audio')throw new Error('Invalid clip edge transition.');clip[key]={type:edge.type,frames:edge.frames};}
   if(c.audio!==undefined)clip.audio=validateAudio(c.audio);
   if(c.adjustments!==undefined)clip.adjustments=validateAdjustments(c.adjustments);if(c.crop!==undefined)clip.crop=validateCrop(c.crop);
   return clip;
  });
- const result:Project={ ...fresh(), name: p.name, width:p.width, height:p.height, assets, clips };if(p.texts!==undefined)result.texts=parseTexts(p.texts,FONT_NAMES);validateTracks(result);return result;
+ const result:Project={ ...fresh(), version:p.version===6?6:5, name: p.name, width:p.width, height:p.height, assets, clips };if(p.texts!==undefined)result.texts=parseTexts(p.texts,FONT_NAMES);validateTracks(result);return result;
 }
 export function timecode(frame: number) {
  const f = Math.max(0, Math.floor(frame)); return [Math.floor(f / 108000), Math.floor(f / 1800) % 60, Math.floor(f / 30) % 60, f % 30].map(v => String(v).padStart(2, '0')).join(':');

@@ -1,6 +1,6 @@
 {
   "name": "ordo",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
   "description": "Video editor for Android",
@@ -24,7 +24,8 @@
     "build:landing": "node scripts/build-landing.mjs",
     "dev:landing": "vite website --host 127.0.0.1",
     "test:titles": "node scripts/title-controls-smoke.mjs",
-    "test:updates": "node scripts/update-prompt-smoke.mjs"
+    "test:updates": "node scripts/update-prompt-smoke.mjs",
+    "test:speed": "node scripts/speed-smoke.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
@@ -98,7 +99,8 @@
     "@noble/hashes": "2.0.1",
     "idb": "8.0.4",
     "mediabunny": "1.62.0",
-    "pixi.js": "8.22.0"
+    "pixi.js": "8.22.0",
+    "signalsmith-stretch-js": "0.2.0"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.3",

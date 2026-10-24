@@ -1,6 +1,6 @@
 import { createAudioChain } from './audio-engine';
 import { loadProjectFonts } from './fonts';
-import { duration, layersAt } from './model';
+import { duration, layersAt, sourceAt, playbackSpeed } from './model';
 import type { Project } from './model';
 import { decodeImage } from './media';
 import type { LocalMedia } from './media';
@@ -36,7 +36,7 @@ export class Preview {
     if(!media){media=document.createElement('video');media.playsInline=true;media.preload='auto';media.src=local.url;this.players.set(entry.clip.id,media);}
     await this.wait(media,'loadedmetadata',()=>media!.readyState>=1);if(token!==this.token)return;
     if(this.audioContext&&!this.graphs.has(entry.clip.id))this.graphs.set(entry.clip.id,createAudioChain(this.audioContext,this.audioContext.createMediaElementSource(media),this.audioContext.destination));
-    const position=(entry.clip.inFrame+entry.offset)/30;media.volume=this.graphs.has(entry.clip.id)?1:entry.clip.volume*entry.audioWeight;
+    const position=sourceAt(entry.clip,entry.offset)/30;media.playbackRate=playbackSpeed(entry.clip);media.preservesPitch=entry.clip.preservePitch!==false;media.volume=this.graphs.has(entry.clip.id)?1:entry.clip.volume*entry.audioWeight;
     if(Math.abs(media.currentTime-position)>.001||media.readyState<2){media.currentTime=position;await this.wait(media,'seeked',()=>!media!.seeking&&media!.readyState>=2);}
    }));
    if(token!==this.token)return;this.paint();

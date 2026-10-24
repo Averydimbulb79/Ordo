@@ -62,6 +62,7 @@ jobs:
           fi
       - run: npm run build
       - run: npm run test:updates
+      - run: npm run test:speed
       - run: npm run test:titles
       - run: npm run test:creative
       - run: npm run test:bulk

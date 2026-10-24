@@ -1,6 +1,11 @@
 # Ordo for Android
 
-## v0.9.1
+## v0.10.0
+
+Select a video or audio clip, open Clip settings, then use Clip speed. Choose 0.25×, 0.5×, 1×, 1.5×, 2× or 4×, or enter a custom value in that range. Preserve pitch is on by default. Apply changes one clip or all clips of the same media kind. Ripple shifts following clips on the same track; switch it off to retain their positions, with overlaps blocked. Image and text clips use duration controls instead.
+
+Speed changes retain the selected source In/Out, adjust timeline duration to whole 30 fps frames, and support preview, split, trim, undo/redo, saving and both export engines. Native video uses Media3 speed adjustment; both export paths share a local, streaming Signalsmith Stretch audio mix when preserving pitch. Slow motion repeats source frames, without frame interpolation. Extreme stretching can sound less natural. Speed projects save as format 6 so older Ordo versions reject them rather than silently dropping their speed edits; older projects remain supported.
+
 
 App and Android version names now read from package.json automatically. The landing page includes current title controls, duration handles, native export and background-rendering details, with versioned stylesheet and APK links.
 
@@ -16,7 +21,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 
 | At a glance | Details |
 | --- | --- |
-| Current app | v0.9.1, development build |
+| Current app | v0.10.0, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
 | Website | Product information, Android screenshot with a release-synchronised version label and two-row toolbar, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |
@@ -28,6 +33,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 | --- | --- |
 | Media | Import video, audio and images; thumbnails, filenames and durations; Add all media |
 | Timeline | V1/V2 picture tracks, A1/A2 audio tracks and T/C text lanes; trim, split, duplicate and reorder |
+| Clip speed | 0.25×–4× video/audio speed, pitch preservation, same-track ripple and scoped Apply to all |
 | Images | Six-second default; shorten or extend with normal trim controls; crop, grade, layer and export |
 | Picture | Brightness, contrast, saturation, exposure, highlights, shadows, temperature, tint, sharpen, vignette and fade |
 | Crop | Common aspect ratios, free sizing and an option to match the project canvas |
