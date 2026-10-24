@@ -3,7 +3,7 @@
   "version": "0.10.0",
   "private": true,
   "type": "module",
-  "description": "Video editor for Android",
+  "description": "Ordo video editor for Android and Windows",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
@@ -25,7 +25,9 @@
     "dev:landing": "vite website --host 127.0.0.1",
     "test:titles": "node scripts/title-controls-smoke.mjs",
     "test:updates": "node scripts/update-prompt-smoke.mjs",
-    "test:speed": "node scripts/speed-smoke.mjs"
+    "test:speed": "node scripts/speed-smoke.mjs",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:package": "npm run build && electron-builder --win nsis --x64"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
@@ -106,9 +108,33 @@
     "@capacitor/cli": "8.5.3",
     "playwright": "1.62.1",
     "typescript": "5.9.3",
-    "vite": "8.3.5"
+    "vite": "8.3.5",
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
   },
   "engines": {
     "node": ">=22.12.0"
+  },
+  "main": "desktop/main.cjs",
+  "build": {
+    "appId": "sg.kithandkeen.ordo",
+    "productName": "Ordo",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/main.cjs",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
