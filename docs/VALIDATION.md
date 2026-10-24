@@ -1,3 +1,14 @@
+# v0.7.0 export validation
+
+24 October 2026.
+
+- TypeScript/production build and all 31 component tests pass, including native routing and sharing bitrate estimates.
+- `npm run test:export-fallback` passes normal, missing-frame, thrown-decoder and unavailable-decoder modes. Real output retains 39 frames, changing pictures, simultaneous/repeated sources and audible audio.
+- `npm run test:composition` passes with picture-in-picture, preview/export dissolve pixels, both independent soundtracks and 150 decoded frames.
+- `npm run test:export-duration` passes: 123 seconds at 480p24, all 2,952 frames, red pixels and audible audio after 122 seconds.
+- Native Android compilation, lint and an emulator render are required by the Android workflow. The emulator test renders PNG clips, crop/placement, mixed WAV/AAC audio, then trims/re-encodes the resulting video and checks output pixels, dimensions and duration.
+- The emulator does not establish real-phone hardware performance. Native visual coverage remains limited to sequential video/JPEG/PNG and geometry effects; other edits are explicitly routed to compatible export. Actual speed and file size need a phone trial.
+
 # v0.6.2 export recovery validation
 
 24 October 2026.

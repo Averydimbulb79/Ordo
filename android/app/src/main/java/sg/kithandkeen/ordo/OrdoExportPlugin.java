@@ -150,40 +150,40 @@ public class OrdoExportPlugin extends Plugin {
         });
     }
     static Composition buildComposition(JSArray clips, int width, int height, int fps, File audio) throws Exception {
-                EditedMediaItemSequence.Builder pictures = new EditedMediaItemSequence.Builder(Collections.singleton(C.TRACK_TYPE_VIDEO));
-                for (int i = 0; i < clips.length(); i++) {
-                    JSONObject c = clips.getJSONObject(i);
-                    Uri uri = Uri.parse(c.getString("uri"));
-                    if (!"content".equals(uri.getScheme())) throw new IllegalArgumentException("Native export requires an Android document URI.");
-                    long inUs = Math.round(c.getDouble("inFrame") * 1000000 / 30), durationUs = Math.round(c.getDouble("frames") * 1000000 / 30);
-                    if (inUs < 0 || durationUs <= 0) throw new IllegalArgumentException("Invalid native clip range.");
-                    boolean image = "image".equals(c.getString("kind"));
-                    MediaItem.Builder media = new MediaItem.Builder().setUri(uri);
-                    if (image) media.setImageDurationMs((durationUs + 999) / 1000);
-                    else media.setClippingConfiguration(new MediaItem.ClippingConfiguration.Builder().setStartPositionUs(inUs).setEndPositionUs(inUs + durationUs).build());
-                    List<Effect> effects = new ArrayList<>();
-                    JSONObject crop = c.optJSONObject("crop");
-                    if (crop != null) {
-                        float x = (float) crop.getDouble("x"), y = (float) crop.getDouble("y"), w = (float) crop.getDouble("width"), h = (float) crop.getDouble("height");
-                        effects.add(new Crop(2*x-1, 2*(x+w)-1, 1-2*(y+h), 1-2*y));
-                    }
-                    effects.add(Presentation.createForWidthAndHeight(width, height, Presentation.LAYOUT_SCALE_TO_FIT));
-                    final float scale = (float)c.optDouble("scale", 1), x = (float)c.optDouble("x", .5), y = (float)c.optDouble("y", .5);
-                    if (scale != 1 || x != .5f || y != .5f) {
-                        Matrix transform = new Matrix(); transform.setScale(scale, scale); transform.postTranslate(2*x-1, 1-2*y);
-                        effects.add((MatrixTransformation) timeUs -> transform);
-                    }
-                    EditedMediaItem.Builder item = new EditedMediaItem.Builder(media.build()).setRemoveAudio(true).setFrameRate(fps).setEffects(new Effects(Collections.emptyList(), effects));
-                    if (image) item.setDurationUs(durationUs);
-                    pictures.addItem(item.build());
-                }
-                List<EditedMediaItemSequence> sequences = new ArrayList<>(); sequences.add(pictures.build());
-                if (audio != null && audio.length() > 44) {
-                    sequences.add(new EditedMediaItemSequence.Builder(Collections.singleton(C.TRACK_TYPE_AUDIO))
-                        .addItem(new EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(audio))).setRemoveVideo(true).build()).build());
-                }
-                return new Composition.Builder(sequences)
-                    .setHdrMode(Composition.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_OPEN_GL).build();
+        EditedMediaItemSequence.Builder pictures = new EditedMediaItemSequence.Builder(Collections.singleton(C.TRACK_TYPE_VIDEO));
+        for (int i = 0; i < clips.length(); i++) {
+            JSONObject c = clips.getJSONObject(i);
+            Uri uri = Uri.parse(c.getString("uri"));
+            if (!"content".equals(uri.getScheme())) throw new IllegalArgumentException("Native export requires an Android document URI.");
+            long inUs = Math.round(c.getDouble("inFrame") * 1000000 / 30), durationUs = Math.round(c.getDouble("frames") * 1000000 / 30);
+            if (inUs < 0 || durationUs <= 0) throw new IllegalArgumentException("Invalid native clip range.");
+            boolean image = "image".equals(c.getString("kind"));
+            MediaItem.Builder media = new MediaItem.Builder().setUri(uri);
+            if (image) media.setImageDurationMs((durationUs + 999) / 1000);
+            else media.setClippingConfiguration(new MediaItem.ClippingConfiguration.Builder().setStartPositionUs(inUs).setEndPositionUs(inUs + durationUs).build());
+            List<Effect> effects = new ArrayList<>();
+            JSONObject crop = c.optJSONObject("crop");
+            if (crop != null) {
+                float x = (float) crop.getDouble("x"), y = (float) crop.getDouble("y"), w = (float) crop.getDouble("width"), h = (float) crop.getDouble("height");
+                effects.add(new Crop(2*x-1, 2*(x+w)-1, 1-2*(y+h), 1-2*y));
+            }
+            effects.add(Presentation.createForWidthAndHeight(width, height, Presentation.LAYOUT_SCALE_TO_FIT));
+            final float scale = (float)c.optDouble("scale", 1), x = (float)c.optDouble("x", .5), y = (float)c.optDouble("y", .5);
+            if (scale != 1 || x != .5f || y != .5f) {
+                Matrix transform = new Matrix(); transform.setScale(scale, scale); transform.postTranslate(2*x-1, 1-2*y);
+                effects.add((MatrixTransformation) timeUs -> transform);
+            }
+            EditedMediaItem.Builder item = new EditedMediaItem.Builder(media.build()).setRemoveAudio(true).setFrameRate(fps).setEffects(new Effects(Collections.emptyList(), effects));
+            if (image) item.setDurationUs(durationUs);
+            pictures.addItem(item.build());
+        }
+        List<EditedMediaItemSequence> sequences = new ArrayList<>(); sequences.add(pictures.build());
+        if (audio != null && audio.length() > 44) {
+            sequences.add(new EditedMediaItemSequence.Builder(Collections.singleton(C.TRACK_TYPE_AUDIO))
+                .addItem(new EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(audio))).setRemoveVideo(true).build()).build());
+        }
+        return new Composition.Builder(sequences)
+            .setHdrMode(Composition.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_OPEN_GL).build();
     }
     private void poll(Job j) {
         if (j.cancelled || j.transformer == null) return;
