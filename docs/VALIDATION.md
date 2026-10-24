@@ -89,6 +89,6 @@ Android's native picker now accepts image MIME types. Real-device image-provider
 
 ## Android landing page and documentation
 
-The GitHub Pages workflow runs `npm run build:landing` and publishes `landing-dist`. The build copies only the product HTML, stylesheet and landing-page assets. Editor JavaScript, media files, fonts and the editor entry point are not copied to that output. Android's `webDir: dist` and engine build remain separate.
+The GitHub Pages workflow runs `npm run build:landing` and publishes `landing-dist`. The build copies only the product HTML, stylesheet and landing-page assets. Editor JavaScript, source footage, bundled editor fonts and the editor entry point are not copied to that output. Android's `webDir: dist` and engine build remain separate.
 
-Page checks include local asset loading, anchor destinations, APK links, native FAQ disclosure behaviour, desktop rendering and phone/tablet viewport layouts. The marketing preview is labelled illustrative. Feature and export-limit statements reflect the current app; the README moves historical release notes to the changelog.
+Page checks include local asset loading, anchor destinations, APK links, native FAQ disclosure behaviour, desktop rendering and phone/tablet viewport layouts. The hero now uses a supplied real Android screenshot, labelled Actual app screenshot. A CSS viewport crops the OS status/navigation bars while preserving the source image. Feature and export-limit statements reflect the current app; the README moves historical release notes to the changelog.

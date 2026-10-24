@@ -1,5 +1,10 @@
 # Ordo changelog
 
+## 24 October 2026: real Android hero preview
+
+- Replaced the illustrative desktop editor in the website hero with a screenshot supplied from an actual Android phone.
+- Added a responsive mobile frame, a clean crop excluding OS bars and subtle presentation polish. The underlying screenshot is retained unchanged; no footage or controls are fabricated.
+
 ## 24 October 2026: Android website and documentation
 
 - GitHub Pages now hosts the Android landing page and APK download links.
