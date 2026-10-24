@@ -38,6 +38,7 @@ final class TitleOverlay extends BitmapOverlay {
         if(leaving){edge(second,image,end.optString("type"),(float)((frame-frames+e)/e),false);image=second;}
         return image;
     }
+    void disposeBitmaps(){if(source!=null){source.recycle();source=null;}if(first!=null){first.recycle();second.recycle();first=second=null;}if(!blank.isRecycled())blank.recycle();}
     static void edge(Bitmap output,Bitmap image,String type,float progress,boolean start){
         Canvas canvas=new Canvas(output);canvas.drawColor(Color.TRANSPARENT,PorterDuff.Mode.CLEAR);canvas.save();
         float a=Math.max(0,Math.min(1,start?progress:1-progress)),w=output.getWidth(),h=output.getHeight();

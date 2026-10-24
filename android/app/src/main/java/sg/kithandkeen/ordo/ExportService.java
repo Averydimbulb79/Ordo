@@ -44,7 +44,7 @@ public final class ExportService extends Service {
         context.getSystemService(NotificationManager.class).notify(ID,n);
     }
     static void finish(android.content.Context context,boolean completed){
-        active=false;cancel=null;context.stopService(new Intent(context,ExportService.class));
+        active=false;cancel=null;if(!completed)context.getSystemService(NotificationManager.class).cancel(ID+1);context.stopService(new Intent(context,ExportService.class));
         if(completed){PendingIntent open=PendingIntent.getActivity(context,0,new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);context.getSystemService(NotificationManager.class).notify(ID+1,builder(context).setSmallIcon(android.R.drawable.stat_sys_upload_done).setContentTitle("Ordo export complete").setContentText("Return to Ordo to choose where to save your video.").setContentIntent(open).setAutoCancel(true).build());}
     }
     @Override public void onTimeout(int startId,int fgsType){if(cancel!=null)cancel.run();stopSelf();}

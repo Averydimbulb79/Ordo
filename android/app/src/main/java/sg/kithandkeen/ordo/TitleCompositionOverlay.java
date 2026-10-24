@@ -17,6 +17,7 @@ final class TitleCompositionOverlay extends BitmapOverlay {
     TitleCompositionOverlay(List<TitleOverlay> titles,int width,int height){
         this.titles=titles;output=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);previous=new Bitmap[titles.size()];
     }
+    @Override public void release() throws androidx.media3.common.VideoFrameProcessingException {try{super.release();}finally{for(TitleOverlay title:titles)title.disposeBitmaps();if(!output.isRecycled())output.recycle();}}
     @Override public Bitmap getBitmap(long timeUs){
         boolean changed=!initialized;
         for(int i=0;i<titles.size();i++){Bitmap bitmap=titles.get(i).getBitmap(timeUs);changed|=bitmap!=previous[i]||titles.get(i).animated;previous[i]=bitmap;}
