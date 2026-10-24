@@ -5,6 +5,10 @@ const {version}=JSON.parse(await readFile(new URL('package.json',root),'utf8'));
 await rm(output,{recursive:true,force:true});await mkdir(output,{recursive:true});
 const html=(await readFile(new URL('website/index.html',root),'utf8')).replace(/(<span[^>]*data-version[^>]*>)[^<]*(<\/span>)/g,'$1v'+version+'$2').replace(/style\.css\?v=[^"']+/g,'style.css?v='+version).replace(/(Ordo-Android\.apk)(?:\?v=[^"']+)?(?=")/g,'$1?v='+version);
 await writeFile(new URL('index.html',output),html);
+for (const page of ['android.html', 'windows.html']) {
+ const pageHtml = (await readFile(new URL('website/'+page,root),'utf8')).replace(/style\\.css\\?v=[^"']+/g,'style.css?v='+version);
+ await writeFile(new URL(page,output),pageHtml);
+}
 await cp(new URL('website/style.css',root),new URL('style.css',output));
 await cp(new URL('website/assets/',root),new URL('assets/',output),{recursive:true});
 console.log(`Ordo Android landing page built at ${fileURLToPath(output)}`);
