@@ -1,5 +1,11 @@
 # Ordo changelog
 
+## 24 October 2026: Android guide refreshed for v0.6.0
+
+- Replaced the mixed historical Android notes with a current-release guide, organised into tables and task-based steps.
+- Documented six-second image clips, Start/End/Between transitions, audio fades/crossfades, 66 fonts, current export settings and project format v5.
+- Removed the obsolete 720p-only limit and v4 project-format statements; clarified APK updates, device checks and the Android-only distribution model.
+
 ## 24 October 2026: light-wave hero polish
 
 - Added soft mint/cyan light waves, glow and small light accents around the real Android phone preview.

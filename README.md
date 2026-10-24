@@ -103,7 +103,7 @@ GitHub Actions builds the APK, checks the editor and deploys the landing page se
 | --- | --- |
 | [Roadmap](docs/ROADMAP.md) | Planned features; development targets are not current capabilities |
 | [Changelog](docs/CHANGELOG.md) | Release history |
-| [Android guide](docs/ANDROID.md) | Native setup and phone checks |
+| [Android guide](docs/ANDROID.md) | Current v0.6.0 usage, limits, native setup and phone checks |
 | [Components](docs/COMPONENTS.md) | Editing engine and dependencies |
 | [Validation](docs/VALIDATION.md) | Test coverage and limitations |
 | [Fonts](docs/FONTS.md) | Font catalogue and style support |
