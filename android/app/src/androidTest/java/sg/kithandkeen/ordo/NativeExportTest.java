@@ -79,6 +79,7 @@ public class NativeExportTest {
             try(androidx.test.core.app.ActivityScenario<MainActivity> scenario=androidx.test.core.app.ActivityScenario.launch(MainActivity.class)){
                 scenario.onActivity(activity->{android.content.Intent service=new android.content.Intent(activity,ExportService.class);if(android.os.Build.VERSION.SDK_INT>=26)activity.startForegroundService(service);else activity.startService(service);});
                 InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+                long serviceDeadline=android.os.SystemClock.elapsedRealtime()+5000;while(!ExportService.active&&android.os.SystemClock.elapsedRealtime()<serviceDeadline)android.os.SystemClock.sleep(50);
                 assertTrue("foreground service started",ExportService.active);
                 try(android.os.ParcelFileDescriptor command=InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand("input keyevent KEYCODE_HOME");java.io.BufferedReader reader=new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(command.getFileDescriptor())))){while(reader.readLine()!=null){}}
                 android.os.SystemClock.sleep(300);
