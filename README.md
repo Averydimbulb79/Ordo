@@ -131,7 +131,7 @@ Keep rollback checkpoints before substantial changes and update this README with
 | Faster compatible export | Hardware encoding preference with software fallback; direct frame rendering when safe; one-second audio encoding batches; four-second audio decode windows |
 | Native Android video | Media3 surface-based decode, crop, resize, scale, positioning and encoding for eligible MP4 timelines; JPEG/PNG stills and trimmed video |
 | Audio parity | The existing offline mix preserves all audio tracks, fades, EQ and dynamics; native video uses a temporary stereo PCM WAV |
-| Automatic routing | Animated transitions, titles, picture overlays, non-default opacity, colour adjustments and unsupported still formats retain the compatible compositor |
+| Automatic routing | Picture transitions, picture overlays, non-default picture opacity, colour adjustments and unsupported still formats retain the compatible compositor; titles and captions now use native overlays |
 | Smaller files | At 720p30: Compact 1.2 Mbps, Standard 2 Mbps, High 4 Mbps; estimates appear before rendering |
 | Native saving | Completed native output streams to the chosen Android document without a full video Blob or base64 transfer |
 
