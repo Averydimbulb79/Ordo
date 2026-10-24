@@ -1,5 +1,6 @@
 # Windows preview layout update
 
+- Open maximized with the Windows taskbar visible; remove the Electron menu and separate title bar, with native caption controls integrated into the draggable app header.
 - Keep the editing toolbar across all columns regardless of window height; restore controls when changing between desktop and mobile layouts.
 - Fit the workspace within the viewport and keep timeline scrolling inside its panel.
 - Fill the timeline panel width for short and empty sequences; retain horizontal scrolling for longer sequences and vertical scrolling for all six tracks.

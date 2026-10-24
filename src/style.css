@@ -78,3 +78,8 @@ body:not(.mobile-ui) .media-list{flex:1 0 120px;min-height:120px;overflow:visibl
 body:not(.mobile-ui) .timeline-scroll{min-height:0;min-width:0;overscroll-behavior:contain}
 body:not(.mobile-ui) .scrubber{height:24px;min-height:24px;flex-shrink:0;margin-bottom:4px;touch-action:none;cursor:ew-resize;position:relative;z-index:1}
 body.mobile-ui .desktop-editbar{display:none}
+
+/* Native caption controls share the app header; the editor remains interactive. */
+body.windows-desktop .topbar{padding-right:150px;-webkit-app-region:drag}
+body.windows-desktop .topbar button,body.windows-desktop .topbar input,
+body.windows-desktop .topbar a{-webkit-app-region:no-drag}

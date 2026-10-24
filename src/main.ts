@@ -30,6 +30,8 @@ import type { Format } from './export';
 import { thumbnail, mediaLength } from './thumbnails';
 import './style.css';
 
+document.body.classList.toggle('windows-desktop',/Electron\//.test(navigator.userAgent)&&!isAndroid);
+
 const icons: Record<string,string> = {transitions:'M3 4h8v16H3V4Zm10 0h8v16h-8M5 8l4 4-4 4m14-8-4 4 4 4',title:'M4 5h16M12 5v15M8 20h8',captions:'M3 5h18v14H3V5Zm3 5h4m-4 4h4m4-4h4m-4 4h4',adjust:'M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M9 15v6',crop:'M7 3v14h14M3 7h14v14',
  import:'M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5', open:'M3 7h7l2 3h9l-3 10H3V7Zm0 0V4h7l2 3h7v3', save:'M5 3h12l4 4v14H3V3h2Zm2 0v7h10V3M7 21v-7h10v7', undo:'M9 4 3 10l6 6M3 10h10a7 7 0 0 1 7 7', redo:'m15 4 6 6-6 6m6-6H11a7 7 0 0 0-7 7', play:'m8 4 12 8-12 8V4Z', pause:'M8 4v16M16 4v16', split:'M12 3v18M4 7l5 5-5 5m16-10-5 5 5 5', trash:'M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7', fullscreen:'M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5', export:'M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6', back:'m14 6-6 6 6 6', next:'m10 6 6 6-6 6', plus:'M12 4v16M4 12h16', new:'M14 2H5v20h14V7l-5-5Zm0 0v6h5', film:'M3 3h18v18H3V3Zm4 0v18M17 3v18M3 8h4m-4 8h4M17 8h4m-4 8h4', audio:'M9 18V5l11-2v13M9 9l11-2M9 18c0 3-6 4-6 1s6-4 6-1Zm11-2c0 3-6 4-6 1s6-4 6-1Z'
 };

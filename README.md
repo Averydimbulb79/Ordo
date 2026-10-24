@@ -2,6 +2,8 @@
 
 [Download the Windows x64 installer directly](https://github.com/Averydimbulb79/Ordo/releases/download/windows-latest/Ordo-Windows-Setup.exe). The unsigned preview installer is built and published by [GitHub Actions](https://github.com/Averydimbulb79/Ordo/actions/workflows/windows.yml).
 
+Windows opens maximized within the work area, keeping the taskbar visible. The default Electron menu and separate title bar are removed; native minimize, restore and close buttons share the app header. Drag the header to move a restored window.
+
 Windows layout update: the editing toolbar stays full width at shorter window heights, the timeline fills the panel, the preview seek bar has a larger drag target, and Project media scrolls through controls and imported files. Importing alone does not create a sequence: use **Add to sequence** or **Add all media** before seeking or playback. Physical Windows laptop playback and export testing remains required.
 
 The desktop uses the same TypeScript editor core, with a widescreen media bin, preview, inspector, single-row editing toolbar and full-width timeline. Windows packaging uses Electron. See [desktop notes](desktop/README.md).

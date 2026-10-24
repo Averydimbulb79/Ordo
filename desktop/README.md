@@ -9,3 +9,5 @@ GitHub Actions workflow `Windows desktop` produces an unsigned Windows NSIS inst
 Desktop layout: media library left, program monitor centre, properties right, a single-row editing toolbar above the full-width timeline. Existing actions remain wired to their original handlers.
 
 Known limitations: desktop hardware encoding, OS background export, update installation and full native feature parity remain to be implemented and validated on Windows.
+
+The app starts maximized to the Windows work area, with the taskbar available. The native caption buttons overlay the app header; there is no separate title bar or Electron menu. Drag or double-click the header to move or restore the window.
