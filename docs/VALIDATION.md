@@ -1,3 +1,11 @@
+# v0.8.0 validation
+
+- All 33 component tests pass, including text opacity/transition round trips and separate source-volume scopes.
+- At 1440 px and 390 px, gesture tests cover title dragging, rotation handles, opacity, Start/End transitions, source-volume groups and project save data.
+- Export fault tests cover normal, missing-frame, thrown-decoder, unavailable-decoder and preview-timeout/native-recovery orchestration. All outputs retain 39 frames, changing pictures, overlapping/repeated sources and audible audio. The browser native branch uses a stand-in provider; Android extraction is checked on the emulator.
+- Android instrumentation checks native extraction at a requested timestamp, pixel colour and bounded dimensions alongside native composition and trimming.
+- The user's original VID_20261023_170042689.mp4 and handset have not been reproduced locally.
+
 # v0.7.0 export validation
 
 24 October 2026.

@@ -1,5 +1,16 @@
 # Ordo changelog
 
+## v0.8.0: text transforms, opacity, source sound and export recovery
+
+- Check for newer Android builds on every launch and offer Download update / Later; publish a versioned update manifest after the tested APK is uploaded. Offline failures do not block startup.
+
+- Add live title/caption positioning and rotation handles, preview selection and timeline dragging.
+- Add text opacity and independent Start/End transitions using the shared catalogue.
+- Add picture opacity to live Adjust and bulk application.
+- Add separate video/audio bulk source-volume controls, preserving unrelated processing; expose video soundtrack adjustments.
+- Recover WebView frame timeouts through Android MediaMetadataRetriever, supplying lossless PNG frames to the shared compositor with all edits retained. Stage sources in bounded chunks when native URI access is unavailable.
+- Add recovery, native extraction, text gesture, persistence and source-volume scope checks.
+
 ## v0.7.0: optimised and native Android export
 
 - Prefer supported hardware encoding; render single-source frames directly; preserve copies only for shared simultaneous decoder sources.

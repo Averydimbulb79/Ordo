@@ -18,7 +18,7 @@ try{
  // Inject decoder faults into the actual export module, without shipping a test switch in the app.
  await page.route('**/src/export.ts',async route=>{
   const response=await route.fetch();
-  await route.fulfill({response,body:await response.text()+`
+  await route.fulfill({response,body:(await response.text()).replace('if (canReadNativeFrames(local.file))',"if (globalThis.decoderFault === 'native' || canReadNativeFrames(local.file))")+`
    const originalCanvases=CanvasSink.prototype.canvasesAtTimestamps;
    CanvasSink.prototype.canvasesAtTimestamps=async function*(timestamps){
     let count=0;
@@ -29,12 +29,20 @@ try{
     }
    };
    const originalTrack=Input.prototype.getPrimaryVideoTrack;
-   Input.prototype.getPrimaryVideoTrack=async function(){const track=await originalTrack.call(this);if(track&&globalThis.decoderFault==='unavailable')track.canDecode=async()=>false;return track;};
+   Input.prototype.getPrimaryVideoTrack=async function(){const track=await originalTrack.call(this);if(track&&['unavailable','native'].includes(globalThis.decoderFault))track.canDecode=async()=>false;return track;};
+   const playbackFrame=PlaybackFrameReader.prototype.frame;
+   PlaybackFrameReader.prototype.frame=async function(seconds){if(globalThis.decoderFault==='native')throw new Error('Playback decoder timed out while loading a frame.');return playbackFrame.call(this,seconds);};
+   NativeFrameReader.prototype.frame=async function(seconds){
+    if(!this.testPlayback){this.testUrl=URL.createObjectURL(this.file);this.testPlayback=new PlaybackFrameReader(this.testUrl,this.signal);}
+    return playbackFrame.call(this.testPlayback,seconds);
+   };
+   const closeNative=NativeFrameReader.prototype.dispose;
+   NativeFrameReader.prototype.dispose=function(){this.testPlayback?.dispose();if(this.testUrl)URL.revokeObjectURL(this.testUrl);closeNative.call(this);};
   `});
  });
  await page.goto(url);
  const bytes=Array.from(await readFile(fixture));
- for(const mode of ['normal','null','throw','unavailable']){
+ for(const mode of ['normal','null','throw','unavailable','native']){
   const result=await page.evaluate(async({bytes,mode})=>{
    globalThis.decoderFault=mode;
    const {exportSequence}=await import('/src/export.ts');
@@ -47,7 +55,7 @@ try{
     {id:'two',assetId:'a',inFrame:15,frames:15,volume:1},
     {id:'overlay',assetId:'a',inFrame:0,frames:20,volume:0,track:'v2',startFrame:5,scale:.3,x:.8,y:.8}];
    const phases=[];
-   try{const blob=await exportSequence(project,new Map([['a',{file,url}]]),'webm',new AbortController().signal,(_,phase)=>phases.push(phase),{resolution:480,fps:30,quality:'compact'});return {bytes:Array.from(new Uint8Array(await blob.arrayBuffer())),fallback:phases.includes('Rendering with preview decoder')};}
+   try{const blob=await exportSequence(project,new Map([['a',{file,url}]]),'webm',new AbortController().signal,(_,phase)=>phases.push(phase),{resolution:480,fps:30,quality:'compact'});return {bytes:Array.from(new Uint8Array(await blob.arrayBuffer())),fallback:phases.some(phase=>phase==='Rendering with preview decoder'||phase==='Rendering with native frame recovery')};}
    finally{URL.revokeObjectURL(url);}
   },{bytes,mode});
   assert.equal(result.fallback,mode!=='normal');

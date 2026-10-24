@@ -45,7 +45,7 @@ try{
  }
  await page.locator('[data-transition="wipe-left"]').click();await page.locator('.creative-apply').click();
  assert.equal(await page.locator('#total-time').innerText(),'00:00:01:15');
- await page.locator('.clip').first().click();await page.locator('#tool-adjust').click();assert.equal(await page.locator('.adjust-row').count(),11);
+ await page.locator('.clip').first().click();await page.locator('#tool-adjust').click();assert.equal(await page.locator('.adjust-row').count(),12);
  for(const [key,value] of [['saturation',-100],['brightness',20],['vignette',60],['sharpen',15],['shadows',10]])await page.locator(`#adjust-${key}`).evaluate((el,v)=>{el.value=String(v);el.dispatchEvent(new Event('input'));},value);
  await page.waitForTimeout(400);let p=await samples();assert.ok(p[4][0]>30&&p[4][0]<150&&Math.abs(p[4][0]-p[4][1])<3&&Math.abs(p[4][1]-p[4][2])<3,`Grading desaturates: ${p}`);await page.locator('.creative-apply').click();
  await page.locator('#tool-title').click();await page.locator('#text-content').fill('ORDO TITLE');await page.locator('#text-start').fill('0');await page.locator('#text-duration').fill('1.5');await page.locator('#text-font').selectOption('Montserrat');await page.locator('#text-size').fill('64');await page.locator('#text-color').evaluate(el=>{el.value='#00ff00';el.dispatchEvent(new Event('input'));});await page.locator('#text-rotation').fill('15');

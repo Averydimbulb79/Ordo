@@ -1,3 +1,4 @@
+import { NativeFrameReader,canReadNativeFrames } from './native-frames';
 import { PlaybackFrameReader } from './playback-frame';
 import { renderAudioMix } from './audio-export';
 import { EXPORT_FORMATS } from './export-formats';
@@ -30,6 +31,7 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
  const videoAssets=new Set<string>(),playbackAssets=new Set<string>();
  const videoIterators=new Map<string,ReturnType<CanvasSink["canvasesAtTimestamps"]>>();
  const playbackReaders=new Map<string,PlaybackFrameReader>();
+ const nativeReaders=new Map<string,NativeFrameReader>();
  const copies=new Map<string,HTMLCanvasElement>();
  let output: Output | undefined;
  try {
@@ -81,8 +83,9 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
     const still=pictures.get(layer.clip.assetId);if(still){images.set(layer.clip.id,still);continue;}
     if(!videoAssets.has(layer.clip.assetId))continue;
     const sourceTime=(layer.clip.inFrame+layer.offset)/30;
-    let source:HTMLVideoElement|HTMLCanvasElement|OffscreenCanvas|undefined;
-    if(!playbackAssets.has(layer.clip.assetId)){
+    let source:HTMLVideoElement|HTMLCanvasElement|OffscreenCanvas|ImageBitmap|undefined;
+    const native=nativeReaders.get(layer.clip.id);if(native)source=await native.frame(sourceTime);
+    if(!source&&!playbackAssets.has(layer.clip.assetId)){
      try{
       const next=await videoIterators.get(layer.clip.id)?.next();check();
       if(next&&!next.done&&next.value)source=next.value.canvas;
@@ -97,7 +100,13 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
       if(!reader){reader=new PlaybackFrameReader(files.get(layer.clip.assetId)!.url,signal);playbackReaders.set(layer.clip.id,reader);}
       source=await reader.frame(sourceTime);check();
      }catch(error){
-      check();throw new Error(`Cannot export "${files.get(layer.clip.assetId)!.file.name}" at timeline ${(frame/fps).toFixed(3)}s (source ${sourceTime.toFixed(3)}s). Preview decoder: ${error instanceof Error?error.message:String(error)}`);
+      check();const local=files.get(layer.clip.assetId)!;let nativeError='';
+      playbackReaders.get(layer.clip.id)?.dispose();playbackReaders.delete(layer.clip.id);
+      if(canReadNativeFrames(local.file)){
+       try{progress((audioSource ? .2 : 0)+(audioSource ? .8 : 1)*frame/frames,'Recovering frame with Android decoder');const reader=new NativeFrameReader(local.file,options.width,options.height,signal);nativeReaders.set(layer.clip.id,reader);source=await reader.frame(sourceTime);check();}
+       catch(failure){check();nativeError=` Native recovery: ${failure instanceof Error?failure.message:String(failure)}`;}
+      }
+      if(!source)throw new Error(`Cannot export "${local.file.name}" at timeline ${(frame/fps).toFixed(3)}s (source ${sourceTime.toFixed(3)}s). Preview decoder: ${error instanceof Error?error.message:String(error)}${nativeError}`);
      }
     }
     // A single layer can be painted directly before advancing its decoder.
@@ -115,14 +124,14 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
     copy.getContext('2d')!.drawImage(source,0,0,copy.width,copy.height);images.set(layer.clip.id,copy);
    }
    paintComposition(ctx,project,frame*30/fps,images);
-   for(const layer of activeLayers)if(frame+1>=Math.ceil(layer.end/30*fps-1e-8)){const iterator=videoIterators.get(layer.clip.id);if(iterator){await iterator.return(undefined);videoIterators.delete(layer.clip.id);}playbackReaders.get(layer.clip.id)?.dispose();playbackReaders.delete(layer.clip.id);}
+   for(const layer of activeLayers)if(frame+1>=Math.ceil(layer.end/30*fps-1e-8)){const iterator=videoIterators.get(layer.clip.id);if(iterator){await iterator.return(undefined);videoIterators.delete(layer.clip.id);}playbackReaders.get(layer.clip.id)?.dispose();playbackReaders.delete(layer.clip.id);nativeReaders.get(layer.clip.id)?.dispose();nativeReaders.delete(layer.clip.id);}
    await videoSource.add(frame/fps,1/fps);
    if(audioSource&&renderedAudio&&frame%fps===0){
     const offset=frame*samplesPerFrame,length=Math.min(48000,renderedAudio.length-offset),buffer=new AudioBuffer({length,numberOfChannels:2,sampleRate:48000});
     for(let channel=0;channel<2;channel++)buffer.copyToChannel(renderedAudio.getChannelData(channel).subarray(offset,offset+length),channel);
     await audioSource.add(buffer);
    }
-   progress((audioSource ? .2 : 0)+(audioSource ? .8 : 1)*(frame+1)/frames,playbackAssets.size?'Rendering with preview decoder':'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));
+   progress((audioSource ? .2 : 0)+(audioSource ? .8 : 1)*(frame+1)/frames,nativeReaders.size?'Rendering with native frame recovery':playbackAssets.size?'Rendering with preview decoder':'Rendering');if(frame%10===0)await new Promise(resolve=>setTimeout(resolve,0));
   }
   for(const iterator of videoIterators.values())await iterator.return(undefined);videoIterators.clear();
   check(); progress(1, 'Finalising'); await output.finalize(); check();
@@ -132,6 +141,7 @@ export async function exportSequence(project: Project, files: Map<string, LocalM
   if (output && output.state !== 'finalized' && output.state !== 'canceled') await output.cancel().catch(() => {});
   throw error;
  } finally {
+  for(const reader of nativeReaders.values())reader.dispose();
   for(const reader of playbackReaders.values())reader.dispose();
   for(const iterator of videoIterators.values())await iterator.return(undefined).catch(()=>{});
   for(const copy of copies.values()){copy.width=0;copy.height=0;}

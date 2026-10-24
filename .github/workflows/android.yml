@@ -43,6 +43,7 @@ jobs:
           mkdir -p apk
           cp android/app/build/outputs/apk/debug/app-debug.apk apk/Ordo-Android.apk
           sha256sum apk/Ordo-Android.apk > apk/SHA256SUMS.txt
+          node scripts/write-update-manifest.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: Ordo-Android
@@ -100,3 +101,4 @@ jobs:
         run: |
           gh release view android-latest >/dev/null 2>&1 || gh release create android-latest --title "Ordo for Android" --prerelease --notes "Android development build. See README for capabilities, limitations and device testing steps."
           gh release upload android-latest apk/Ordo-Android.apk apk/SHA256SUMS.txt --clobber
+          gh release upload android-latest apk/update.json --clobber

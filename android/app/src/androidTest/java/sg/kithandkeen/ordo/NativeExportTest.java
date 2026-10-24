@@ -58,6 +58,11 @@ public class NativeExportTest {
         try{assertTrue("Native render timed out",done.await(90,TimeUnit.SECONDS));if(failure.get()!=null)throw failure.get();}
         finally{InstrumentationRegistry.getInstrumentation().runOnMainSync(()->{if(transformer.get()!=null)transformer.get().cancel();});}
     }
+    @Test public void updateManifestAcceptsOnlyNewerTrustedRelease() throws Exception {
+        org.json.JSONObject release=new org.json.JSONObject().put("version","0.8.0").put("versionCode",12).put("apkUrl",OrdoUpdatesPlugin.APK).put("sha256",String.join("",java.util.Collections.nCopies(64,"a")));
+        assertTrue(OrdoUpdatesPlugin.validRelease(release,11));assertFalse(OrdoUpdatesPlugin.validRelease(release,12));assertFalse(OrdoUpdatesPlugin.validRelease(release,13));
+        release.put("apkUrl","https://example.com/update.apk");assertFalse(OrdoUpdatesPlugin.validRelease(release,11));
+    }
     @Test public void nativeImagesCropPlacementAndAudioThenVideoTrim() throws Exception {
         Context context=InstrumentationRegistry.getInstrumentation().getTargetContext();
         File red=picture(context,"native-red.png",Color.RED),blue=picture(context,"native-blue.png",Color.BLUE),audio=tone(context),first=new File(context.getCacheDir(),"native-first.mp4"),trimmed=new File(context.getCacheDir(),"native-trim.mp4");
@@ -74,6 +79,12 @@ public class NativeExportTest {
                 long ms=Long.parseLong(reader.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));assertTrue("duration "+ms,ms>=1950&&ms<=2100);
                 Bitmap f=reader.getFrameAtTime(250000,MediaMetadataRetriever.OPTION_CLOSEST);assertTrue(Color.red(f.getPixel(160,90))>180);assertTrue(Color.red(f.getPixel(20,90))<30);f.recycle();
                 f=reader.getFrameAtTime(1250000,MediaMetadataRetriever.OPTION_CLOSEST);assertTrue(Color.blue(f.getPixel(240,90))>180);assertTrue(Color.blue(f.getPixel(80,90))<30);f.recycle();
+            }
+            try(MediaMetadataRetriever nativeReader=new MediaMetadataRetriever()){
+                nativeReader.setDataSource(context,FileProvider.getUriForFile(context,context.getPackageName()+".fileprovider",first));
+                Bitmap recovered=OrdoFramesPlugin.decodeFrame(nativeReader,1250000,160,90);
+                assertTrue("native recovery returns the requested picture",Color.blue(recovered.getPixel(recovered.getWidth()*3/4,recovered.getHeight()/2))>180);
+                assertTrue(recovered.getWidth()<=160&&recovered.getHeight()<=90);recovered.recycle();
             }
             JSObject video=clip(context,first).put("kind","video").put("inFrame",30).put("frames",30);
             render(context,OrdoExportPlugin.buildComposition(new JSArray(java.util.Collections.singletonList(video)),320,180,24,null),trimmed);
