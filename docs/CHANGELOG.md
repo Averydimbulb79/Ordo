@@ -1,5 +1,11 @@
 # Ordo changelog
 
+## v0.6.1: longer exports, quick delete and undo
+
+- Added Delete and Undo beside Split in the mobile toolbar, with selection/history/busy states matching the existing commands. All 12 controls use two rows of six in portrait and landscape.
+- Removed the two-minute export restriction from both the export dialog and renderer. Longer timelines can now export with the existing format, resolution, FPS and quality options.
+- Updated the app guide, Android documentation, README and landing page. Device memory, the 24-hour timeline guard and the 256 MB Android save limit still apply; this release does not add streaming output.
+
 ## 24 October 2026: Android guide refreshed for v0.6.0
 
 - Replaced the mixed historical Android notes with a current-release guide, organised into tables and task-based steps.

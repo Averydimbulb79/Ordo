@@ -24,7 +24,7 @@ The reproducible test is scripts/browser-smoke.mjs, run by npm run test:browser.
 
 The synthetic test is not a codec/device compatibility certification or a perceptual audio-sync measurement. MP4/H.264/AAC export, real phone variable-frame-rate video, Safari/Firefox, long media, hardware performance, and Windows/Electron have not been verified here. Runtime capability checks apply. Real user footage remains an important next test.
 
-Export currently uses in-memory encoded output and a continuous offline stereo mix with windowed source decoding; a 2-minute cap bounds the initial workload. Clip boundaries use integer frames at a fixed 30 fps. Preview uses browser media playback; export uses decoded frames and offline audio, so exact colour and seeking consistency need further real-media tests.
+Export currently uses in-memory encoded output and a continuous offline stereo mix with windowed source decoding; there is no fixed export duration cap, so longer jobs require more memory. Clip boundaries use integer frames at a fixed 30 fps. Preview uses browser media playback; export uses decoded frames and offline audio, so exact colour and seeking consistency need further real-media tests.
 
 GitHub Actions results are separate from local checks. Consult the Actions tab for current runs.
 
@@ -96,3 +96,11 @@ Page checks include local asset loading, anchor destinations, APK links, native 
 ### Light-wave hero checks
 
 Responsive preview checks cover 320, 390, 768 and 1024 px frames plus the desktop browser viewport. The entire document fits horizontally at each size; headings, links, feature cards and download controls stay within the viewport. Light trails are decorative, hidden from accessibility navigation and use `pointer-events: none`. The screenshot remains unchanged. The glow animation is disabled by `prefers-reduced-motion: reduce`.
+
+
+## v0.6.1 export duration and mobile toolbar
+
+- All 27 component/model tests and the TypeScript/Vite production build pass.
+- `npm run test:export-duration` exports a 123-second still-image and audio sequence at 480p/24 fps, checks all 2,952 video frames, and decodes red image pixels and audible audio at 122 seconds. It also verifies the export button is enabled beyond two minutes. The headless test disables GPU rasterisation to avoid slow software-GPU canvas readback; real-phone performance still needs device checks.
+- `npm run test:mobile` verifies direct touch Delete, disabled state after deletion, toolbar Undo restoring the exact clip IDs/order, and twelve controls arranged in two rows of six in portrait and landscape. Existing import, trim, duplicate, pinch, project-save and pan checks pass.
+- The duration regression is included in GitHub Actions. Encoded output and the final stereo mix remain in memory; removing the two-minute gate does not remove device resource limits or the 256 MB native save cap.

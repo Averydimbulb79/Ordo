@@ -6,7 +6,7 @@ A free, open-source video editor for Android. Edit video, images and sound on yo
 
 | At a glance | Details |
 | --- | --- |
-| Current app | v0.6.0, development build |
+| Current app | v0.6.1, development build |
 | Platform | Android 7.0 or later; codec support varies by device |
 | Website | Product information, real Android app preview, responsive layout and APK downloads |
 | Privacy | Local editing and rendering; bundled offline fonts |
@@ -49,11 +49,13 @@ Updates use the same application ID and development signing certificate, with an
 
 Available combinations depend on the device's encoders. The timeline runs at 30 FPS; higher export FPS does not create new motion in lower-frame-rate footage.
 
+Delete and Undo sit beside Split in the mobile toolbar. Its 12 buttons are arranged in two rows of six. Select a clip and tap Delete; tap Undo to restore it.
+
 ### Current limits
 
 | Area | Current behaviour |
 | --- | --- |
-| Export duration | Up to 2 minutes |
+| Export duration | No fixed export duration cap; available device memory and the 256 MB Android save limit still apply |
 | Android save size | Up to 256 MB; final encoded output is assembled in memory |
 | Exporting | Keep the app in the foreground; large resolutions and frame rates need more memory |
 | Transitions | Start/End leave timing unchanged; Between overlaps V1 clips and shortens the sequence |
@@ -93,7 +95,7 @@ The product is Android-only. The browser-based editing engine remains in the rep
 | `npm run build:landing` | Build the public Android website into landing-dist |
 | `npm run dev:landing` | Preview the landing page locally |
 
-Browser suites: `test:browser`, `test:mobile`, `test:composition`, `test:creative`, `test:bulk`, `test:touch-preview`, `test:audio` and `test:images`. Install Chromium with `npx playwright install chromium` before running them.
+Browser suites: `test:browser`, `test:mobile`, `test:composition`, `test:creative`, `test:bulk`, `test:touch-preview`, `test:audio`, `test:images` and `test:export-duration`. Install Chromium with `npx playwright install chromium` before running them.
 
 GitHub Actions builds the APK, checks the editor and deploys the landing page separately. [View build results](https://github.com/Averydimbulb79/Ordo/actions).
 
@@ -103,7 +105,7 @@ GitHub Actions builds the APK, checks the editor and deploys the landing page se
 | --- | --- |
 | [Roadmap](docs/ROADMAP.md) | Planned features; development targets are not current capabilities |
 | [Changelog](docs/CHANGELOG.md) | Release history |
-| [Android guide](docs/ANDROID.md) | Current v0.6.0 usage, limits, native setup and phone checks |
+| [Android guide](docs/ANDROID.md) | Current v0.6.1 usage, limits, native setup and phone checks |
 | [Components](docs/COMPONENTS.md) | Editing engine and dependencies |
 | [Validation](docs/VALIDATION.md) | Test coverage and limitations |
 | [Fonts](docs/FONTS.md) | Font catalogue and style support |

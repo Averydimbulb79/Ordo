@@ -65,3 +65,4 @@ jobs:
       - run: npm run test:touch-preview
       - run: npm run test:audio
       - run: npm run test:images
+      - run: npm run test:export-duration

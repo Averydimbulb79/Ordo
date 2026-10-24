@@ -11,7 +11,6 @@ import { duration, layersAt, placements } from './model';
 import { decodeImage } from './media';
 import type { LocalMedia } from './media';
 import { paintComposition } from './composition';
-export const LIMIT_SECONDS = 120;
 export async function supported(format: Format, includeAudio: boolean, settings:ExportSettings=DEFAULT_EXPORT, project:Pick<Project,"width"|"height">={width:1280,height:720}) {
  try {
   const c = EXPORT_FORMATS[format],options=exportDimensions(project,settings);
@@ -21,7 +20,6 @@ export async function supported(format: Format, includeAudio: boolean, settings:
 export async function exportSequence(project: Project, files: Map<string, LocalMedia>, format: Format, signal: AbortSignal, progress: (n: number, phase: string) => void, settings:ExportSettings=DEFAULT_EXPORT): Promise<Blob> {
  const timelineFrames=duration(project),options=exportDimensions(project,settings),fps=options.fps,samplesPerFrame=48000/fps,frames=Math.ceil(timelineFrames/30*fps);
  if (!frames) throw new Error('Add a clip before exporting.');
- if (timelineFrames > LIMIT_SECONDS * 30) throw new Error('This initial release supports exports up to 2 minutes. Shorten the sequence before exporting.');
  const check = () => { if (signal.aborted) throw new DOMException('Export cancelled', 'AbortError'); };
  check();await loadProjectFonts(project);check();
  const pictures=new Map<string,ImageBitmap>(),imageAssets=new Set<string>();

@@ -1,6 +1,6 @@
 {
   "name": "ordo",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "type": "module",
   "description": "Video editor for Android",
@@ -19,6 +19,7 @@
     "test:touch-preview": "node scripts/touch-preview-smoke.mjs",
     "test:audio": "node scripts/audio-relink-smoke.mjs",
     "test:images": "node scripts/images-smoke.mjs",
+    "test:export-duration": "node scripts/export-duration-smoke.mjs",
     "build:landing": "node scripts/build-landing.mjs",
     "dev:landing": "vite website --host 127.0.0.1"
   },

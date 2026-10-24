@@ -18,7 +18,7 @@ export function setupMobile(hooks: Hooks) {
  const backdrop = document.createElement('button'); backdrop.id = 'sheet-backdrop'; backdrop.setAttribute('aria-label', 'Close editing panel'); backdrop.hidden = true; document.body.append(backdrop);
  const dock = document.createElement('nav'); dock.id = 'mobile-dock'; dock.setAttribute('aria-label','Editing tools');
  const dockIcon=(path:string)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}"/></svg>`;
- dock.innerHTML = `<button id="dock-media" aria-label="Media">${dockIcon('M12 4v16M4 12h16')}Media</button><button id="dock-edit" aria-label="Clip settings">${dockIcon('M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 10v7M12 6v1')}Edit</button><button id="dock-split" aria-label="Split selected clip">${dockIcon('M12 3v18M4 7l5 5-5 5m16-10-5 5 5 5')}Split</button><button id="dock-duplicate" aria-label="Duplicate selected clip">${dockIcon('M8 8h13v13H8V8ZM3 16V3h13')}Duplicate</button><button id="dock-project" aria-label="Project menu">${dockIcon('M3 5h7l2 3h9v13H3V5Z')}Project</button>`;
+ dock.innerHTML = `<button id="dock-media" aria-label="Media">${dockIcon('M12 4v16M4 12h16')}Media</button><button id="dock-edit" aria-label="Clip settings">${dockIcon('M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 10v7M12 6v1')}Edit</button><button id="dock-split" aria-label="Split selected clip">${dockIcon('M12 3v18M4 7l5 5-5 5m16-10-5 5 5 5')}Split</button><button id="dock-delete" aria-label="Delete selected clip">${dockIcon('M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7')}Delete</button><button id="dock-undo" aria-label="Undo last edit">${dockIcon('M9 4 3 10l6 6M3 10h11a7 7 0 0 1 7 7v3')}Undo</button><button id="dock-duplicate" aria-label="Duplicate selected clip">${dockIcon('M8 8h13v13H8V8ZM3 16V3h13')}Duplicate</button><button id="dock-project" aria-label="Project menu">${dockIcon('M3 5h7l2 3h9v13H3V5Z')}Project</button>`;
  const creativeIcons:Record<string,string>={transitions:'M3 4h8v16H3V4Zm10 0h8v16h-8',title:'M4 5h16M12 5v15M8 20h8',captions:'M3 5h18v14H3V5Zm3 5h4m-4 4h4m4-4h4m-4 4h4',adjust:'M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M9 15v6',crop:'M7 3v14h14M3 7h14v14'};
  for(const [kind,label] of [['transitions','Transitions'],['title','Title'],['captions','Captions'],['crop','Crop'],['adjust','Adjust']]){const button=document.createElement('button');button.id='dock-'+kind;button.innerHTML=dockIcon(creativeIcons[kind]);button.append(document.createTextNode(label));button.setAttribute('aria-label',label);dock.append(button);}
  $('app').insertBefore(dock,document.querySelector('.statusbar'));
@@ -55,12 +55,16 @@ export function setupMobile(hooks: Hooks) {
  }
  activate('dock-media',()=>showSheet('media'));activate('dock-edit',()=>showSheet('edit'));activate('dock-project',()=>showSheet('project'));
  for(const kind of ['transitions','title','captions','adjust','crop'])activate('dock-'+kind,()=>{if(!hooks.isBusy())$('tool-'+kind).click();});
- activate('dock-split',()=>{if(!hooks.isBusy())$('split').click();});activate('dock-duplicate',()=>{if(!hooks.isBusy())$('duplicate').click();});
+ activate('dock-undo',()=>{if(!hooks.isBusy())$('undo').click();});activate('dock-delete',()=>{if(!hooks.isBusy())$('delete').click();});activate('dock-split',()=>{if(!hooks.isBusy())$('split').click();});activate('dock-duplicate',()=>{if(!hooks.isBusy())$('duplicate').click();});
  const updateDock=()=>{
+  ($('dock-undo') as HTMLButtonElement).disabled=($('undo') as HTMLButtonElement).disabled;
+  ($('dock-delete') as HTMLButtonElement).disabled=($('delete') as HTMLButtonElement).disabled;
   ($('dock-split') as HTMLButtonElement).disabled=($('split') as HTMLButtonElement).disabled;
   ($('dock-duplicate') as HTMLButtonElement).disabled=($('duplicate') as HTMLButtonElement).disabled;
   importButton.disabled=hooks.isBusy();
  };
+ new MutationObserver(updateDock).observe($('undo'),{attributes:true,attributeFilter:['disabled']});
+ new MutationObserver(updateDock).observe($('delete'),{attributes:true,attributeFilter:['disabled']});
  new MutationObserver(updateDock).observe($('split'),{attributes:true,attributeFilter:['disabled']});
  new MutationObserver(updateDock).observe($('duplicate'),{attributes:true,attributeFilter:['disabled']});updateDock();
  const query=matchMedia('(max-width: 760px), (pointer: coarse) and (max-width: 1100px)');

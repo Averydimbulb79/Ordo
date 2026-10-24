@@ -38,6 +38,8 @@ try {
  assert.equal(await page.locator('#empty-heading').innerText(),'Your media is ready');
  assert.match(await page.locator('#empty-description').innerText(),/1 file is in Project media/);
  assert.equal(await page.locator('#import-empty').innerText(),'Choose clips');
+ assert.equal(await page.locator('#dock-delete').isDisabled(),true,'Delete is disabled without a selected clip');
+ assert.equal(await page.locator('#dock-undo').isDisabled(),await page.locator('#undo').isDisabled(),'Undo mirrors the current history state');
  if(process.env.ORDO_READY_SCREENSHOT)await page.screenshot({path:process.env.ORDO_READY_SCREENSHOT});
  await page.locator('#import-empty').tap();await page.getByRole('dialog',{name:'Project media'}).waitFor();
  await page.locator('#media-file').setInputFiles(fixture);
@@ -52,6 +54,8 @@ try {
  assert.match(await page.locator('.media-card').innerText(),/In timeline/);
  await page.getByRole('button',{name:'Close media panel'}).tap();
  assert.equal(await page.locator('.clip').count(),1);
+ assert.equal(await page.locator('#mobile-dock button').count(),12);
+ const portraitRows=await page.locator('#mobile-dock button').evaluateAll(nodes=>{const rows=new Map();for(const node of nodes){const y=Math.round(node.getBoundingClientRect().y);rows.set(y,(rows.get(y)||0)+1);}return [...rows.values()];});assert.deepEqual(portraitRows,[6,6]);
  const dock=await page.locator('#mobile-dock').boundingBox();assert.ok(dock.y+dock.height<=844,'Bottom dock is visible without scrolling');
  await page.locator('.clip').tap();
  const cdp=await context.newCDPSession(page);
@@ -62,6 +66,13 @@ try {
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  await page.waitForFunction(()=>document.querySelector('#total-time').textContent==='00:00:02:10');
  await page.waitForTimeout(400);await page.locator('#dock-duplicate').tap();await page.waitForFunction(()=>document.querySelectorAll('.clip').length===2);
+ const beforeDelete=await page.locator('.clip').evaluateAll(nodes=>nodes.map(n=>n.dataset.id));
+ const splitBox=await page.locator('#dock-split').boundingBox(),deleteBox=await page.locator('#dock-delete').boundingBox();assert.ok(deleteBox.width>=44&&deleteBox.height>=44&&deleteBox.x>splitBox.x&&Math.abs(deleteBox.y-splitBox.y)<1,'Delete is accessible beside Split');
+ await page.locator('#dock-delete').tap();await page.waitForFunction(()=>document.querySelectorAll('.clip').length===1);
+ assert.equal(await page.locator('#dock-delete').isDisabled(),true);assert.equal(await page.locator('.sheet-open').count(),0,'Quick delete does not open Edit');
+ await page.locator('#dock-undo').tap();
+ assert.deepEqual(await page.locator('.clip').evaluateAll(nodes=>nodes.map(n=>n.dataset.id)),beforeDelete,'Undo restores the deleted clip in place');
+ await page.locator('.clip').last().tap();
  const scroll=await page.locator('#timeline-scroll').boundingBox();const cx=scroll.x+scroll.width/2,cy=scroll.y+80;
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:0,x:cx-35,y:cy},{id:1,x:cx+35,y:cy}]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{id:0,x:cx-65,y:cy},{id:1,x:cx+65,y:cy}]});
@@ -86,6 +97,7 @@ try {
  await page.screenshot({path:process.env.ORDO_MOBILE_SCREENSHOT||join(folder,'mobile.png'),fullPage:true});
  await page.setViewportSize({width:844,height:390});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ const toolbarRows=await page.locator('#mobile-dock button').evaluateAll(nodes=>{const rows=new Map();for(const node of nodes){const y=Math.round(node.getBoundingClientRect().y);rows.set(y,(rows.get(y)||0)+1);}return [...rows.values()];});assert.deepEqual(toolbarRows,[6,6],'Landscape retains two rows of six controls');
  const wideDock=await page.locator('#mobile-dock').boundingBox();assert.ok(wideDock.y+wideDock.height<=390,'Landscape dock remains visible');
- assert.deepEqual(errors,[]);console.log('Mobile touch checks passed: import from empty panel, automatic media sheet, persistent confirmation, choose clips, duplicate/failed import feedback, trim handle, duplicate clip, pinch zoom, project save, portrait and landscape.');
+ assert.deepEqual(errors,[]);console.log('Mobile touch checks passed: import from empty panel, automatic media sheet, persistent confirmation, choose clips, duplicate/failed import feedback, trim handle, duplicate clip, quick delete and undo, pinch zoom, project save, portrait and landscape.');
 } finally { await browser?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await rm(folder,{recursive:true,force:true}); }

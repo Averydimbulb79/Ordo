@@ -1,6 +1,6 @@
-## Ordo for Android · v0.6.0
+## Ordo for Android · v0.6.1
 
-Current app release: v0.6.0, development build. Guide updated 24 October 2026.
+Current app release: v0.6.1, development build. Guide updated 24 October 2026.
 
 [Download the latest APK](https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk) · [Ordo website](https://averydimbulb79.github.io/Ordo/) · [Release history](CHANGELOG.md) · [Roadmap](ROADMAP.md)
 
@@ -23,9 +23,9 @@ Current app release: v0.6.0, development build. Guide updated 24 October 2026.
 3. Install and launch Ordo. Keep your original media and saved projects backed up while using this development build.
 4. For future updates, install the newer APK over the existing app rather than uninstalling first.
 
-Published APKs retain the same application ID, `sg.kithandkeen.ordo`, and development signing certificate. GitHub assigns an increasing versionCode so newer builds can update the installed app. The visible release version and the internal build number are separate; several builds can share the v0.6.0 label.
+Published APKs retain the same application ID, `sg.kithandkeen.ordo`, and development signing certificate. GitHub assigns an increasing versionCode so newer builds can update the installed app. The visible release version and the internal build number are separate; several builds can share the v0.6.1 label.
 
-### What is available in v0.6.0
+### What is available in v0.6.1
 
 | Area | Available tools |
 | --- | --- |
@@ -108,9 +108,9 @@ Crossfades can apply to all adjacent joins. Existing gaps are retained, and vide
 | Resolution | 480p, 720p, 1080p or 2160p; the selected short-edge size preserves canvas orientation |
 | Frame rate | 24, 25, 30, 50 or 60 FPS |
 | Quality | Compact, Standard or High |
-| Export duration | Up to 2 minutes |
+| Export duration | No fixed export duration cap; available device memory and the 256 MB Android save limit still apply |
 | Android save size | Up to 256 MB |
-| Timeline length | Up to 24 hours; the shorter export limit still applies |
+| Timeline length | Up to 24 hours; actual export capacity depends on memory and output file size |
 
 The app checks encoder support for the chosen format, dimensions, frame rate and bitrate. H.265 and 4K are device-dependent options, not guaranteed capabilities of every phone. Unsupported combinations are blocked rather than silently replaced with another codec.
 
@@ -138,14 +138,14 @@ Older projects may need one initial relink/import and a new save before automati
 1. Confirm the header and tool dock remain outside the Android status/navigation bars in portrait and landscape.
 2. Import a phone video, an MP3, a camera photo and a transparent PNG. Check media feedback, thumbnails, filenames, durations and Add all media.
 3. Add an image and confirm its six-second default. Extend it beyond six seconds, shorten it, split/duplicate it and undo.
-4. Place clips on V1/V2 and audio on A1/A2. Pan and pinch the timeline; check placement, gaps and picture-in-picture preview.
+4. Select a clip and tap Delete beside Split in the main toolbar; tap Undo on the toolbar to restore it. Place clips on V1/V2 and audio on A1/A2. Pan and pinch the timeline; check placement, gaps and picture-in-picture preview.
 5. Try a crop preset and free sizing. Apply picture adjustments to video and images, including a transparent overlay; compare using Adjusted during playback.
 6. Try Start/End animations and a Between join, including Apply to all. Confirm their different timing behaviour.
 7. Select the MP3 and confirm Adjust opens audio controls. Check volume, pan/EQ, per-clip Fade in/out, first/last fades and an adjacent audio Crossfade.
 8. Add a title and caption using different bundled fonts and styles. Import SRT/VTT if used in your workflow.
 9. Enter fullscreen, rotate the phone and exit using Android Back. Check restored orientation, bars and edit state.
 10. Save a project, cancel Save as once, then reopen after an app restart. Verify remembered media and test batch relinking when needed.
-11. Export a short sequence using supported settings and play the result in another player. Check picture, text, transparency, fades and sound; test H.265 only where offered as supported.
+11. Export both a short sequence and an edit longer than two minutes using supported settings and play the result in another player. Check picture, text, transparency, fades and sound; test H.265 only where offered as supported.
 12. Install a later published APK over the existing app without uninstalling and confirm your local recovery remains available.
 
 Automated checks are described in [Validation](VALIDATION.md). They do not certify every phone, file provider, hardware codec, memory limit or orientation policy. Provider permission retention across restarts and high-resolution exports need real-device verification.
@@ -186,4 +186,4 @@ The repository's development signing certificate is intentionally public and int
 
 The browser-based engine is an internal development/test harness and the APK's editing engine. It is not a separately published web app. `dist` supplies the Android editor; `landing-dist` supplies only the public marketing website.
 
-Capacitor does not itself provide a native video rendering engine. No Media3 Transformer bridge is integrated in v0.6.0. Any future native-engine decision should follow phone benchmarks and retain the project model; see [Components](COMPONENTS.md) and the [Roadmap](ROADMAP.md).
+Capacitor does not itself provide a native video rendering engine. No Media3 Transformer bridge is integrated in v0.6.1. Any future native-engine decision should follow phone benchmarks and retain the project model; see [Components](COMPONENTS.md) and the [Roadmap](ROADMAP.md).
