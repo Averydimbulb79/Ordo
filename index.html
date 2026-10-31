@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#121314" />
+    <meta
+      name="description"
+      content="Ordo is a free video editor for Android and Windows. Six tracks, colour grading, titles in 66 fonts, speed with natural pitch and export up to 4K. No account, no uploads, no AI."
+    />
+    <meta property="og:title" content="Ordo: a real video editor, free on your phone and your PC" />
+    <meta
+      property="og:description"
+      content="Six tracks, colour grading, titles in 66 fonts, speed with natural pitch and export up to 4K. Free, and edited on your device."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://averydimbulb79.github.io/Ordo/" />
+    <meta
+      property="og:image"
+      content="https://averydimbulb79.github.io/Ordo/assets/screens/windows-editor.webp"
+    />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./assets/icon-180.png" />
+    <link
+      rel="preload"
+      href="./assets/fonts/ibm-plex-sans-latin-600-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="./style.css?v=0.13.2" />
+    <title>Ordo | Free video editor for Android and Windows</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="./index.html" aria-label="Ordo home">ordo<span></span></a>
+        <nav class="site-nav" aria-label="Main">
+          <a href="#features">Features</a><a href="./android.html">Android</a
+          ><a href="./windows.html">Windows</a>
+        </nav>
+        <a class="button button-primary button-small" href="#download">Download</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="wrap hero-copy">
+          <img class="app-icon hero-icon" src="./assets/icon.svg" width="88" height="88" alt="" />
+          <a class="release" href="#keyframes"
+            ><span class="dot" aria-hidden="true"></span><span data-version>v0.13.2</span> Keyframes: make
+            anything move</a
+          >
+          <h1 id="hero-title">A real video editor, free on your phone and your PC.</h1>
+          <p class="lede">
+            Layer video, photos and sound across six tracks. Grade colour, change speed without the chipmunk
+            voice, add titles in 66 fonts and export up to 4K. No account, no uploads, no AI.
+          </p>
+          <div class="actions">
+            <a
+              class="button button-primary"
+              href="https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk?v=0.13.2"
+              ><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M17.5 9.2 19.2 6.2a.4.4 0 0 0-.7-.4L16.8 8.8A10.4 10.4 0 0 0 12 7.7c-1.7 0-3.4.4-4.8 1.1L5.5 5.8a.4.4 0 1 0-.7.4l1.7 3A9.3 9.3 0 0 0 2 16.5h20a9.3 9.3 0 0 0-4.5-7.3ZM7.5 13.6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
+                /></svg
+              >Download for Android</a
+            ><a
+              class="button button-secondary"
+              href="https://github.com/Averydimbulb79/Ordo/releases/download/windows-latest/Ordo-Windows-Setup.exe"
+              ><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M3 5.5 10 4.5v7H3zM11 4.4 21 3v8.5H11zM3 12.5h7v7l-7-1zM11 12.5h10V21l-10-1.4z"
+                /></svg
+              >Download for Windows</a
+            >
+          </div>
+          <p class="fineprint">Free. Android 7.0 or later, Windows 10 or 11 (64-bit).</p>
+        </div>
+        <div class="wrap hero-stage">
+          <figure class="shot device-desktop">
+            <img
+              src="./assets/screens/windows-editor.webp"
+              width="2400"
+              height="1410"
+              fetchpriority="high"
+              alt="Ordo on Windows editing a project called Lisbon weekend: media on the left, a mountain-lake shot with the title Lisbon weekend in the centre, clip settings on the right, and video, overlay, music, sound, title and caption tracks below."
+            />
+          </figure>
+          <figure class="device-phone">
+            <img
+              src="./assets/screens/android-editor.webp"
+              width="780"
+              height="1688"
+              alt="The same project on an Android phone: a city skyline at dusk with a caption, the timeline with picture strips and waveforms, and the tools for the selected clip."
+            />
+          </figure>
+          <p class="stage-caption">Actual screenshots of Ordo v0.13.0 on Windows and Android.</p>
+        </div>
+      </section>
+
+      <section class="section" id="features" aria-labelledby="toolkit-title">
+        <div class="wrap">
+          <div class="section-head centered">
+            <h2 id="toolkit-title">Everything happens on one timeline.</h2>
+            <p>Six tracks, each with a job. These are the tools you will find on them.</p>
+          </div>
+          <div class="feature-timeline">
+            <div class="ft-ruler" aria-hidden="true">
+              <span>0:00</span><span>0:01</span><span>0:02</span><span>0:03</span><span>0:04</span
+              ><span>0:05</span><span>0:06</span><span>0:07</span><span>0:08</span><span>0:09</span>
+            </div>
+            <ul class="ft-lanes">
+              <li class="ft-lane">
+                <span class="ft-label">V1 <small>Main video</small></span>
+                <span class="ft-track">
+                  <span class="ft-clip video" style="--at: 0; --len: 27">Trim, split and reorder</span
+                  ><span class="ft-clip video" style="--at: 27; --len: 24">13 transitions</span
+                  ><span class="ft-clip video" style="--at: 51; --len: 25">Speed from 0.25× to 4×</span
+                  ><span class="ft-clip video" style="--at: 76; --len: 24">Crop and fit</span>
+                </span>
+              </li>
+              <li class="ft-lane">
+                <span class="ft-label">V2 <small>Overlay</small></span>
+                <span class="ft-track">
+                  <span class="ft-clip image" style="--at: 14; --len: 34">Picture-in-picture</span
+                  ><span class="ft-clip image" style="--at: 52; --len: 30">Photos with any duration</span>
+                </span>
+              </li>
+              <li class="ft-lane">
+                <span class="ft-label">A1 <small>Music</small></span>
+                <span class="ft-track">
+                  <span class="ft-clip audio" style="--at: 0; --len: 100"
+                    >Music with fades in, fades out and crossfades</span
+                  >
+                </span>
+              </li>
+              <li class="ft-lane">
+                <span class="ft-label">A2 <small>Sound</small></span>
+                <span class="ft-track">
+                  <span class="ft-clip audio" style="--at: 8; --len: 44"
+                    >Gain, pan, 3-band EQ, compressor, limiter</span
+                  ><span class="ft-clip audio" style="--at: 56; --len: 36">Natural pitch at any speed</span>
+                </span>
+              </li>
+              <li class="ft-lane">
+                <span class="ft-label">T <small>Titles</small></span>
+                <span class="ft-track">
+                  <span class="ft-clip words" style="--at: 3; --len: 30">66 fonts, offline</span
+                  ><span class="ft-clip words" style="--at: 36; --len: 30">Drag, resize, rotate</span
+                  ><span class="ft-clip words" style="--at: 69; --len: 31">Animate in and out</span>
+                </span>
+              </li>
+              <li class="ft-lane">
+                <span class="ft-label">C <small>Captions</small></span>
+                <span class="ft-track">
+                  <span class="ft-clip words" style="--at: 10; --len: 38">Import SRT and VTT</span
+                  ><span class="ft-clip words" style="--at: 52; --len: 38">Write your own, export SRT</span>
+                </span>
+              </li>
+              <li class="ft-playhead" aria-hidden="true"></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-label="Features in detail" style="padding-top: 0">
+        <div class="wrap">
+          <article class="feature feature-wide">
+            <div class="feature-copy">
+              <h2>Built like a desktop editor, because on Windows it is one.</h2>
+              <p>
+                Your media, the picture and the settings for the selected clip sit side by side above a
+                timeline that shows every track. Tools open beside the picture, so you keep watching while you
+                adjust.
+              </p>
+              <ul class="points video">
+                <li>
+                  Trim clip edges with the mouse, scrub along the ruler and zoom with Ctrl and the wheel
+                </li>
+                <li>Drag files straight in from File Explorer</li>
+                <li>File, Edit and View menus, and shortcuts for everything you do often</li>
+              </ul>
+              <div class="keys" aria-label="Keyboard shortcuts">
+                <kbd>Space</kbd><kbd>S</kbd><kbd>Ctrl+Z</kbd><kbd>Ctrl+D</kbd><kbd>Ctrl+E</kbd><kbd>Home</kbd
+                ><kbd>End</kbd>
+              </div>
+            </div>
+            <figure class="shot">
+              <img
+                src="./assets/screens/windows-docked.webp"
+                width="2400"
+                height="1410"
+                loading="lazy"
+                alt="Ordo on Windows with the Title tool docked beside the preview while all six tracks stay visible below."
+              />
+            </figure>
+          </article>
+
+          <article class="feature feature-wide" id="keyframes">
+            <div class="feature-copy">
+              <h2>Make anything move.</h2>
+              <p>
+                Add a keyframe, move the playhead, change the picture, and Ordo animates between them. Slow
+                zooms, pans across a photo, a spinning overlay, music that fades under a voice: all set by
+                hand, all free.
+              </p>
+              <ul class="points video">
+                <li>Keyframes for position, size, rotation, opacity and volume</li>
+                <li>Linear, ease in, ease out, ease in and out, or hold</li>
+                <li>Diamonds on the clip show every keyframe; tap one to jump to it</li>
+                <li>Splitting a clip keeps its motion smooth on both sides</li>
+              </ul>
+            </div>
+            <figure class="shot">
+              <img
+                src="./assets/screens/keyframes.webp"
+                width="2400"
+                height="1410"
+                loading="lazy"
+                alt="Ordo on Windows animating a city clip: the picture is scaled down and tilted, two keyframe diamonds sit on the clip, and the Keyframes panel offers Add keyframe at playhead."
+              />
+            </figure>
+          </article>
+
+          <article class="feature feature-wide" id="see-every-clip">
+            <div class="feature-copy">
+              <h2>See every clip at a glance.</h2>
+              <p>
+                Video clips show a strip of their pictures and sound clips show their waveform, so you can
+                find the moment you want without playing it. Tools follow whatever you select, on your phone
+                and on your PC.
+              </p>
+              <ul class="points video">
+                <li>Picture strips and waveforms drawn right inside the timeline</li>
+                <li>
+                  Right-click a clip, or long-press it on your phone, for Split, Duplicate, Adjust and Delete
+                </li>
+                <li>Delete or split by accident? Undo is on the message that pops up</li>
+                <li>Imports start straight away, even with gigabytes of 4K footage</li>
+              </ul>
+            </div>
+            <figure class="shot">
+              <img
+                src="./assets/screens/timeline.webp"
+                width="2000"
+                height="727"
+                loading="lazy"
+                alt="Ordo's timeline with picture strips on video clips, waveforms on sound clips and the clip menu open on a beach clip."
+              />
+            </figure>
+          </article>
+
+          <article class="feature feature-split reverse">
+            <div class="feature-copy">
+              <h2>Titles that look designed.</h2>
+              <p>
+                Type straight onto the picture, then drag, resize and rotate it right there. Long lines wrap
+                neatly between words.
+              </p>
+              <ul class="points words">
+                <li>66 Google Fonts that ship inside the app and work offline</li>
+                <li>Bold, italic, outline, background, colour and opacity</li>
+                <li>Start and end animations from the same 13 effects as clips</li>
+                <li>Captions from SRT or VTT files, or written by hand</li>
+              </ul>
+            </div>
+            <figure class="shot">
+              <img
+                src="./assets/screens/titles.webp"
+                width="1300"
+                height="728"
+                loading="lazy"
+                alt="The title Lisbon weekend set in DM Serif Display on the preview, with corner handles to resize it and a control to rotate it."
+              />
+            </figure>
+          </article>
+
+          <article class="feature feature-split">
+            <div class="feature-copy">
+              <h2>Colour and sound, shaped by hand.</h2>
+              <p>
+                Eleven picture controls cover exposure, contrast, highlights, shadows, temperature, tint,
+                saturation, sharpening, vignette and fade. Flip the Adjusted switch to compare with the
+                original.
+              </p>
+              <ul class="points audio">
+                <li>Gain, pan, bass, mid and treble on every clip</li>
+                <li>A compressor and a limiter for even levels</li>
+                <li>Fades and equal-power crossfades between sound clips</li>
+                <li>Apply one look or one mix to all clips at once</li>
+              </ul>
+            </div>
+            <figure class="shot">
+              <img
+                src="./assets/screens/adjust.webp"
+                width="2000"
+                height="714"
+                loading="lazy"
+                alt="A city skyline at dusk with warmer colour and a caption, and the Adjust tool showing opacity, brightness, contrast and saturation sliders."
+              />
+            </figure>
+          </article>
+
+          <div class="feature pair">
+            <article>
+              <figure class="shot">
+                <img
+                  src="./assets/screens/speed.webp"
+                  width="1200"
+                  height="750"
+                  loading="lazy"
+                  alt="Speed settings for a beach clip: playback speed 0.75, with Preserve original pitch and Ripple following clips turned on."
+                />
+              </figure>
+              <h2>Speed that still sounds right.</h2>
+              <p>
+                Slow a moment to 0.25× or rush through at 4×. Voices keep their natural pitch, and the clips
+                after it slide along so nothing falls out of sync.
+              </p>
+            </article>
+            <article>
+              <figure class="shot">
+                <img
+                  src="./assets/screens/export.webp"
+                  width="960"
+                  height="584"
+                  loading="lazy"
+                  alt="The export dialog set to 1920 by 1080 at 30 frames per second with an estimated size of 9 MB."
+                />
+              </figure>
+              <h2>Exports that finish.</h2>
+              <p>
+                MP4 with H.264 or H.265, or WebM, from 480p to 4K at 24 to 60 fps. You see the estimated file
+                size before you start, and on Android, native export keeps going while you switch apps.
+              </p>
+            </article>
+          </div>
+
+          <article class="feature feature-split reverse">
+            <div class="feature-copy">
+              <h2>The whole editor fits in your pocket.</h2>
+              <p>
+                On Android it is the same editor, laid out for your thumbs. Undo, redo and Export stay at the
+                top. Tap a clip and the bar at the bottom changes to that clip's tools. Pinch to zoom, drag
+                edges to trim and watch adjustments live.
+              </p>
+              <div class="stats">
+                <div><strong>6</strong><span>tracks</span></div>
+                <div><strong>13</strong><span>transitions</span></div>
+                <div><strong>4K</strong><span>export</span></div>
+              </div>
+            </div>
+            <figure class="phone-solo">
+              <img
+                src="./assets/screens/android-adjust.webp"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="Ordo on Android with the Adjust panel open below a live preview of a city at dusk."
+              />
+            </figure>
+          </article>
+        </div>
+      </section>
+
+      <section class="section everything" aria-labelledby="everything-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="everything-title">Everything in <span data-version>v0.13.2</span></h2>
+            <p>The full toolkit, on both Android and Windows.</p>
+          </div>
+          <div class="spec-grid">
+            <div class="spec" style="--chip: var(--video)">
+              <h3>Timeline</h3>
+              <ul>
+                <li>Two picture tracks, two sound tracks, titles and captions</li>
+                <li>Trim, split, duplicate, reorder and delete</li>
+                <li>Undo and redo, 100 steps</li>
+                <li>Picture strips and waveforms on clips</li>
+                <li>Clip menu on right-click or long-press</li>
+                <li>Clip speed from 0.25× to 4×, with ripple</li>
+                <li>Timelines up to 24 hours</li>
+              </ul>
+            </div>
+            <div class="spec" style="--chip: var(--image)">
+              <h3>Picture</h3>
+              <ul>
+                <li>11 colour and detail controls</li>
+                <li>Crop presets and free crop</li>
+                <li>Position, scale, rotation and opacity</li>
+                <li>Keyframes with five easing curves</li>
+                <li>13 transitions, plus start and end animations</li>
+                <li>Photos with any duration</li>
+              </ul>
+            </div>
+            <div class="spec" style="--chip: var(--words)">
+              <h3>Words</h3>
+              <ul>
+                <li>66 bundled Google Fonts</li>
+                <li>Drag, resize and rotate on the picture</li>
+                <li>Outline, background, colour and opacity</li>
+                <li>SRT and VTT import, SRT export</li>
+              </ul>
+            </div>
+            <div class="spec" style="--chip: var(--audio)">
+              <h3>Sound</h3>
+              <ul>
+                <li>Gain, pan and 3-band EQ</li>
+                <li>Compressor and limiter</li>
+                <li>Fades, crossfades and volume keyframes</li>
+                <li>Pitch preserved when speed changes</li>
+              </ul>
+            </div>
+            <div class="spec" style="--chip: var(--mint)">
+              <h3>Export</h3>
+              <ul>
+                <li>MP4 (H.264 or H.265) and WebM</li>
+                <li>480p, 720p, 1080p and 4K</li>
+                <li>24, 25, 30, 50 and 60 fps</li>
+                <li>Native Android rendering in the background</li>
+              </ul>
+            </div>
+            <div class="spec" style="--chip: #8f9298">
+              <h3>Projects</h3>
+              <ul>
+                <li>Editable .ordo project files</li>
+                <li>Automatic recovery copies</li>
+                <li>Fast import, even for multi-gigabyte files</li>
+                <li>Media remembered and relinked by fingerprint</li>
+                <li>In-app update prompt on Android</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="promise-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="promise-title">Your footage stays yours.</h2>
+          </div>
+          <div class="promise">
+            <div>
+              <strong>No account.</strong>
+              <p>Install it and start editing. There is nothing to sign up for.</p>
+            </div>
+            <div>
+              <strong>No uploads.</strong>
+              <p>Editing and exporting happen on your device. Fonts are built in, so it works offline.</p>
+            </div>
+            <div>
+              <strong>No AI.</strong>
+              <p>Every cut and every colour is yours. No ads or tracking either.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section everything" id="download" aria-labelledby="download-title">
+        <div class="wrap">
+          <div class="section-head">
+            <h2 id="download-title">Get Ordo.</h2>
+            <p>
+              Free for both platforms. These are development builds, so keep your original media backed up.
+            </p>
+          </div>
+          <div class="download-grid">
+            <div class="platform">
+              <h3><img class="app-icon" src="./assets/icon.svg" width="44" height="44" alt="" />Android</h3>
+              <p>
+                Install the APK on your phone. Ordo checks for newer builds when it starts and offers to
+                update.
+              </p>
+              <a
+                class="button button-primary"
+                href="https://github.com/Averydimbulb79/Ordo/releases/download/android-latest/Ordo-Android.apk?v=0.13.2"
+                >Download the APK</a
+              >
+              <small
+                >Android 7.0 or later. <a class="text-link" href="./android.html">Install guide</a></small
+              >
+            </div>
+            <div class="platform">
+              <h3><img class="app-icon" src="./assets/icon.svg" width="44" height="44" alt="" />Windows</h3>
+              <p>
+                Run the installer and choose where Ordo goes. The installer is not yet code-signed, so Windows
+                may ask you to confirm.
+              </p>
+              <a
+                class="button button-primary"
+                href="https://github.com/Averydimbulb79/Ordo/releases/download/windows-latest/Ordo-Windows-Setup.exe"
+                >Download the installer</a
+              >
+              <small
+                >Windows 10 or 11, 64-bit.
+                <a class="text-link" href="./windows.html">What's in the desktop app</a></small
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <div class="wrap faq">
+          <h2 id="faq-title">Questions, answered.</h2>
+          <div class="faq-list">
+            <details>
+              <summary>Is Ordo really free?</summary>
+              <p>
+                Yes. Everything Ordo does today is free, with no account and no ads. Optional paid features
+                may come later, but what is free now stays free. Report problems or ask for features on
+                <a class="text-link" href="https://github.com/Averydimbulb79/Ordo/issues">GitHub</a>.
+              </p>
+            </details>
+            <details>
+              <summary>Do my videos get uploaded anywhere?</summary>
+              <p>
+                No. Ordo edits and exports on your device, and you choose which files it can open. The only
+                connection it makes is the Android update check, which sends the app version and nothing about
+                your media. The <a class="text-link" href="./privacy.html">privacy statement</a> has the
+                details.
+              </p>
+            </details>
+            <details>
+              <summary>Can I move a project between my phone and my PC?</summary>
+              <p>
+                Projects are .ordo files that both apps open. Projects do not contain the media itself, so
+                copy your original files across too and Ordo reconnects them by their content.
+              </p>
+            </details>
+            <details>
+              <summary>Can I keep using my phone while it exports?</summary>
+              <p>
+                Yes, when the export dialog shows native Android rendering. Allow notifications to see
+                progress and cancel if needed, then return to Ordo to save. Some edits, such as colour grading
+                and picture transitions, use the compatible exporter, which needs Ordo open.
+              </p>
+            </details>
+            <details>
+              <summary>Why no AI features?</summary>
+              <p>
+                Ordo is about hands-on editing. Everything it does to your picture and sound is a conventional
+                tool you control, with no cloud processing.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <a class="brand" href="./index.html" aria-label="Ordo home">ordo<span></span></a>
+        <nav aria-label="Footer">
+          <a href="./android.html">Android</a><a href="./windows.html">Windows</a
+          ><a href="./privacy.html">Privacy</a
+          ><a href="https://github.com/Averydimbulb79/Ordo/releases">Releases</a
+          ><a href="https://github.com/Averydimbulb79/Ordo/issues">Report an issue</a>
+        </nav>
+        <p class="footer-note">
+          Ordo is Latin for order and sequence, which is what editing turns your moments into. Made in
+          Singapore. © 2026 Lee Wen Yang (Mike).
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
